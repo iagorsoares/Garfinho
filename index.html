@@ -319,84 +319,96 @@ body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:var(--black
 .ibs{font-size:10px;color:rgba(255,255,255,.65);font-weight:500}
 #ibBtn{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:800;cursor:pointer;font-family:"Nunito",sans-serif}
 #ibX{background:none;border:none;color:rgba(255,255,255,.5);font-size:19px;cursor:pointer;padding:0 2px}
+
+/* FB SYNC BAR */
+.fb-sync-bar{position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:100%;font-size:11px;font-weight:700;text-align:center;padding:5px;z-index:9999;display:none;transition:opacity .3s}
+.fb-sync-bar.show{display:block}
+.fb-sync-bar.ok{background:#50a773;color:#fff}
+.fb-sync-bar.saving{background:#f5a623;color:#fff}
+.fb-sync-bar.err{background:#ea1d2c;color:#fff}
 </style>
 <!-- Firebase SDK -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import{initializeApp}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import{getFirestore,doc,setDoc,getDoc,onSnapshot}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
-  const app = initializeApp({
-    apiKey: "AIzaSyAck2Sz_o_U0f99bCRmN2cpWVYpWk3t_i4",
-    authDomain: "garfinho.firebaseapp.com",
-    projectId: "garfinho",
-    storageBucket: "garfinho.firebasestorage.app",
-    messagingSenderId: "323706945481",
-    appId: "1:323706945481:web:36f2a45b0d1fb8ed8b7218"
-  });
-  const db = getFirestore(app);
-  const COL = "lugares";
+const db=getFirestore(initializeApp({
+  apiKey:"AIzaSyAck2Sz_o_U0f99bCRmN2cpWVYpWk3t_i4",
+  authDomain:"garfinho.firebaseapp.com",
+  projectId:"garfinho",
+  storageBucket:"garfinho.firebasestorage.app",
+  messagingSenderId:"323706945481",
+  appId:"1:323706945481:web:36f2a45b0d1fb8ed8b7218"
+}));
 
-  // Remove fotos base64 antes de salvar (Firestore tem limite de 1MB por doc)
-  function semFotos(place) {
-    const p = {...place};
-    p.photos = (p.photos||[]).map(() => null);
-    return p;
-  }
+// Um único documento guarda todos os lugares — igual ao app de Banca
+const REF=doc(db,'garfinho','lugares');
+let saveTimer=null;
+let listening=false;
 
-  window._fbSave = async (place) => {
-    try {
-      await setDoc(doc(db, COL, String(place.id)), semFotos(place));
-      return true;
-    } catch(e) {
-      console.error('Firebase save error:', e);
-      return false;
+function syncBar(msg,cls){
+  const b=document.getElementById('fb-sync');
+  if(!b)return;
+  b.textContent=msg;b.className='fb-sync-bar show '+cls;
+  clearTimeout(b._t);
+  if(cls==='ok')b._t=setTimeout(()=>b.classList.remove('show'),2000);
+}
+
+// Expõe funções para o código global
+window._fbSave=function(){
+  clearTimeout(saveTimer);
+  syncBar('💾 Salvando...','saving');
+  saveTimer=setTimeout(async()=>{
+    try{
+      // Remove fotos base64 (muito grandes para Firestore)
+      const placesLimpos=window.places.map(p=>({...p,photos:(p.photos||[]).map(()=>null)}));
+      await setDoc(REF,{lista:placesLimpos});
+      localStorage.setItem('garfinho_bkp',JSON.stringify(window.places));
+      syncBar('✅ Salvo','ok');
+    }catch(e){
+      console.error('Erro ao salvar:',e);
+      syncBar('❌ Erro ao salvar','err');
     }
-  };
+  },700);
+};
 
-  window._fbDelete = async (id) => {
-    try {
-      await deleteDoc(doc(db, COL, String(id)));
-    } catch(e) {
-      console.error('Firebase delete error:', e);
+async function fbLoad(){
+  syncBar('☁️ Carregando...','saving');
+  try{
+    const snap=await getDoc(REF);
+    let lista=[];
+    if(snap.exists()&&snap.data().lista){
+      lista=snap.data().lista;
+      // Restaura fotos do localStorage
+      const fotos=JSON.parse(localStorage.getItem('garfinho_fotos')||'{}');
+      lista.forEach(p=>{if(fotos[p.id])p.photos=fotos[p.id];});
     }
-  };
+    window.places=lista;
+    syncBar('✅ Sincronizado','ok');
+    if(window._onPlacesLoaded)window._onPlacesLoaded();
 
-  window._fbLoad = async () => {
-    const snap = await getDocs(collection(db, COL));
-    const list = [];
-    snap.forEach(d => list.push(d.data()));
-    list.sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
-    return list;
-  };
-
-  window._fbReady = true;
-
-  // Carrega dados do Firebase ao iniciar
-  function dispararLoad(list) {
-    const local = JSON.parse(localStorage.getItem('garfinho_photos') || '{}');
-    list.forEach(p => { if (local[p.id]) p.photos = local[p.id]; });
-    window.places = list;
-    window._placesLoaded = true;
-    // Garante que o evento load da página já aconteceu
-    if (document.readyState === 'complete') {
-      if (window._onPlacesLoaded) window._onPlacesLoaded();
-      else { window._pendingPlaces = true; }
-    } else {
-      window.addEventListener('load', () => {
-        setTimeout(() => {
-          if (window._onPlacesLoaded) window._onPlacesLoaded();
-        }, 100);
+    // Escuta mudanças em tempo real (outro dispositivo salva, atualiza aqui)
+    if(!listening){
+      listening=true;
+      onSnapshot(REF,s=>{
+        if(!s.exists())return;
+        const lista2=s.data().lista||[];
+        const fotos=JSON.parse(localStorage.getItem('garfinho_fotos')||'{}');
+        lista2.forEach(p=>{if(fotos[p.id])p.photos=fotos[p.id];});
+        window.places=lista2;
+        if(window._appReady)window.renderAll();
       });
     }
+  }catch(e){
+    console.error('Erro Firebase:',e);
+    syncBar('❌ Sem conexão','err');
+    const bkp=localStorage.getItem('garfinho_bkp');
+    window.places=bkp?JSON.parse(bkp):[];
+    if(window._onPlacesLoaded)window._onPlacesLoaded();
   }
+}
 
-  window._fbLoad().then(list => {
-    dispararLoad(list);
-  }).catch(err => {
-    console.error("Erro Firebase:", err);
-    const lc = localStorage.getItem('garfinho_backup');
-    dispararLoad(lc ? JSON.parse(lc) : []);
-  });
+fbLoad();
 </script>
 </head>
 <body>
@@ -409,6 +421,7 @@ body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:var(--black
   <button id="ibX" onclick="document.getElementById('ib').classList.remove('show')">×</button>
 </div>
 
+<div id="fb-sync" class="fb-sync-bar"></div>
 <div id="splash">
   <div class="splash-icon">🍽️</div>
   <div class="splash-title">Garfinho</div>
@@ -460,7 +473,6 @@ body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:var(--black
           <span style="color:var(--gray3)">🔍</span>
           <input type="text" placeholder="Buscar lugares..." id="searchInput" oninput="applyFilters()">
         </div>
-
       </div>
     </div>
 
@@ -699,29 +711,21 @@ const CB = {
   'Lanches':'tc-lanches','Delivery':'tc-delivery'
 };
 
+window._onPlacesLoaded = function(){
+  window._appReady = true;
+  renderAll();
+  setTimeout(()=>document.getElementById('splash').classList.add('hidden'), 300);
+};
+
 window.addEventListener('load', () => {
-  // Splash some vai sumir depois que os dados carregarem (mínimo 1.2s)
-  const hideSplash = () => document.getElementById('splash').classList.add('hidden');
-
-  window._onPlacesLoaded = () => {
-    renderAll();
-    setTimeout(hideSplash, 300);
-  };
-
-  // Se Firebase já carregou antes do load (improvável mas possível)
-  if (window._placesLoaded || window._pendingPlaces) {
-    renderAll();
-    setTimeout(hideSplash, 300);
-  } else {
-    // Timeout de segurança: se Firebase demorar mais de 5s, mostra vazio
-    setTimeout(() => {
-      if (!window._placesLoaded) {
-        window._placesLoaded = true;
-        renderAll();
-        hideSplash();
-      }
-    }, 5000);
-  }
+  // Timeout de segurança: 6s sem resposta do Firebase → abre vazio
+  setTimeout(()=>{
+    if(!window._appReady){
+      window._appReady=true;
+      renderAll();
+      document.getElementById('splash').classList.add('hidden');
+    }
+  }, 6000);
 });
 
 /* ── NAVIGATE ── */
@@ -902,38 +906,31 @@ function deletePlace(id) {
 }
 
 function save() {
-  // salva no Firebase (assíncrono, não bloqueia a UI)
-  if (window._fbReady) {
-    places.forEach(p => window._fbSave(p).catch(e => console.error('Erro ao salvar:', e)));
-  }
+  // Salva fotos no localStorage antes de mandar para Firebase
+  places.forEach(p=>{
+    if(p.photos&&p.photos.some(x=>x)){
+      const fotos=JSON.parse(localStorage.getItem('garfinho_fotos')||'{}');
+      fotos[p.id]=p.photos;
+      localStorage.setItem('garfinho_fotos',JSON.stringify(fotos));
+    }
+  });
+  if(window._fbSave) window._fbSave();
 }
 function saveSingle(p) {
-  // Salva fotos no localStorage (Firebase não suporta base64 grande)
-  if (p.photos && p.photos.some(x=>x)) {
-    const local = JSON.parse(localStorage.getItem('garfinho_photos') || '{}');
-    local[p.id] = p.photos;
-    localStorage.setItem('garfinho_photos', JSON.stringify(local));
+  // Salva foto localmente
+  if(p.photos&&p.photos.some(x=>x)){
+    const fotos=JSON.parse(localStorage.getItem('garfinho_fotos')||'{}');
+    fotos[p.id]=p.photos;
+    localStorage.setItem('garfinho_fotos',JSON.stringify(fotos));
   }
-  // Backup completo local
-  localStorage.setItem('garfinho_backup', JSON.stringify(places));
-  // Salva no Firebase (sem fotos)
-  if (window._fbReady) {
-    window._fbSave(p).then(ok => {
-      if (ok) toast('☁️','Salvo na nuvem!');
-    });
-  }
+  if(window._fbSave) window._fbSave();
 }
 function deleteSingle(id) {
   // Remove foto local
-  const local = JSON.parse(localStorage.getItem('garfinho_photos') || '{}');
-  delete local[id];
-  localStorage.setItem('garfinho_photos', JSON.stringify(local));
-  // Backup local
-  localStorage.setItem('garfinho_backup', JSON.stringify(places));
-  // Remove do Firebase
-  if (window._fbReady) {
-    window._fbDelete(id);
-  }
+  const fotos=JSON.parse(localStorage.getItem('garfinho_fotos')||'{}');
+  delete fotos[id];
+  localStorage.setItem('garfinho_fotos',JSON.stringify(fotos));
+  if(window._fbSave) window._fbSave();
 }
 
 /* ── FILTERS ── */
