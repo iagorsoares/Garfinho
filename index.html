@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#ea1d2c">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Garfinho">
+<link rel="apple-touch-icon" id="appleTouchIcon">
+<link rel="manifest" id="pwaManifest">
 <title>Garfinho 🍽️</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -307,32 +311,56 @@ body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:var(--black
 ::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
+
+/* PWA INSTALL BANNER */
+#ib{display:none;align-items:center;gap:10px;background:var(--red);border-radius:12px;padding:11px 14px;margin:12px 14px 0;box-shadow:0 2px 10px rgba(234,29,44,0.25)}
+#ib.show{display:flex}
+.ibt{font-size:13px;font-weight:800;color:#fff;flex:1}
+.ibs{font-size:10px;color:rgba(255,255,255,.65);font-weight:500}
+#ibBtn{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:800;cursor:pointer;font-family:"Nunito",sans-serif}
+#ibX{background:none;border:none;color:rgba(255,255,255,.5);font-size:19px;cursor:pointer;padding:0 2px}
 </style>
 <!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  const firebaseConfig = {
+  const app = initializeApp({
     apiKey: "AIzaSyAck2Sz_o_U0f99bCRmN2cpWVYpWk3t_i4",
     authDomain: "garfinho.firebaseapp.com",
     projectId: "garfinho",
     storageBucket: "garfinho.firebasestorage.app",
     messagingSenderId: "323706945481",
     appId: "1:323706945481:web:36f2a45b0d1fb8ed8b7218"
-  };
-
-  const app = initializeApp(firebaseConfig);
+  });
   const db = getFirestore(app);
   const COL = "lugares";
 
-  // Expõe funções para o código global
+  // Remove fotos base64 antes de salvar (Firestore tem limite de 1MB por doc)
+  function semFotos(place) {
+    const p = {...place};
+    p.photos = (p.photos||[]).map(() => null);
+    return p;
+  }
+
   window._fbSave = async (place) => {
-    await setDoc(doc(db, COL, place.id), place);
+    try {
+      await setDoc(doc(db, COL, String(place.id)), semFotos(place));
+      return true;
+    } catch(e) {
+      console.error('Firebase save error:', e);
+      return false;
+    }
   };
+
   window._fbDelete = async (id) => {
-    await deleteDoc(doc(db, COL, id));
+    try {
+      await deleteDoc(doc(db, COL, String(id)));
+    } catch(e) {
+      console.error('Firebase delete error:', e);
+    }
   };
+
   window._fbLoad = async () => {
     const snap = await getDocs(collection(db, COL));
     const list = [];
@@ -340,21 +368,38 @@ body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:var(--black
     list.sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
     return list;
   };
+
   window._fbReady = true;
 
-  // Carrega os dados assim que o Firebase estiver pronto
+  // Carrega dados do Firebase ao iniciar
   window._fbLoad().then(list => {
+    // Mescla com fotos salvas localmente
+    const local = JSON.parse(localStorage.getItem('garfinho_photos') || '{}');
+    list.forEach(p => {
+      if (local[p.id]) p.photos = local[p.id];
+    });
     window.places = list;
     window._placesLoaded = true;
     if (window._onPlacesLoaded) window._onPlacesLoaded();
   }).catch(err => {
-    console.error("Erro ao carregar Firebase:", err);
+    console.error("Erro Firebase:", err);
+    // Fallback: usa localStorage se Firebase falhar
+    const lc = localStorage.getItem('garfinho_backup');
+    window.places = lc ? JSON.parse(lc) : [];
     window._placesLoaded = true;
     if (window._onPlacesLoaded) window._onPlacesLoaded();
   });
 </script>
 </head>
 <body>
+
+
+<div id="ib">
+  <div style="font-size:24px">🍽️</div>
+  <div><div class="ibt">Instalar na tela inicial</div><div class="ibs">Acesso rápido sem o navegador</div></div>
+  <button id="ibBtn">Instalar</button>
+  <button id="ibX" onclick="document.getElementById('ib').classList.remove('show')">×</button>
+</div>
 
 <div id="splash">
   <div class="splash-icon">🍽️</div>
@@ -398,7 +443,10 @@ body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:var(--black
   <main class="main" id="main-area">
     <div class="topbar">
       <button class="menu-btn" onclick="openSidebar()">☰</button>
-      <div class="topbar-title" id="topbar-title">Início</div>
+      <div style="display:flex;align-items:baseline;gap:10px">
+        <div class="topbar-title" id="topbar-title">Início</div>
+        <div id="topbar-date" style="font-size:.82rem;font-weight:600;color:var(--gray2)"></div>
+      </div>
       <div class="topbar-actions">
         <div class="search-box" id="searchBox" style="display:none">
           <span style="color:var(--gray3)">🔍</span>
@@ -833,13 +881,31 @@ function save() {
   }
 }
 function saveSingle(p) {
+  // Salva fotos no localStorage (Firebase não suporta base64 grande)
+  if (p.photos && p.photos.some(x=>x)) {
+    const local = JSON.parse(localStorage.getItem('garfinho_photos') || '{}');
+    local[p.id] = p.photos;
+    localStorage.setItem('garfinho_photos', JSON.stringify(local));
+  }
+  // Backup completo local
+  localStorage.setItem('garfinho_backup', JSON.stringify(places));
+  // Salva no Firebase (sem fotos)
   if (window._fbReady) {
-    window._fbSave(p).catch(e => console.error('Erro ao salvar:', e));
+    window._fbSave(p).then(ok => {
+      if (ok) toast('☁️','Salvo na nuvem!');
+    });
   }
 }
 function deleteSingle(id) {
+  // Remove foto local
+  const local = JSON.parse(localStorage.getItem('garfinho_photos') || '{}');
+  delete local[id];
+  localStorage.setItem('garfinho_photos', JSON.stringify(local));
+  // Backup local
+  localStorage.setItem('garfinho_backup', JSON.stringify(places));
+  // Remove do Firebase
   if (window._fbReady) {
-    window._fbDelete(id).catch(e => console.error('Erro ao deletar:', e));
+    window._fbDelete(id);
   }
 }
 
@@ -994,6 +1060,16 @@ function toast(icon, msg) {
 <!-- MAPA -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+(function(){
+  const d=new Date();
+  const dias=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const dia=dias[d.getDay()];
+  const data=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const semFeira=['Domingo','Sábado'];
+  const label=semFeira.includes(dia)?dia:dia+'-feira';
+  document.getElementById('topbar-date').textContent=label+' '+data;
+})();
+
 let leafletMap=null, mapMarkers=[], userMarker=null, mapFilter='all', userCoords=null, geoCache={};
 
 function initMap() {
@@ -1117,5 +1193,38 @@ function setMapFilter(el, f) {
   el.classList.add('active'); mapFilter=f; renderMap();
 }
 </script>
+
+<!-- PWA -->
+<script>
+function gerarIconeGarfinho(s){
+  const cv=document.createElement('canvas');cv.width=s;cv.height=s;
+  const x=cv.getContext('2d'),r=s*.22;
+  const g=x.createLinearGradient(0,0,s,s);
+  g.addColorStop(0,'#ea1d2c');g.addColorStop(1,'#c0111e');
+  x.beginPath();x.moveTo(r,0);x.lineTo(s-r,0);x.quadraticCurveTo(s,0,s,r);
+  x.lineTo(s,s-r);x.quadraticCurveTo(s,s,s-r,s);
+  x.lineTo(r,s);x.quadraticCurveTo(0,s,0,s-r);
+  x.lineTo(0,r);x.quadraticCurveTo(0,0,r,0);x.closePath();
+  x.fillStyle=g;x.fill();
+  x.font=s*.52+'px serif';x.textAlign='center';x.textBaseline='middle';
+  x.fillText('🍽️',s/2,s/2+s*.02);
+  if(s>=96){x.font='bold '+s*.1+'px -apple-system,sans-serif';x.fillStyle='rgba(255,255,255,.8)';x.fillText('GARFINHO',s/2,s*.84);}
+  return cv.toDataURL('image/png');
+}
+(function(){
+  const icon=gerarIconeGarfinho(180);
+  document.getElementById('appleTouchIcon').href=icon;
+  let fav=document.querySelector("link[rel='icon']")||document.createElement('link');
+  fav.rel='icon';fav.href=gerarIconeGarfinho(64);document.head.appendChild(fav);
+  const i192=gerarIconeGarfinho(192),i512=gerarIconeGarfinho(512);
+  const m={name:'Garfinho 🍽️',short_name:'Garfinho',start_url:location.href,display:'standalone',background_color:'#f2f2f2',theme_color:'#ea1d2c',orientation:'portrait',icons:[{src:i192,sizes:'192x192',type:'image/png',purpose:'any maskable'},{src:i512,sizes:'512x512',type:'image/png',purpose:'any maskable'}]};
+  document.getElementById('pwaManifest').href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/json'}));
+})();
+let _dp=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();_dp=e;document.getElementById('ib').classList.add('show');});
+document.getElementById('ibBtn').addEventListener('click',async()=>{if(!_dp)return;_dp.prompt();await _dp.userChoice;_dp=null;document.getElementById('ib').classList.remove('show');});
+window.addEventListener('appinstalled',()=>document.getElementById('ib').classList.remove('show'));
+</script>
+
 </body>
 </html>
