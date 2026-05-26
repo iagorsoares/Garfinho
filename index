@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#ea1d2c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Garfinho 🍽️</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{
+  --bg:#f2f2f2;--bg2:#ffffff;--bg3:#e8e8e8;--card:#ffffff;--border:#e0e0e0;
+  --red:#ea1d2c;--red-dark:#c0111e;--red-soft:#ffeaec;--red-mid:#ffd0d3;
+  --black:#1a1a1a;--gray1:#3d3d3d;--gray2:#7a7a7a;--gray3:#b0b0b0;
+  --green:#50a773;--yellow:#f5a623;--pet:#4caf7d;
+  --shadow:0 2px 12px rgba(0,0,0,.08);--shadow-lg:0 6px 28px rgba(0,0,0,.12);
+  --r:14px;--tr:0.2s cubic-bezier(.4,0,.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:var(--black);min-height:100dvh;overflow-x:hidden}
+
+/* SPLASH */
+#splash{position:fixed;inset:0;z-index:999;background:var(--red);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .6s ease,visibility .6s ease}
+#splash.hidden{opacity:0;visibility:hidden;pointer-events:none}
+.splash-icon{font-size:4rem;animation:pop .6s ease}
+.splash-title{font-family:'Nunito',sans-serif;font-size:2.8rem;font-weight:900;color:#fff;letter-spacing:-.02em}
+.splash-sub{font-size:.9rem;color:rgba(255,255,255,.75);font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.splash-bar{width:100px;height:3px;background:rgba(255,255,255,.3);border-radius:99px;overflow:hidden;margin-top:10px}
+.splash-fill{height:100%;background:#fff;border-radius:99px;animation:fill 1.5s ease forwards}
+@keyframes pop{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes fill{from{width:0}to{width:100%}}
+
+/* LAYOUT */
+.app{display:flex;height:100dvh;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:230px;flex-shrink:0;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;box-shadow:2px 0 8px rgba(0,0,0,.04)}
+.sidebar-logo{padding:22px 20px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-icon{width:40px;height:40px;background:var(--red);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;box-shadow:0 4px 12px rgba(234,29,44,.3);flex-shrink:0}
+.logo-text{font-family:'Nunito',sans-serif;font-size:1.3rem;font-weight:900;color:var(--black);letter-spacing:-.02em}
+.logo-sub{font-size:.68rem;color:var(--gray2);font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+.sidebar-nav{padding:12px 0;flex:1}
+.nav-section{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray3);padding:12px 20px 6px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 12px;font-size:.88rem;font-weight:600;color:var(--gray1);cursor:pointer;transition:background var(--tr),color var(--tr);position:relative;margin:1px 8px;border-radius:10px}
+.nav-item:hover{background:var(--bg);color:var(--black)}
+.nav-item.active{background:var(--red-soft);color:var(--red)}
+.nav-item.active::before{content:'';position:absolute;left:-8px;top:6px;bottom:6px;width:3px;background:var(--red);border-radius:0 3px 3px 0}
+.nav-icon{font-size:1.1rem;width:22px;text-align:center}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:99px;min-width:20px;text-align:center}
+.sidebar-footer{padding:14px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.user-avatar{width:36px;height:36px;background:var(--red);border-radius:50%;font-family:'Nunito',sans-serif;font-size:1rem;font-weight:900;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.user-name{font-size:.85rem;font-weight:700;color:var(--black)}
+.user-sub{font-size:.7rem;color:var(--gray2)}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column;background:var(--bg)}
+
+/* TOPBAR */
+.topbar{position:sticky;top:0;z-index:10;background:var(--card);border-bottom:1px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow)}
+.menu-btn{display:none;background:none;border:none;color:var(--gray1);font-size:1.3rem;cursor:pointer;padding:4px}
+.topbar-title{font-family:'Nunito',sans-serif;font-size:1.3rem;font-weight:900;color:var(--black);letter-spacing:-.01em}
+.topbar-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
+.search-box{display:flex;align-items:center;gap:8px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:7px 14px}
+.search-box input{background:none;border:none;outline:none;font-family:'Nunito Sans',sans-serif;font-size:.85rem;color:var(--black);width:160px}
+.search-box input::placeholder{color:var(--gray3)}
+.btn-add{display:flex;align-items:center;gap:6px;padding:9px 18px;background:var(--red);border:none;border-radius:10px;font-family:'Nunito',sans-serif;font-size:.88rem;font-weight:800;color:#fff;cursor:pointer;box-shadow:0 4px 14px rgba(234,29,44,.3);transition:all var(--tr)}
+.btn-add:hover{background:var(--red-dark);transform:translateY(-1px)}
+
+/* VIEWS */
+.view{display:none;padding:22px 24px;flex:1}
+.view.active{display:block;animation:fadeIn .25s ease}
+.view-map{display:none;flex-direction:column;flex:1;padding:0}
+.view-map.active{display:flex}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* HERO */
+.hero-banner{background:var(--red);border-radius:var(--r);padding:22px 24px;margin-bottom:22px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 6px 24px rgba(234,29,44,.3);overflow:hidden;position:relative}
+.hero-banner::before{content:'🍔🍕🌮🍜🍣';position:absolute;right:-10px;top:50%;transform:translateY(-50%) rotate(-15deg);font-size:3.5rem;opacity:.12;letter-spacing:8px;white-space:nowrap;pointer-events:none}
+.hero-text h2{font-family:'Nunito',sans-serif;font-size:1.3rem;font-weight:900;color:#fff;margin-bottom:4px}
+.hero-text p{font-size:.85rem;color:rgba(255,255,255,.8);font-weight:600}
+.hero-btn{padding:10px 20px;background:#fff;color:var(--red);border-radius:99px;border:none;font-family:'Nunito',sans-serif;font-weight:800;font-size:.85rem;cursor:pointer;flex-shrink:0;transition:all var(--tr);box-shadow:0 3px 10px rgba(0,0,0,.15)}
+.hero-btn:hover{transform:scale(1.04)}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--shadow);position:relative;overflow:hidden;transition:transform var(--tr),box-shadow var(--tr)}
+.stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.stat-card.red-card{background:var(--red);border-color:var(--red)}
+.stat-card.red-card .stat-value,.stat-card.red-card .stat-label,.stat-card.red-card .stat-icon{color:#fff!important}
+.stat-icon{font-size:1.5rem;margin-bottom:10px}
+.stat-value{font-family:'Nunito',sans-serif;font-size:2rem;font-weight:900;line-height:1;margin-bottom:3px;color:var(--black)}
+.stat-label{font-size:.75rem;font-weight:700;color:var(--gray2);letter-spacing:.04em;text-transform:uppercase}
+.stat-card::after{content:attr(data-icon);position:absolute;right:-8px;bottom:-8px;font-size:3.5rem;opacity:.07;pointer-events:none}
+
+/* DASH GRID */
+.dash-grid{display:grid;grid-template-columns:1fr 320px;gap:18px}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--shadow)}
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.section-title{font-family:'Nunito',sans-serif;font-size:1.05rem;font-weight:900;color:var(--black);letter-spacing:-.01em}
+.section-title span{color:var(--red)}
+.section-link{font-size:.8rem;font-weight:700;color:var(--red);cursor:pointer;transition:opacity var(--tr)}
+.section-link:hover{opacity:.7}
+
+/* RECENT */
+.recent-list{display:flex;flex-direction:column;gap:2px}
+.recent-item{display:flex;align-items:center;gap:12px;padding:10px;border-radius:10px;cursor:pointer;transition:background var(--tr)}
+.recent-item:hover{background:var(--bg)}
+.recent-thumb{width:42px;height:42px;border-radius:10px;background:var(--red-soft);font-size:1.3rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+.recent-thumb img{width:100%;height:100%;object-fit:cover}
+.recent-name{font-size:.9rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.recent-cat{font-size:.75rem;color:var(--gray2);margin-top:1px}
+.stars{display:flex;gap:1px}
+.star{font-size:.78rem;color:var(--bg3)}
+.star.filled{color:var(--yellow)}
+
+/* CAT CHART */
+.cat-chart{display:flex;flex-direction:column;gap:10px}
+.cat-row{display:flex;flex-direction:column;gap:5px}
+.cat-header{display:flex;justify-content:space-between;font-size:.82rem;font-weight:600;color:var(--gray1)}
+.cat-bar{height:7px;background:var(--bg);border-radius:99px;overflow:hidden}
+.cat-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--red),#ff6b6b);transition:width .8s cubic-bezier(.4,0,.2,1)}
+
+/* MOOD */
+.mood-cloud{display:flex;flex-wrap:wrap;gap:7px}
+.mood-tag{padding:5px 12px;border-radius:99px;font-size:.78rem;font-weight:600;background:var(--bg);color:var(--gray1);border:1.5px solid var(--border);cursor:default;transition:all var(--tr)}
+.mood-tag:hover{border-color:var(--red);color:var(--red);background:var(--red-soft)}
+
+/* FILTER BAR */
+.filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.filter-chip{padding:7px 16px;border-radius:99px;font-size:.82rem;font-weight:700;border:1.5px solid var(--border);background:var(--card);color:var(--gray1);cursor:pointer;transition:all var(--tr)}
+.filter-chip:hover{border-color:var(--red);color:var(--red)}
+.filter-chip.active{background:var(--red);border-color:var(--red);color:#fff;box-shadow:0 3px 10px rgba(234,29,44,.25)}
+
+/* PLACES GRID */
+.places-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.place-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:pointer;box-shadow:var(--shadow);transition:transform var(--tr),box-shadow var(--tr)}
+.place-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+.place-thumb{height:140px;background:var(--red-soft);display:flex;align-items:center;justify-content:center;font-size:3rem;position:relative;overflow:hidden}
+.place-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.place-thumb .emoji-bg{position:relative;z-index:1}
+.tc-cafe{background:#fff3e0}.tc-sorveteria{background:#e3f2fd}.tc-pizza{background:#fce4ec}.tc-burger{background:#fff3e0}.tc-lanches{background:#fff8e1}.tc-delivery{background:#e8f5e9}
+.status-pill{position:absolute;top:10px;right:10px;padding:3px 9px;border-radius:99px;font-size:.68rem;font-weight:700;z-index:2}
+.sp-visitado{background:#e8f5e0;color:#3a8a4a}
+.sp-quero{background:var(--red-soft);color:var(--red)}
+.pet-badge{position:absolute;top:10px;left:10px;font-size:1rem;z-index:2;background:rgba(255,255,255,.92);border-radius:99px;padding:3px 8px;font-weight:700;color:var(--pet);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.place-body{padding:14px}
+.place-name{font-family:'Nunito',sans-serif;font-size:1rem;font-weight:800;margin-bottom:2px;color:var(--black);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.place-cat{font-size:.73rem;font-weight:700;color:var(--gray2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.place-note{font-size:.78rem;color:var(--gray2);line-height:1.4;margin:6px 0;font-style:italic;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.place-footer{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.place-price{font-size:.8rem;font-weight:800;color:var(--red);background:var(--red-soft);padding:3px 9px;border-radius:6px}
+.place-actions{display:flex;gap:4px}
+.icon-btn{width:30px;height:30px;border-radius:8px;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.82rem;cursor:pointer;transition:all var(--tr);color:var(--gray1)}
+.icon-btn:hover{background:var(--red-soft);color:var(--red);border-color:var(--red-mid)}
+
+/* RANKING */
+.ranking-list{display:flex;flex-direction:column;gap:10px}
+.ranking-item{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);transition:transform var(--tr),box-shadow var(--tr)}
+.ranking-item:hover{transform:translateX(4px);box-shadow:var(--shadow-lg)}
+.rank-pos{font-family:'Nunito',sans-serif;font-size:1.4rem;font-weight:900;width:32px;text-align:center;flex-shrink:0}
+.rank-thumb{width:42px;height:42px;border-radius:10px;background:var(--red-soft);font-size:1.3rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+.rank-thumb img{width:100%;height:100%;object-fit:cover}
+.rank-name{font-size:.95rem;font-weight:700}
+.rank-cat{font-size:.75rem;color:var(--gray2);margin-top:2px}
+.rank-score{font-family:'Nunito',sans-serif;font-size:1.4rem;font-weight:900;color:var(--red);display:flex;align-items:center;gap:3px}
+.rank-score span{font-size:.85rem;color:var(--yellow)}
+
+/* TIMELINE */
+.timeline{position:relative;display:flex;flex-direction:column}
+.timeline::before{content:'';position:absolute;left:20px;top:8px;bottom:8px;width:2px;background:var(--border)}
+.timeline-item{display:flex;gap:20px;padding:0 0 20px 52px;position:relative}
+.timeline-dot{position:absolute;left:13px;top:5px;width:14px;height:14px;background:var(--red);border-radius:50%;border:3px solid var(--bg);box-shadow:0 0 0 2px var(--red)}
+.timeline-inner{flex:1}
+.timeline-date{font-size:.73rem;font-weight:700;color:var(--gray2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
+.timeline-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow);transition:box-shadow var(--tr)}
+.timeline-card:hover{box-shadow:var(--shadow-lg)}
+.timeline-title{font-family:'Nunito',sans-serif;font-size:1rem;font-weight:800;margin-bottom:4px}
+.timeline-note{font-size:.82rem;color:var(--gray2);line-height:1.5;font-style:italic}
+
+/* MAP VIEW */
+.map-header{padding:16px 24px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.map-filter-chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.map-filter-chips::-webkit-scrollbar{display:none}
+.map-chip{padding:6px 14px;border-radius:99px;font-size:.78rem;font-weight:700;border:1.5px solid var(--border);background:var(--card);color:var(--gray1);cursor:pointer;transition:all var(--tr);white-space:nowrap}
+.map-chip.active{background:var(--red);border-color:var(--red);color:#fff}
+.map-chip:hover:not(.active){border-color:var(--red);color:var(--red)}
+.map-container{flex:1;position:relative;min-height:0}
+#leaflet-map{width:100%;height:100%}
+.map-status-bar{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:1000;background:var(--card);border:1.5px solid var(--border);border-radius:99px;padding:7px 16px;font-size:.78rem;font-weight:700;color:var(--gray1);box-shadow:var(--shadow);white-space:nowrap;pointer-events:none}
+.map-loc-btn{position:absolute;bottom:20px;right:16px;z-index:1000;background:var(--card);border:1.5px solid var(--border);border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;cursor:pointer;box-shadow:var(--shadow-lg);transition:all var(--tr)}
+.map-loc-btn:hover{border-color:var(--red);background:var(--red-soft)}
+.map-city-search{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:1001;display:none;align-items:center;gap:6px;background:var(--card);border:1.5px solid var(--border);border-radius:99px;padding:6px 6px 6px 14px;box-shadow:var(--shadow-lg);width:260px}
+.map-city-search.show{display:flex}
+.map-city-search input{background:none;border:none;outline:none;font-family:'Nunito Sans',sans-serif;font-size:.82rem;color:var(--black);flex:1;min-width:0}
+.map-city-search input::placeholder{color:var(--gray3)}
+.map-city-search button{background:var(--red);border:none;border-radius:99px;color:#fff;font-size:.75rem;font-weight:700;padding:6px 14px;cursor:pointer;white-space:nowrap;flex-shrink:0;font-family:'Nunito',sans-serif}
+.leaflet-popup-content-wrapper{border-radius:12px!important;box-shadow:var(--shadow-lg)!important;border:1px solid var(--border)!important;padding:0!important}
+.leaflet-popup-content{margin:0!important;min-width:180px}
+.leaflet-popup-tip{display:none!important}
+.map-popup{padding:14px 16px;font-family:'Nunito Sans',sans-serif}
+.map-popup-name{font-family:'Nunito',sans-serif;font-size:1rem;font-weight:800;color:var(--black);margin-bottom:2px}
+.map-popup-meta{font-size:.72rem;color:var(--gray2);margin-bottom:8px}
+.map-popup-btn{display:block;width:100%;padding:8px;background:var(--red);color:#fff;border:none;border-radius:8px;font-family:'Nunito',sans-serif;font-size:.78rem;font-weight:800;cursor:pointer;text-align:center;transition:background var(--tr)}
+.map-popup-btn:hover{background:var(--red-dark)}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;opacity:0;visibility:hidden;transition:opacity .3s ease,visibility .3s ease}
+.overlay.open{opacity:1;visibility:visible}
+.modal{background:var(--card);border-radius:22px 22px 0 0;width:100%;max-width:560px;max-height:92dvh;overflow-y:auto;padding:20px 24px 32px;transform:translateY(40px);transition:transform .35s cubic-bezier(.4,0,.2,1)}
+.overlay.open .modal{transform:translateY(0)}
+.modal-handle{width:36px;height:4px;background:var(--border);border-radius:99px;margin:0 auto 18px}
+.modal-title{font-family:'Nunito',sans-serif;font-size:1.4rem;font-weight:900;margin-bottom:20px;color:var(--black)}
+.form-field{margin-bottom:15px}
+.form-label{display:block;font-size:.75rem;font-weight:700;color:var(--gray2);letter-spacing:.06em;text-transform:uppercase;margin-bottom:7px}
+.form-input{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-family:'Nunito Sans',sans-serif;font-size:.9rem;color:var(--black);outline:none;transition:border-color var(--tr),box-shadow var(--tr)}
+.form-input:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(234,29,44,.1)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.star-input{display:flex;gap:8px}
+.star-pick{font-size:1.6rem;cursor:pointer;filter:grayscale(1) opacity(.3);transition:filter var(--tr),transform var(--tr)}
+.star-pick.on{filter:none;transform:scale(1.1)}
+
+/* STATUS PICKER */
+.status-picker{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sp-btn{border:2px solid var(--border);border-radius:12px;background:var(--bg);padding:12px 10px;text-align:center;cursor:pointer;transition:all var(--tr)}
+.sp-btn:hover{border-color:var(--red-mid)}
+.sp-btn.sel.sp-quero{border-color:var(--red);background:var(--red-soft)}
+.sp-btn.sel.sp-visitado{border-color:var(--green);background:rgba(80,167,115,.08)}
+.sp-btn-icon{font-size:1.4rem;margin-bottom:4px}
+.sp-btn-lbl{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--gray1)}
+
+/* PET TOGGLE */
+.pet-toggle{display:flex;align-items:center;gap:12px;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:13px 14px;cursor:pointer;transition:all var(--tr);user-select:none}
+.pet-toggle:hover{border-color:var(--gray3)}
+.pet-toggle.on{border-color:var(--pet);background:rgba(76,175,125,.06)}
+.pt-icon{font-size:1.4rem;flex-shrink:0}
+.pt-info{flex:1}
+.pt-title{font-size:.88rem;font-weight:700;color:var(--black)}
+.pt-sub{font-size:.72rem;color:var(--gray2);margin-top:1px}
+.pt-switch{width:42px;height:24px;border-radius:99px;background:var(--border);position:relative;transition:background .25s;flex-shrink:0}
+.pt-switch::after{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;top:3px;left:3px;transition:transform .25s cubic-bezier(.34,1.56,.64,1);box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.pet-toggle.on .pt-switch{background:var(--pet)}
+.pet-toggle.on .pt-switch::after{transform:translateX(18px)}
+
+/* PHOTO UPLOAD */
+.photos-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.photo-slot{border:2px dashed var(--border);border-radius:12px;aspect-ratio:4/3;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all var(--tr);position:relative;overflow:hidden;background:var(--bg)}
+.photo-slot:hover{border-color:var(--red);background:var(--red-soft)}
+.photo-slot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.photo-slot .slot-icon{font-size:1.4rem;opacity:.5;margin-bottom:4px}
+.photo-slot .slot-txt{font-size:.72rem;font-weight:700;color:var(--gray2)}
+.photo-slot .slot-remove{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.7rem;z-index:2;display:none}
+.photo-slot.has-img .slot-remove{display:flex}
+.photo-slot.has-img .slot-icon,.photo-slot.has-img .slot-txt{display:none}
+
+/* IG BUTTON */
+.ig-btn{display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);border:none;border-radius:10px;padding:10px 14px;color:#fff;font-family:'Nunito',sans-serif;font-size:.85rem;font-weight:800;cursor:pointer;transition:all var(--tr);width:100%}
+.ig-btn:hover{opacity:.88;transform:translateY(-1px)}
+.ig-btn-icon{font-size:1.1rem}
+
+/* MODAL ACTIONS */
+.modal-actions{display:flex;gap:10px;margin-top:22px}
+.btn-cancel{flex:1;padding:13px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--gray1);font-family:'Nunito',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:all var(--tr)}
+.btn-cancel:hover{border-color:var(--red);color:var(--red)}
+.btn-save{flex:2;padding:13px;border-radius:12px;border:none;background:var(--red);color:#fff;font-family:'Nunito',sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;box-shadow:0 4px 14px rgba(234,29,44,.3);transition:all var(--tr)}
+.btn-save:hover{background:var(--red-dark);transform:translateY(-1px)}
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--black);border-radius:99px;padding:11px 22px;display:flex;align-items:center;gap:8px;font-size:.87rem;font-weight:600;color:#fff;z-index:999;transition:transform .4s cubic-bezier(.4,0,.2,1);white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+#toast.show{transform:translateX(-50%) translateY(0)}
+
+/* EMPTY */
+.empty{text-align:center;padding:50px 20px;grid-column:1/-1}
+.empty-icon{font-size:3rem;margin-bottom:12px}
+.empty-title{font-family:'Nunito',sans-serif;font-size:1.2rem;font-weight:900;color:var(--gray1);margin-bottom:5px}
+.empty-sub{font-size:.85rem;color:var(--gray2)}
+.empty-cta{display:inline-block;margin-top:16px;padding:10px 22px;background:var(--red);color:#fff;border-radius:99px;font-weight:800;font-size:.85rem;cursor:pointer;transition:all var(--tr)}
+.empty-cta:hover{background:var(--red-dark)}
+
+/* MOBILE NAV */
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:50;background:var(--card);border-top:1px solid var(--border);padding:6px 0 env(safe-area-inset-bottom,6px);justify-content:space-around;box-shadow:0 -4px 16px rgba(0,0,0,.07)}
+.mob-nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 10px;cursor:pointer;color:var(--gray2);font-size:.6rem;font-weight:700;transition:color var(--tr);border-radius:8px;text-transform:uppercase;letter-spacing:.03em}
+.mob-nav-item.active{color:var(--red)}
+.mob-nav-item span:first-child{font-size:1.2rem}
+.sidebar-overlay{display:none;position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.4)}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:50;transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-overlay.open{display:block}
+  .menu-btn{display:flex}
+  .search-box{display:none}
+  .mobile-nav{display:flex}
+  .view{padding:16px 14px 80px}
+  .view-map{padding-bottom:env(safe-area-inset-bottom,0px)}
+  .stats-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .dash-grid{grid-template-columns:1fr}
+  .places-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+}
+@media(max-width:480px){
+  .places-grid{grid-template-columns:1fr 1fr;gap:10px}
+  .form-row{grid-template-columns:1fr}
+  .hero-banner::before{display:none}
+}
+@media(max-width:360px){.places-grid{grid-template-columns:1fr}}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
+</style>
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAck2Sz_o_U0f99bCRmN2cpWVYpWk3t_i4",
+    authDomain: "garfinho.firebaseapp.com",
+    projectId: "garfinho",
+    storageBucket: "garfinho.firebasestorage.app",
+    messagingSenderId: "323706945481",
+    appId: "1:323706945481:web:36f2a45b0d1fb8ed8b7218"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const COL = "lugares";
+
+  // Expõe funções para o código global
+  window._fbSave = async (place) => {
+    await setDoc(doc(db, COL, place.id), place);
+  };
+  window._fbDelete = async (id) => {
+    await deleteDoc(doc(db, COL, id));
+  };
+  window._fbLoad = async () => {
+    const snap = await getDocs(collection(db, COL));
+    const list = [];
+    snap.forEach(d => list.push(d.data()));
+    list.sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
+    return list;
+  };
+  window._fbReady = true;
+
+  // Carrega os dados assim que o Firebase estiver pronto
+  window._fbLoad().then(list => {
+    window.places = list;
+    window._placesLoaded = true;
+    if (window._onPlacesLoaded) window._onPlacesLoaded();
+  }).catch(err => {
+    console.error("Erro ao carregar Firebase:", err);
+    window._placesLoaded = true;
+    if (window._onPlacesLoaded) window._onPlacesLoaded();
+  });
+</script>
+</head>
+<body>
+
+<div id="splash">
+  <div class="splash-icon">🍽️</div>
+  <div class="splash-title">Garfinho</div>
+  <div class="splash-sub">Nosso Mapa gastronômico</div>
+  <div class="splash-bar"><div class="splash-fill"></div></div>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<div class="app">
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🍽️</div>
+      <div>
+        <div class="logo-text">Garfinho</div>
+        <div class="logo-sub">mapa gastronômico</div>
+      </div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section">Menu</div>
+      <div class="nav-item active" onclick="navigate('inicio')"><span class="nav-icon">🏠</span>Início</div>
+      <div class="nav-item" onclick="navigate('lugares')"><span class="nav-icon">🍴</span>Lugares<span class="nav-badge" id="badge-all">0</span></div>
+      <div class="nav-section">Listas</div>
+      <div class="nav-item" onclick="navigate('quero')"><span class="nav-icon">🔖</span>Quero Conhecer<span class="nav-badge" id="badge-want">0</span></div>
+      <div class="nav-section">Mapa</div>
+      <div class="nav-item" onclick="navigate('mapa')"><span class="nav-icon">🗺️</span>Perto de Mim</div>
+      <div class="nav-section">Relatórios</div>
+      <div class="nav-item" onclick="navigate('ranking')"><span class="nav-icon">🏆</span>Ranking</div>
+      <div class="nav-item" onclick="navigate('timeline')"><span class="nav-icon">📅</span>Timeline</div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="user-avatar">G</div>
+      <div>
+        <div class="user-name">Garfeiros</div>
+        <div class="user-sub">Débora & Iago 💑</div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="main" id="main-area">
+    <div class="topbar">
+      <button class="menu-btn" onclick="openSidebar()">☰</button>
+      <div class="topbar-title" id="topbar-title">Início</div>
+      <div class="topbar-actions">
+        <div class="search-box" id="searchBox" style="display:none">
+          <span style="color:var(--gray3)">🔍</span>
+          <input type="text" placeholder="Buscar lugares..." id="searchInput" oninput="applyFilters()">
+        </div>
+        <button class="btn-add" onclick="openModal()">＋ Novo Lugar</button>
+      </div>
+    </div>
+
+    <!-- INÍCIO -->
+    <div class="view active" id="view-inicio">
+      <div class="hero-banner">
+        <div class="hero-text">
+          <h2>Olá, Garfeiros! </h2>
+          <p>Débora & Iago</p>
+        </div>
+        <button class="hero-btn" onclick="openModal()">Adicionar</button>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card red-card" data-icon="🍽️"><div class="stat-icon">🍽️</div><div class="stat-value" id="stat-total">0</div><div class="stat-label">Cadastrados</div></div>
+        <div class="stat-card" data-icon="✅"><div class="stat-icon">✅</div><div class="stat-value" id="stat-visited">0</div><div class="stat-label">Visitados</div></div>
+        <div class="stat-card" data-icon="⭐"><div class="stat-icon">⭐</div><div class="stat-value" id="stat-avg">—</div><div class="stat-label">Nota Média</div></div>
+        <div class="stat-card" data-icon="🔖"><div class="stat-icon">🔖</div><div class="stat-value" id="stat-want">0</div><div class="stat-label">Para Visitar</div></div>
+      </div>
+      <div class="dash-grid">
+        <div>
+          <div class="panel">
+            <div class="section-head">
+              <div class="section-title">Adicionados <span>recentemente</span></div>
+              <div class="section-link" onclick="navigate('lugares')">Ver todos →</div>
+            </div>
+            <div class="recent-list" id="recent-list"></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="panel">
+            <div class="section-title" style="margin-bottom:14px">Por <span>categoria</span></div>
+            <div class="cat-chart" id="cat-chart"></div>
+          </div>
+          <div class="panel">
+            <div class="section-title" style="margin-bottom:12px">Suas <span>dicas</span></div>
+            <div class="mood-cloud" id="mood-cloud"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LUGARES -->
+    <div class="view" id="view-lugares">
+      <div class="filter-bar" id="filter-bar">
+        <div class="filter-chip active" onclick="setFilter(this,'todos')">Todos</div>
+        <div class="filter-chip" onclick="setFilter(this,'visitado')">✅ Visitados</div>
+        <div class="filter-chip" onclick="setFilter(this,'quero')">🔖 Quero Ir</div>
+        <div class="filter-chip" onclick="setFilter(this,'pet')">🐶 Pet Friendly</div>
+        <div class="filter-chip" onclick="setFilter(this,'Bar')">🍺 Bar</div>
+        <div class="filter-chip" onclick="setFilter(this,'Restaurante')">🍽️ Restaurante</div>
+        <div class="filter-chip" onclick="setFilter(this,'Pizzaria')">🍕 Pizzaria</div>
+        <div class="filter-chip" onclick="setFilter(this,'Hamburgueria')">🍔 Hamburgueria</div>
+        <div class="filter-chip" onclick="setFilter(this,'Café')">☕ Café</div>
+        <div class="filter-chip" onclick="setFilter(this,'Sorveteria')">🍦 Sorveteria</div>
+        <div class="filter-chip" onclick="setFilter(this,'Lanches')">🥪 Lanches</div>
+        <div class="filter-chip" onclick="setFilter(this,'Delivery')">🛵 Delivery</div>
+        <div class="filter-chip" onclick="setFilter(this,'Outros')">🍴 Outros</div>
+      </div>
+      <div class="places-grid" id="places-grid"></div>
+    </div>
+
+    <!-- QUERO -->
+    <div class="view" id="view-quero">
+      <div class="places-grid" id="want-grid"></div>
+    </div>
+
+    <!-- MAPA -->
+    <div class="view-map" id="view-mapa">
+      <div class="map-header">
+        <div class="map-filter-chips" id="map-chips">
+          <div class="map-chip active" onclick="setMapFilter(this,'all')">Todos</div>
+          <div class="map-chip" onclick="setMapFilter(this,'quero')">🔖 Quero ir</div>
+          <div class="map-chip" onclick="setMapFilter(this,'visitado')">✅ Já fui</div>
+          <div class="map-chip" onclick="setMapFilter(this,'pet')">🐶 Pet friendly</div>
+        </div>
+      </div>
+      <div class="map-container">
+        <div id="leaflet-map"></div>
+        <div class="map-status-bar" id="map-status">📍 Buscando localização…</div>
+        <div class="map-city-search" id="map-city-search">
+          <input type="text" id="map-city-input" placeholder="Digite uma cidade…" onkeydown="if(event.key==='Enter')searchCity()">
+          <button onclick="searchCity()">Ir</button>
+        </div>
+        <button class="map-loc-btn" onclick="centerOnMe()">📍</button>
+      </div>
+    </div>
+
+    <!-- RANKING -->
+    <div class="view" id="view-ranking">
+      <div class="ranking-list" id="ranking-list"></div>
+    </div>
+
+    <!-- TIMELINE -->
+    <div class="view" id="view-timeline">
+      <div class="timeline" id="timeline-list"></div>
+    </div>
+  </main>
+</div>
+
+<div class="mobile-nav">
+  <div class="mob-nav-item active" onclick="navigate('inicio')" data-nav="inicio"><span>🏠</span><span>Início</span></div>
+  <div class="mob-nav-item" onclick="navigate('lugares')" data-nav="lugares"><span>🍴</span><span>Lugares</span></div>
+  <div class="mob-nav-item" onclick="navigate('quero')" data-nav="quero"><span>🔖</span><span>Quero</span></div>
+  <div class="mob-nav-item" onclick="navigate('mapa')" data-nav="mapa"><span>🗺️</span><span>Perto</span></div>
+  <div class="mob-nav-item" onclick="navigate('ranking')" data-nav="ranking"><span>🏆</span><span>Ranking</span></div>
+</div>
+
+<!-- MODAL CADASTRO / EDIÇÃO -->
+<div class="overlay" id="overlay" onclick="onOvClick(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-title">Novo Lugar 🍴</div>
+
+    <div class="form-field">
+      <label class="form-label">Nome do Lugar</label>
+      <input class="form-input" id="f-name" placeholder="Ex: Cantina">
+    </div>
+
+    <div class="form-row">
+      <div class="form-field">
+        <label class="form-label">Categoria</label>
+        <select class="form-input" id="f-cat">
+          <option>Bar</option>
+          <option>Restaurante</option>
+          <option>Pizzaria</option>
+          <option>Hamburgueria</option>
+          <option>Café</option>
+          <option>Sorveteria</option>
+          <option>Lanches</option>
+          <option>Delivery</option>
+          <option>Outros</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Cidade / Bairro</label>
+        <input class="form-input" id="f-city" placeholder="Ex: Porto Alegre, RS">
+      </div>
+    </div>
+
+    <div class="form-field">
+      <label class="form-label">Instagram do Lugar</label>
+      <input class="form-input" id="f-ig" placeholder="https://instagram.com/nomedolugar" type="url">
+    </div>
+
+    <div class="form-field">
+      <label class="form-label">Status</label>
+      <div class="status-picker">
+        <div class="sp-btn sel sp-quero" onclick="selStatus(this,'quero')">
+          <div class="sp-btn-icon">🔖</div><div class="sp-btn-lbl">Quero ir</div>
+        </div>
+        <div class="sp-btn sp-visitado" onclick="selStatus(this,'visitado')">
+          <div class="sp-btn-icon">✅</div><div class="sp-btn-lbl">Já fui</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-field" id="rating-field" style="display:none">
+      <label class="form-label">Avaliação</label>
+      <div class="star-input">
+        <span class="star-pick" data-v="1" onclick="setRating(1)">⭐</span>
+        <span class="star-pick" data-v="2" onclick="setRating(2)">⭐</span>
+        <span class="star-pick" data-v="3" onclick="setRating(3)">⭐</span>
+        <span class="star-pick" data-v="4" onclick="setRating(4)">⭐</span>
+        <span class="star-pick" data-v="5" onclick="setRating(5)">⭐</span>
+      </div>
+    </div>
+
+    <div class="form-field">
+      <label class="form-label">Dica / Anotação</label>
+      <input class="form-input" id="f-note" placeholder="Ex: Pedir o risoto de cogumelos!">
+    </div>
+
+    <div class="form-field" id="date-field" style="display:none">
+      <label class="form-label">Data da Visita</label>
+      <input class="form-input" type="date" id="f-date">
+    </div>
+
+    <div class="form-field">
+      <div class="pet-toggle" id="pet-toggle" onclick="togglePet()">
+        <div class="pt-icon">🐶</div>
+        <div class="pt-info">
+          <div class="pt-title">Pet Friendly</div>
+          <div class="pt-sub">Aceita animais de estimação</div>
+        </div>
+        <div class="pt-switch"></div>
+      </div>
+    </div>
+
+    <div class="form-field">
+      <label class="form-label">Fotos (até 2)</label>
+      <div class="photos-row">
+        <div class="photo-slot" id="slot0" onclick="triggerPhoto(0)">
+          <div class="slot-icon">📷</div>
+          <div class="slot-txt">Foto 1</div>
+          <button class="slot-remove" onclick="removePhoto(event,0)">✕</button>
+          <input type="file" accept="image/*" style="display:none" id="photo-input-0" onchange="loadPhoto(event,0)">
+        </div>
+        <div class="photo-slot" id="slot1" onclick="triggerPhoto(1)">
+          <div class="slot-icon">📷</div>
+          <div class="slot-txt">Foto 2</div>
+          <button class="slot-remove" onclick="removePhoto(event,1)">✕</button>
+          <input type="file" accept="image/*" style="display:none" id="photo-input-1" onchange="loadPhoto(event,1)">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-field" id="ig-open-wrap" style="display:none">
+      <button class="ig-btn" onclick="openIG()">
+        <span class="ig-btn-icon">📸</span> Abrir Instagram do lugar
+      </button>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-save" onclick="savePlace()">Salvar Lugar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"><span id="ti">✅</span><span id="tm">Salvo!</span></div>
+
+<script>
+let places = [];
+let editId = null, rating = 0, curStatus = 'quero', curPet = false;
+let photos = [null, null];
+let activeFilter = 'todos', searchQuery = '', currentView = 'inicio';
+
+const CE = {
+  'Bar':'🍺','Restaurante':'🍽️','Pizzaria':'🍕','Hamburgueria':'🍔',
+  'Café':'☕','Sorveteria':'🍦','Lanches':'🥪',
+  'Delivery':'🛵','Outros':'🍴'
+};
+const CB = {
+  'Bar':'tc-bar','Café':'tc-cafe','Sorveteria':'tc-sorveteria',
+  'Pizzaria':'tc-pizza','Hamburgueria':'tc-burger',
+  'Lanches':'tc-lanches','Delivery':'tc-delivery'
+};
+
+window.addEventListener('load', () => {
+  setTimeout(() => document.getElementById('splash').classList.add('hidden'), 1700);
+  window._onPlacesLoaded = () => { renderAll(); };
+  if (window._placesLoaded) renderAll();
+});
+
+/* ── NAVIGATE ── */
+function navigate(v) {
+  currentView = v;
+  // views
+  document.querySelectorAll('.view,.view-map').forEach(x => x.classList.remove('active'));
+  const el = document.getElementById('view-'+v);
+  if (el) el.classList.add('active');
+  // nav highlight
+  document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.mob-nav-item').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(x => { if (x.getAttribute('onclick')?.includes("'"+v+"'")) x.classList.add('active'); });
+  document.querySelectorAll('.mob-nav-item').forEach(x => { if (x.dataset.nav === v) x.classList.add('active'); });
+  // titles
+  const T = {inicio:'Início',lugares:'Lugares',quero:'Quero Conhecer',mapa:'Perto de Mim',ranking:'Ranking',timeline:'Timeline'};
+  document.getElementById('topbar-title').textContent = T[v] || '';
+  document.getElementById('searchBox').style.display = v === 'lugares' ? 'flex' : 'none';
+  // render
+  if (v === 'inicio') renderDashboard();
+  else if (v === 'lugares') renderPlacesGrid();
+  else if (v === 'quero') renderWantGrid();
+  else if (v === 'mapa') { setTimeout(() => { initMap(); renderMap(); centerOnMe(); }, 120); }
+  else if (v === 'ranking') renderRanking();
+  else if (v === 'timeline') renderTimeline();
+  closeSidebar();
+}
+
+function openSidebar() { document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebarOverlay').classList.add('open'); }
+function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('open'); }
+
+/* ── MODAL ── */
+function openModal(id = null) {
+  editId = id; rating = 0; curPet = false; photos = [null, null];
+  document.getElementById('modal-title').textContent = id ? 'Editar Lugar ✏️' : 'Novo Lugar 🍴';
+
+  if (id) {
+    const p = places.find(x => x.id === id);
+    if (p) {
+      document.getElementById('f-name').value  = p.name;
+      document.getElementById('f-cat').value   = p.cat;
+      document.getElementById('f-city').value  = p.city || '';
+      document.getElementById('f-ig').value    = p.ig || '';
+      document.getElementById('f-note').value  = p.note || '';
+      document.getElementById('f-date').value  = p.date || '';
+      curStatus = p.status || 'quero';
+      curPet    = !!p.pet;
+      photos    = [p.photos?.[0]||null, p.photos?.[1]||null];
+      setRating(p.rating || 0);
+    }
+  } else {
+    ['f-name','f-city','f-ig','f-note'].forEach(i => document.getElementById(i).value = '');
+    document.getElementById('f-cat').value  = 'Restaurante';
+    document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+    curStatus = 'quero';
+    setRating(0);
+  }
+
+  // status picker
+  document.querySelectorAll('.sp-btn').forEach(b => b.classList.remove('sel'));
+  document.querySelector('.sp-'+curStatus)?.classList.add('sel');
+  const isVisitado = curStatus === 'visitado';
+  document.getElementById('rating-field').style.display = isVisitado ? 'block' : 'none';
+  document.getElementById('date-field').style.display   = isVisitado ? 'block' : 'none';
+
+  // pet
+  document.getElementById('pet-toggle').classList.toggle('on', curPet);
+
+  // photos
+  [0,1].forEach(i => {
+    const slot = document.getElementById('slot'+i);
+    const img  = slot.querySelector('img');
+    if (photos[i]) {
+      if (!img) { const im = document.createElement('img'); slot.appendChild(im); }
+      slot.querySelector('img').src = photos[i];
+      slot.classList.add('has-img');
+    } else {
+      if (img) img.remove();
+      slot.classList.remove('has-img');
+    }
+  });
+
+  // ig button
+  document.getElementById('ig-open-wrap').style.display = document.getElementById('f-ig').value ? 'block' : 'none';
+  document.getElementById('f-ig').addEventListener('input', () => {
+    document.getElementById('ig-open-wrap').style.display = document.getElementById('f-ig').value ? 'block' : 'none';
+  });
+
+  document.getElementById('overlay').classList.add('open');
+}
+
+function closeModal() { document.getElementById('overlay').classList.remove('open'); editId = null; }
+function onOvClick(e) { if (e.target === document.getElementById('overlay')) closeModal(); }
+
+function selStatus(el, st) {
+  document.querySelectorAll('.sp-btn').forEach(b => b.classList.remove('sel'));
+  el.classList.add('sel');
+  curStatus = st;
+  const isVisitado = st === 'visitado';
+  document.getElementById('rating-field').style.display = isVisitado ? 'block' : 'none';
+  document.getElementById('date-field').style.display   = isVisitado ? 'block' : 'none';
+  if (isVisitado && !document.getElementById('f-date').value) {
+    document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+  }
+}
+
+function setRating(v) {
+  rating = v;
+  document.querySelectorAll('.star-pick').forEach(s => s.classList.toggle('on', parseInt(s.dataset.v) <= v));
+}
+
+function togglePet() {
+  curPet = !curPet;
+  document.getElementById('pet-toggle').classList.toggle('on', curPet);
+}
+
+function triggerPhoto(i) { document.getElementById('photo-input-'+i).click(); }
+
+function loadPhoto(e, i) {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    photos[i] = ev.target.result;
+    const slot = document.getElementById('slot'+i);
+    let img = slot.querySelector('img');
+    if (!img) { img = document.createElement('img'); slot.appendChild(img); }
+    img.src = photos[i];
+    slot.classList.add('has-img');
+  };
+  r.readAsDataURL(f);
+}
+
+function removePhoto(e, i) {
+  e.stopPropagation();
+  photos[i] = null;
+  const slot = document.getElementById('slot'+i);
+  const img  = slot.querySelector('img');
+  if (img) img.remove();
+  slot.classList.remove('has-img');
+  document.getElementById('photo-input-'+i).value = '';
+}
+
+function openIG() {
+  const ig = document.getElementById('f-ig').value.trim();
+  if (ig) window.open(ig, '_blank');
+}
+
+/* ── SAVE ── */
+function savePlace() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { toast('⚠️','Informe o nome do lugar!'); return; }
+  const cat  = document.getElementById('f-cat').value;
+  const p = {
+    id:       editId || Date.now().toString(),
+    name,  cat,
+    city:     document.getElementById('f-city').value.trim(),
+    ig:       document.getElementById('f-ig').value.trim(),
+    status:   curStatus,
+    rating,
+    pet:      curPet,
+    photos:   [...photos],
+    note:     document.getElementById('f-note').value.trim(),
+    date:     document.getElementById('f-date').value,
+    emoji:    CE[cat] || '🍴',
+    createdAt: editId ? (places.find(x => x.id === editId)?.createdAt || Date.now()) : Date.now()
+  };
+  if (editId) { places[places.findIndex(x => x.id === editId)] = p; toast('✏️','Lugar atualizado!'); }
+  else        { places.unshift(p); toast('✅','Lugar adicionado!'); }
+  saveSingle(p); closeModal(); renderAll();
+  if (currentView !== 'inicio') navigate(currentView);
+}
+
+function deletePlace(id) {
+  if (!confirm('Remover este lugar?')) return;
+  places = places.filter(p => p.id !== id);
+  deleteSingle(id); renderAll(); toast('🗑️','Removido');
+  if (currentView !== 'inicio') navigate(currentView);
+}
+
+function save() {
+  // salva no Firebase (assíncrono, não bloqueia a UI)
+  if (window._fbReady) {
+    places.forEach(p => window._fbSave(p).catch(e => console.error('Erro ao salvar:', e)));
+  }
+}
+function saveSingle(p) {
+  if (window._fbReady) {
+    window._fbSave(p).catch(e => console.error('Erro ao salvar:', e));
+  }
+}
+function deleteSingle(id) {
+  if (window._fbReady) {
+    window._fbDelete(id).catch(e => console.error('Erro ao deletar:', e));
+  }
+}
+
+/* ── FILTERS ── */
+function setFilter(el, v) {
+  document.querySelectorAll('#filter-bar .filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active'); activeFilter = v; renderPlacesGrid();
+}
+function applyFilters() { searchQuery = document.getElementById('searchInput').value.toLowerCase(); renderPlacesGrid(); }
+function getFiltered() {
+  return places.filter(p => {
+    const mf = activeFilter === 'todos'
+      || p.status === activeFilter
+      || p.cat === activeFilter
+      || (activeFilter === 'pet' && p.pet);
+    const ms = !searchQuery || p.name.toLowerCase().includes(searchQuery) || (p.cat||'').toLowerCase().includes(searchQuery) || (p.city||'').toLowerCase().includes(searchQuery);
+    return mf && ms;
+  });
+}
+
+/* ── RENDER ALL ── */
+function renderAll() { updateBadges(); updateStats(); renderDashboard(); }
+
+function updateBadges() {
+  document.getElementById('badge-all').textContent  = places.length;
+  document.getElementById('badge-want').textContent = places.filter(p => p.status === 'quero').length;
+}
+
+function updateStats() {
+  document.getElementById('stat-total').textContent   = places.length;
+  document.getElementById('stat-visited').textContent = places.filter(p => p.status === 'visitado').length;
+  document.getElementById('stat-want').textContent    = places.filter(p => p.status === 'quero').length;
+  const rated = places.filter(p => p.rating > 0);
+  document.getElementById('stat-avg').textContent = rated.length
+    ? (rated.reduce((a,p) => a+p.rating,0) / rated.length).toFixed(1)+'★' : '—';
+}
+
+function renderDashboard() {
+  updateStats(); updateBadges();
+  const rec = places.slice(0, 5);
+  document.getElementById('recent-list').innerHTML = rec.length
+    ? rec.map(p => `<div class="recent-item" onclick="openModal('${p.id}')">
+        <div class="recent-thumb">${p.photos?.[0] ? `<img src="${p.photos[0]}" alt="">` : (p.emoji||'🍴')}</div>
+        <div style="flex:1;min-width:0">
+          <div class="recent-name">${p.name}${p.pet?' 🐶':''}</div>
+          <div class="recent-cat">${p.cat}${p.city?' · '+p.city:''}</div>
+        </div>
+        <div class="stars">${stars(p.rating)}</div>
+      </div>`).join('')
+    : '<div style="text-align:center;padding:20px;color:var(--gray2);font-size:.85rem">Nenhum lugar ainda 🍴</div>';
+
+  const cats = {};
+  places.forEach(p => { cats[p.cat] = (cats[p.cat]||0)+1; });
+  const sorted = Object.entries(cats).sort((a,b) => b[1]-a[1]).slice(0,6);
+  const max = sorted[0]?.[1] || 1;
+  document.getElementById('cat-chart').innerHTML = sorted.length
+    ? sorted.map(([c,n]) => `<div class="cat-row"><div class="cat-header"><span>${CE[c]||'🍴'} ${c}</span><span style="font-weight:800;color:var(--red)">${n}</span></div><div class="cat-bar"><div class="cat-fill" style="width:${(n/max)*100}%"></div></div></div>`).join('')
+    : '<span style="color:var(--gray2);font-size:.85rem">Adicione lugares para ver</span>';
+
+  const words = [...new Set(places.filter(p=>p.note).flatMap(p=>p.note.split(/[\s,!.]+/)).filter(w=>w.length>3))].slice(0,12);
+  document.getElementById('mood-cloud').innerHTML = words.length
+    ? words.map(w => `<span class="mood-tag">${w}</span>`).join('')
+    : '<span style="color:var(--gray2);font-size:.82rem">Adicione dicas nos lugares</span>';
+}
+
+function stars(r) {
+  return [1,2,3,4,5].map(i => `<span class="star ${i<=(r||0)?'filled':''}">★</span>`).join('');
+}
+
+function card(p) {
+  const SL = {visitado:'✅ Visitado', quero:'🔖 Quero'};
+  const thumb = p.photos?.[0]
+    ? `<img src="${p.photos[0]}" alt=""><span class="emoji-bg" style="display:none"></span>`
+    : `<span class="emoji-bg">${p.emoji||'🍴'}</span>`;
+  return `<div class="place-card">
+    <div class="place-thumb ${CB[p.cat]||''}">
+      ${thumb}
+      <span class="status-pill sp-${p.status}">${SL[p.status]||p.status}</span>
+      ${p.pet ? `<span class="pet-badge">🐶 Pet</span>` : ''}
+    </div>
+    <div class="place-body">
+      <div class="place-name">${p.name}</div>
+      <div class="place-cat">${p.cat}${p.city?' · '+p.city:''}</div>
+      <div class="stars">${stars(p.rating)}</div>
+      ${p.note ? `<div class="place-note">💬 ${p.note}</div>` : ''}
+      <div class="place-footer">
+        <span></span>
+        <div class="place-actions">
+          ${p.ig ? `<div class="icon-btn" onclick="event.stopPropagation();window.open('${p.ig}','_blank')" title="Instagram">📸</div>` : ''}
+          <div class="icon-btn" onclick="event.stopPropagation();openModal('${p.id}')" title="Editar">✏️</div>
+          <div class="icon-btn" onclick="event.stopPropagation();deletePlace('${p.id}')" title="Remover">🗑️</div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function empty(t, s, cta=true) {
+  return `<div class="empty"><div class="empty-icon">🍴</div><div class="empty-title">${t}</div><div class="empty-sub">${s}</div>${cta?`<div class="empty-cta" onclick="openModal()">+ Adicionar Lugar</div>`:''}</div>`;
+}
+
+function renderPlacesGrid() { const g=document.getElementById('places-grid'),l=getFiltered(); g.innerHTML=l.length?l.map(card).join(''):empty('Nada encontrado','Tente outro filtro ou busca',false); }
+function renderWantGrid()   { const g=document.getElementById('want-grid'),l=places.filter(p=>p.status==='quero'); g.innerHTML=l.length?l.map(card).join(''):empty('Lista vazia','Adicione lugares que querem conhecer 🔖'); }
+
+function renderRanking() {
+  const rl = document.getElementById('ranking-list');
+  const rk = [...places].filter(p=>p.rating>0).sort((a,b)=>b.rating-a.rating||a.name.localeCompare(b.name));
+  if (!rk.length) { rl.innerHTML = empty('Sem avaliações','Avalie os lugares visitados para ver o ranking'); return; }
+  const M = ['🥇','🥈','🥉'];
+  rl.innerHTML = rk.map((p,i) => `
+    <div class="ranking-item">
+      <div class="rank-pos">${i<3?M[i]:i+1}</div>
+      <div class="rank-thumb">${p.photos?.[0]?`<img src="${p.photos[0]}" alt="">`:p.emoji||'🍴'}</div>
+      <div style="flex:1;min-width:0">
+        <div class="rank-name">${p.name}${p.pet?' 🐶':''}</div>
+        <div class="rank-cat">${p.cat}${p.city?' · '+p.city:''}</div>
+      </div>
+      <div class="rank-score">${p.rating}<span>★</span></div>
+    </div>`).join('');
+}
+
+function renderTimeline() {
+  const tl = document.getElementById('timeline-list');
+  const vs = [...places].filter(p=>p.date).sort((a,b)=>b.date.localeCompare(a.date));
+  if (!vs.length) { tl.innerHTML = empty('Sem histórico','Adicione datas de visita aos seus lugares'); return; }
+  const MN=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  tl.innerHTML = vs.map(p => {
+    const [y,m,d] = p.date.split('-');
+    return `<div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-inner">
+        <div class="timeline-date">${parseInt(d)} ${MN[parseInt(m)-1]} ${y}</div>
+        <div class="timeline-card">
+          <div class="timeline-title">${p.emoji||'🍴'} ${p.name}${p.pet?' 🐶':''}</div>
+          ${p.note?`<div class="timeline-note">💬 ${p.note}</div>`:''}
+          <div style="margin-top:6px">${stars(p.rating)}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toast(icon, msg) {
+  document.getElementById('ti').textContent = icon;
+  document.getElementById('tm').textContent = msg;
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+</script>
+
+<!-- MAPA -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+let leafletMap=null, mapMarkers=[], userMarker=null, mapFilter='all', userCoords=null, geoCache={};
+
+function initMap() {
+  if (leafletMap) return;
+  leafletMap = L.map('leaflet-map', {zoomControl:false, attributionControl:false});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18}).addTo(leafletMap);
+  L.control.zoom({position:'topright'}).addTo(leafletMap);
+  leafletMap.setView([-15.77,-47.92],4);
+}
+
+function makeIcon(cat, status, pet) {
+  const color = status==='visitado' ? '#ea1d2c' : '#f5a623';
+  const emoji = ({Restaurante:'🍽️',Pizzaria:'🍕',Hamburgueria:'🍔',Café:'☕',Sorveteria:'🍦',Lanches:'🥪',Delivery:'🛵',Outros:'🍴'})[cat]||'📍';
+  const petEl = pet ? `<div style="position:absolute;top:-4px;right:-4px;background:#4caf7d;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;font-size:9px">🐶</div>` : '';
+  return L.divIcon({
+    html:`<div style="position:relative;width:40px;height:48px">
+      <svg xmlns="http://www.w3.org/2000/svg" width="40" height="48" viewBox="0 0 40 48">
+        <path d="M20 2C11.16 2 4 9.16 4 18c0 12 16 28 16 28s16-16 16-28C36 9.16 28.84 2 20 2z" fill="${color}"/>
+        <circle cx="20" cy="18" r="10" fill="white" opacity=".95"/>
+        <text x="20" y="22" text-anchor="middle" font-size="11">${emoji}</text>
+      </svg>${petEl}</div>`,
+    className:'', iconSize:[40,48], iconAnchor:[20,48], popupAnchor:[0,-50]
+  });
+}
+
+async function geocode(p) {
+  const key = p.name+'|'+p.city;
+  if (geoCache[key]) return geoCache[key];
+  try {
+    const q = encodeURIComponent(p.name+(p.city?' '+p.city:''));
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`,
+      {headers:{'Accept-Language':'pt-BR','User-Agent':'GarfinhoApp/1.0'}});
+    const d = await r.json();
+    if (d[0]) { const c=[parseFloat(d[0].lat),parseFloat(d[0].lon)]; geoCache[key]=c; return c; }
+  } catch(e){}
+  return null;
+}
+
+async function renderMap() {
+  if (!leafletMap) return;
+  const sb = document.getElementById('map-status');
+  sb.textContent = '⏳ Carregando…';
+  mapMarkers.forEach(m => leafletMap.removeLayer(m)); mapMarkers=[];
+
+  let list = places;
+  if (mapFilter==='quero')   list = places.filter(p=>p.status==='quero');
+  if (mapFilter==='visitado')list = places.filter(p=>p.status==='visitado');
+  if (mapFilter==='pet')     list = places.filter(p=>p.pet);
+
+  if (!list.length) { sb.textContent='📭 Nenhum lugar para mostrar'; return; }
+
+  let loaded=0; const bounds=[];
+  await Promise.all(list.map(async p => {
+    const coords = await geocode(p);
+    if (!coords) return;
+    bounds.push(coords);
+    const statusLabel = p.status==='visitado' ? '✅ Já fui' : '🔖 Quero ir';
+    const marker = L.marker(coords, {icon:makeIcon(p.cat, p.status, p.pet)})
+      .addTo(leafletMap)
+      .bindPopup(`<div class="map-popup">
+        <div class="map-popup-name">${p.name}${p.pet?' 🐶':''}</div>
+        <div class="map-popup-meta">${p.cat}${p.city?' · '+p.city:''}</div>
+        <div style="font-size:.72rem;font-weight:700;margin-bottom:8px;color:${p.status==='visitado'?'#50a773':'#f5a623'}">${statusLabel}</div>
+        ${p.rating?`<div style="color:#f5a623;margin-bottom:8px">${'★'.repeat(p.rating)}</div>`:''}
+        <button class="map-popup-btn" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent((p.name||'')+(p.city?' '+p.city:''))}','_blank')">🗺️ Abrir rota</button>
+      </div>`,{maxWidth:220,minWidth:180});
+    mapMarkers.push(marker); loaded++;
+  }));
+
+  sb.textContent = loaded ? `📍 ${loaded} lugar${loaded>1?'es':''} encontrado${loaded>1?'s':''}` : '😕 Não encontrei coordenadas';
+  if (bounds.length===1) leafletMap.setView(bounds[0],14);
+  else if (bounds.length>1) leafletMap.fitBounds(bounds,{padding:[48,48]});
+}
+
+function centerOnMe() {
+  if (!leafletMap) return;
+  if (userCoords) { leafletMap.setView(userCoords,13,{animate:true}); return; }
+  if (!navigator.geolocation) { showCitySearch(); return; }
+  document.getElementById('map-status').textContent = '📡 Obtendo localização…';
+  navigator.geolocation.getCurrentPosition(pos => {
+    userCoords = [pos.coords.latitude, pos.coords.longitude];
+    if (userMarker) leafletMap.removeLayer(userMarker);
+    userMarker = L.circleMarker(userCoords,{radius:8,fillColor:'#ea1d2c',fillOpacity:1,color:'#fff',weight:3})
+      .addTo(leafletMap).bindPopup('<div class="map-popup"><div class="map-popup-name">Você está aqui</div></div>');
+    leafletMap.setView(userCoords,13,{animate:true});
+    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${userCoords[0]}&lon=${userCoords[1]}&format=json`,
+      {headers:{'Accept-Language':'pt-BR'}})
+      .then(r=>r.json()).then(d=>{
+        const city = d.address?.city||d.address?.town||d.address?.state||'sua região';
+        document.getElementById('map-status').textContent = `📍 Você está em ${city}`;
+      });
+  }, () => { showCitySearch(); }, {timeout:8000});
+}
+
+function showCitySearch() {
+  document.getElementById('map-status').style.display = 'none';
+  document.getElementById('map-city-search').classList.add('show');
+  setTimeout(() => document.getElementById('map-city-input').focus(), 100);
+}
+
+async function searchCity() {
+  const val = document.getElementById('map-city-input').value.trim();
+  if (!val) return;
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(val)}&format=json&limit=1`,
+      {headers:{'Accept-Language':'pt-BR','User-Agent':'GarfinhoApp/1.0'}});
+    const d = await r.json();
+    if (d[0]) {
+      leafletMap.setView([parseFloat(d[0].lat),parseFloat(d[0].lon)],12,{animate:true});
+      document.getElementById('map-city-search').classList.remove('show');
+      document.getElementById('map-status').style.display='';
+      document.getElementById('map-status').textContent=`📍 Mostrando: ${val}`;
+    } else {
+      document.getElementById('map-city-input').placeholder='Cidade não encontrada…';
+    }
+  } catch(e){}
+}
+
+function setMapFilter(el, f) {
+  document.querySelectorAll('.map-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active'); mapFilter=f; renderMap();
+}
+</script>
+</body>
+</html>
