@@ -706,7 +706,7 @@ fbLoad();
 <div id="toast"><span id="ti">✅</span><span id="tm">Salvo!</span></div>
 
 <script>
-let places = [];
+window.places = window.places || [];
 let editId = null, rating = 0, curStatus = 'quero', curPet = false;
 let photos = [null, null];
 let activeFilter = 'todos', searchQuery = '', currentView = 'inicio';
@@ -774,7 +774,7 @@ function openModal(id = null) {
   document.getElementById('modal-title').textContent = id ? 'Editar Lugar ✏️' : 'Novo Lugar 🍴';
 
   if (id) {
-    const p = places.find(x => x.id === id);
+    const p = window.places.find(x => x.id === id);
     if (p) {
       document.getElementById('f-name').value  = p.name;
       document.getElementById('f-cat').value   = p.cat;
@@ -901,24 +901,24 @@ function savePlace() {
     note:     document.getElementById('f-note').value.trim(),
     date:     document.getElementById('f-date').value,
     emoji:    CE[cat] || '🍴',
-    createdAt: editId ? (places.find(x => x.id === editId)?.createdAt || Date.now()) : Date.now()
+    createdAt: editId ? (window.places.find(x => x.id === editId)?.createdAt || Date.now()) : Date.now()
   };
-  if (editId) { places[places.findIndex(x => x.id === editId)] = p; toast('✏️','Lugar atualizado!'); }
-  else        { places.unshift(p); toast('✅','Lugar adicionado!'); }
+  if (editId) { window.places[window.places.findIndex(x => x.id === editId)] = p; toast('✏️','Lugar atualizado!'); }
+  else        { window.places.unshift(p); toast('✅','Lugar adicionado!'); }
   saveSingle(p); closeModal(); renderAll();
   if (currentView !== 'inicio') navigate(currentView);
 }
 
 function deletePlace(id) {
   if (!confirm('Remover este lugar?')) return;
-  places = places.filter(p => p.id !== id);
+  window.places = window.places.filter(p => p.id !== id);
   deleteSingle(id); renderAll(); toast('🗑️','Removido');
   if (currentView !== 'inicio') navigate(currentView);
 }
 
 function save() {
   // Salva fotos no localStorage antes de mandar para Firebase
-  places.forEach(p=>{
+  window.places.forEach(p=>{
     if(p.photos&&p.photos.some(x=>x)){
       const fotos=JSON.parse(localStorage.getItem('garfinho_fotos')||'{}');
       fotos[p.id]=p.photos;
@@ -951,7 +951,7 @@ function setFilter(el, v) {
 }
 function applyFilters() { searchQuery = document.getElementById('searchInput').value.toLowerCase(); renderPlacesGrid(); }
 function getFiltered() {
-  return places.filter(p => {
+  return window.places.filter(p => {
     const mf = activeFilter === 'todos'
       || p.status === activeFilter
       || p.cat === activeFilter
@@ -965,22 +965,22 @@ function getFiltered() {
 function renderAll() { updateBadges(); updateStats(); renderDashboard(); }
 
 function updateBadges() {
-  document.getElementById('badge-all').textContent  = places.length;
-  document.getElementById('badge-want').textContent = places.filter(p => p.status === 'quero').length;
+  document.getElementById('badge-all').textContent  = window.places.length;
+  document.getElementById('badge-want').textContent = window.places.filter(p => p.status === 'quero').length;
 }
 
 function updateStats() {
-  document.getElementById('stat-total').textContent   = places.length;
-  document.getElementById('stat-visited').textContent = places.filter(p => p.status === 'visitado').length;
-  document.getElementById('stat-want').textContent    = places.filter(p => p.status === 'quero').length;
-  const rated = places.filter(p => p.rating > 0);
+  document.getElementById('stat-total').textContent   = window.places.length;
+  document.getElementById('stat-visited').textContent = window.places.filter(p => p.status === 'visitado').length;
+  document.getElementById('stat-want').textContent    = window.places.filter(p => p.status === 'quero').length;
+  const rated = window.places.filter(p => p.rating > 0);
   document.getElementById('stat-avg').textContent = rated.length
     ? (rated.reduce((a,p) => a+p.rating,0) / rated.length).toFixed(1)+'★' : '—';
 }
 
 function renderDashboard() {
   updateStats(); updateBadges();
-  const rec = places.slice(0, 5);
+  const rec = window.places.slice(0, 5);
   document.getElementById('recent-list').innerHTML = rec.length
     ? rec.map(p => `<div class="recent-item" onclick="openModal('${p.id}')">
         <div class="recent-thumb">${p.photos?.[0] ? `<img src="${p.photos[0]}" alt="">` : (p.emoji||'🍴')}</div>
@@ -993,14 +993,14 @@ function renderDashboard() {
     : '<div style="text-align:center;padding:20px;color:var(--gray2);font-size:.85rem">Nenhum lugar ainda 🍴</div>';
 
   const cats = {};
-  places.forEach(p => { cats[p.cat] = (cats[p.cat]||0)+1; });
+  window.places.forEach(p => { cats[p.cat] = (cats[p.cat]||0)+1; });
   const sorted = Object.entries(cats).sort((a,b) => b[1]-a[1]).slice(0,6);
   const max = sorted[0]?.[1] || 1;
   document.getElementById('cat-chart').innerHTML = sorted.length
     ? sorted.map(([c,n]) => `<div class="cat-row"><div class="cat-header"><span>${CE[c]||'🍴'} ${c}</span><span style="font-weight:800;color:var(--red)">${n}</span></div><div class="cat-bar"><div class="cat-fill" style="width:${(n/max)*100}%"></div></div></div>`).join('')
     : '<span style="color:var(--gray2);font-size:.85rem">Adicione lugares para ver</span>';
 
-  const words = [...new Set(places.filter(p=>p.note).flatMap(p=>p.note.split(/[\s,!.]+/)).filter(w=>w.length>3))].slice(0,12);
+  const words = [...new Set(window.places.filter(p=>p.note).flatMap(p=>p.note.split(/[\s,!.]+/)).filter(w=>w.length>3))].slice(0,12);
   document.getElementById('mood-cloud').innerHTML = words.length
     ? words.map(w => `<span class="mood-tag">${w}</span>`).join('')
     : '<span style="color:var(--gray2);font-size:.82rem">Adicione dicas nos lugares</span>';
@@ -1043,7 +1043,7 @@ function empty(t, s, cta=true) {
 }
 
 function renderPlacesGrid() { const g=document.getElementById('places-grid'),l=getFiltered(); g.innerHTML=l.length?l.map(card).join(''):empty('Nada encontrado','Tente outro filtro ou busca',false); }
-function renderWantGrid()   { const g=document.getElementById('want-grid'),l=places.filter(p=>p.status==='quero'); g.innerHTML=l.length?l.map(card).join(''):empty('Lista vazia','Adicione lugares que querem conhecer 🔖'); }
+function renderWantGrid()   { const g=document.getElementById('want-grid'),l=window.places.filter(p=>p.status==='quero'); g.innerHTML=l.length?l.map(card).join(''):empty('Lista vazia','Adicione lugares que querem conhecer 🔖'); }
 
 function renderRanking() {
   const rl = document.getElementById('ranking-list');
