@@ -354,49 +354,60 @@ function syncBar(msg,cls){
   if(cls==='ok')b._t=setTimeout(()=>b.classList.remove('show'),2000);
 }
 
-// Expõe funções para o código global
+let saving=false;
+
 window._fbSave=function(){
   clearTimeout(saveTimer);
   syncBar('💾 Salvando...','saving');
   saveTimer=setTimeout(async()=>{
     try{
-      // Remove fotos base64 (muito grandes para Firestore)
+      saving=true;
       const placesLimpos=window.places.map(p=>({...p,photos:(p.photos||[]).map(()=>null)}));
       await setDoc(REF,{lista:placesLimpos});
       localStorage.setItem('garfinho_bkp',JSON.stringify(window.places));
       syncBar('✅ Salvo','ok');
+      saving=false;
     }catch(e){
+      saving=false;
       console.error('Erro ao salvar:',e);
       syncBar('❌ Erro ao salvar','err');
     }
-  },700);
+  },600);
 };
+
+function aplicarLista(lista){
+  const fotos=JSON.parse(localStorage.getItem('garfinho_fotos')||'{}');
+  lista.forEach(p=>{if(fotos[p.id])p.photos=fotos[p.id];});
+  window.places=lista;
+}
 
 async function fbLoad(){
   syncBar('☁️ Carregando...','saving');
   try{
-    const snap=await getDoc(REF);
-    let lista=[];
-    if(snap.exists()&&snap.data().lista){
-      lista=snap.data().lista;
-      // Restaura fotos do localStorage
-      const fotos=JSON.parse(localStorage.getItem('garfinho_fotos')||'{}');
-      lista.forEach(p=>{if(fotos[p.id])p.photos=fotos[p.id];});
-    }
-    window.places=lista;
-    syncBar('✅ Sincronizado','ok');
-    if(window._onPlacesLoaded)window._onPlacesLoaded();
-
-    // Escuta mudanças em tempo real (outro dispositivo salva, atualiza aqui)
+    // Usa onSnapshot como fonte principal — igual ao app de Banca
     if(!listening){
       listening=true;
+      let primeiraVez=true;
       onSnapshot(REF,s=>{
-        if(!s.exists())return;
-        const lista2=s.data().lista||[];
-        const fotos=JSON.parse(localStorage.getItem('garfinho_fotos')||'{}');
-        lista2.forEach(p=>{if(fotos[p.id])p.photos=fotos[p.id];});
-        window.places=lista2;
-        if(window._appReady)window.renderAll();
+        // Ignora disparo do onSnapshot causado pelo próprio setDoc
+        if(saving)return;
+        let lista=[];
+        if(s.exists()&&s.data().lista) lista=s.data().lista;
+        aplicarLista(lista);
+        if(primeiraVez){
+          primeiraVez=false;
+          syncBar('✅ Sincronizado','ok');
+          if(window._onPlacesLoaded) window._onPlacesLoaded();
+          else if(window._appReady) window.renderAll();
+        } else {
+          if(window._appReady) window.renderAll();
+        }
+      },err=>{
+        console.error('Erro Firebase:',err);
+        syncBar('❌ Sem conexão','err');
+        const bkp=localStorage.getItem('garfinho_bkp');
+        window.places=bkp?JSON.parse(bkp):[];
+        if(window._onPlacesLoaded) window._onPlacesLoaded();
       });
     }
   }catch(e){
@@ -404,7 +415,7 @@ async function fbLoad(){
     syncBar('❌ Sem conexão','err');
     const bkp=localStorage.getItem('garfinho_bkp');
     window.places=bkp?JSON.parse(bkp):[];
-    if(window._onPlacesLoaded)window._onPlacesLoaded();
+    if(window._onPlacesLoaded) window._onPlacesLoaded();
   }
 }
 
