@@ -372,22 +372,30 @@ body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:var(--black
   window._fbReady = true;
 
   // Carrega dados do Firebase ao iniciar
-  window._fbLoad().then(list => {
-    // Mescla com fotos salvas localmente
+  function dispararLoad(list) {
     const local = JSON.parse(localStorage.getItem('garfinho_photos') || '{}');
-    list.forEach(p => {
-      if (local[p.id]) p.photos = local[p.id];
-    });
+    list.forEach(p => { if (local[p.id]) p.photos = local[p.id]; });
     window.places = list;
     window._placesLoaded = true;
-    if (window._onPlacesLoaded) window._onPlacesLoaded();
+    // Garante que o evento load da página já aconteceu
+    if (document.readyState === 'complete') {
+      if (window._onPlacesLoaded) window._onPlacesLoaded();
+      else { window._pendingPlaces = true; }
+    } else {
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          if (window._onPlacesLoaded) window._onPlacesLoaded();
+        }, 100);
+      });
+    }
+  }
+
+  window._fbLoad().then(list => {
+    dispararLoad(list);
   }).catch(err => {
     console.error("Erro Firebase:", err);
-    // Fallback: usa localStorage se Firebase falhar
     const lc = localStorage.getItem('garfinho_backup');
-    window.places = lc ? JSON.parse(lc) : [];
-    window._placesLoaded = true;
-    if (window._onPlacesLoaded) window._onPlacesLoaded();
+    dispararLoad(lc ? JSON.parse(lc) : []);
   });
 </script>
 </head>
@@ -452,7 +460,7 @@ body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:var(--black
           <span style="color:var(--gray3)">🔍</span>
           <input type="text" placeholder="Buscar lugares..." id="searchInput" oninput="applyFilters()">
         </div>
-        <button class="btn-add" onclick="openModal()">＋ Novo Lugar</button>
+
       </div>
     </div>
 
@@ -692,9 +700,28 @@ const CB = {
 };
 
 window.addEventListener('load', () => {
-  setTimeout(() => document.getElementById('splash').classList.add('hidden'), 1700);
-  window._onPlacesLoaded = () => { renderAll(); };
-  if (window._placesLoaded) renderAll();
+  // Splash some vai sumir depois que os dados carregarem (mínimo 1.2s)
+  const hideSplash = () => document.getElementById('splash').classList.add('hidden');
+
+  window._onPlacesLoaded = () => {
+    renderAll();
+    setTimeout(hideSplash, 300);
+  };
+
+  // Se Firebase já carregou antes do load (improvável mas possível)
+  if (window._placesLoaded || window._pendingPlaces) {
+    renderAll();
+    setTimeout(hideSplash, 300);
+  } else {
+    // Timeout de segurança: se Firebase demorar mais de 5s, mostra vazio
+    setTimeout(() => {
+      if (!window._placesLoaded) {
+        window._placesLoaded = true;
+        renderAll();
+        hideSplash();
+      }
+    }, 5000);
+  }
 });
 
 /* ── NAVIGATE ── */
