@@ -602,26 +602,27 @@ fbLoad();
       <input class="form-input" id="f-name" placeholder="Ex: Cantina">
     </div>
 
-    <div class="form-row">
-      <div class="form-field">
-        <label class="form-label">Categoria</label>
-        <select class="form-input" id="f-cat">
-          <option>Bar</option>
-          <option>Restaurante</option>
-          <option>Pizzaria</option>
-          <option>Hamburgueria</option>
-          <option>Café</option>
-          <option>Sorveteria</option>
-          <option>Lanches</option>
-          <option>Delivery</option>
-          <option>Outros</option>
-        </select>
-      </div>
-      <div class="form-field">
-        <label class="form-label">Cidade / Bairro</label>
-        <input class="form-input" id="f-city" placeholder="Ex: Porto Alegre, RS">
-      </div>
+    <div class="form-field">
+      <label class="form-label">Categoria</label>
+      <select class="form-input" id="f-cat">
+        <option>Bar</option>
+        <option>Restaurante</option>
+        <option>Pizzaria</option>
+        <option>Hamburgueria</option>
+        <option>Café</option>
+        <option>Sorveteria</option>
+        <option>Lanches</option>
+        <option>Delivery</option>
+        <option>Outros</option>
+      </select>
     </div>
+
+    <div class="form-field" style="position:relative">
+      <label class="form-label">Endereço <span style="font-size:.68rem;font-weight:600;color:var(--gray2);text-transform:none;letter-spacing:0;font-style:italic">— rua, número, bairro, cidade</span></label>
+      <input class="form-input" id="f-address" placeholder="Ex: Rua das Flores, 123, Moinhos de Vento, Porto Alegre" autocomplete="off">
+      <div id="addr-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:200;background:var(--card);border:1.5px solid var(--border);border-radius:10px;box-shadow:var(--shadow-lg);max-height:210px;overflow-y:auto;margin-top:4px"></div>
+    </div>
+    <input type="hidden" id="f-city" value="">
 
     <div class="form-field">
       <label class="form-label">Instagram do Lugar</label>
@@ -776,10 +777,12 @@ function openModal(id = null) {
   if (id) {
     const p = window.places.find(x => x.id === id);
     if (p) {
-      document.getElementById('f-name').value  = p.name;
-      document.getElementById('f-cat').value   = p.cat;
-      document.getElementById('f-city').value  = p.city || '';
-      document.getElementById('f-ig').value    = p.ig || '';
+      document.getElementById('f-name').value    = p.name;
+      document.getElementById('f-cat').value     = p.cat;
+      // address field: use stored address, or fallback to old city field for legacy entries
+      document.getElementById('f-address').value = p.address || p.city || '';
+      document.getElementById('f-city').value    = '';
+      document.getElementById('f-ig').value      = p.ig || '';
       document.getElementById('f-note').value  = p.note || '';
       document.getElementById('f-date').value  = p.date || '';
       curStatus = p.status || 'quero';
@@ -788,7 +791,7 @@ function openModal(id = null) {
       setRating(p.rating || 0);
     }
   } else {
-    ['f-name','f-city','f-ig','f-note'].forEach(i => document.getElementById(i).value = '');
+    ['f-name','f-city','f-address','f-ig','f-note'].forEach(i => document.getElementById(i).value = '');
     document.getElementById('f-cat').value  = 'Restaurante';
     document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
     curStatus = 'quero';
@@ -892,7 +895,8 @@ function savePlace() {
   const p = {
     id:       editId || Date.now().toString(),
     name,  cat,
-    city:     document.getElementById('f-city').value.trim(),
+    address:  document.getElementById('f-address').value.trim(),
+    city:     '', // legacy field, kept blank — address is the single source of truth
     ig:       document.getElementById('f-ig').value.trim(),
     status:   curStatus,
     rating,
@@ -986,7 +990,7 @@ function renderDashboard() {
         <div class="recent-thumb">${p.photos?.[0] ? `<img src="${p.photos[0]}" alt="">` : (p.emoji||'🍴')}</div>
         <div style="flex:1;min-width:0">
           <div class="recent-name">${p.name}${p.pet?' 🐶':''}</div>
-          <div class="recent-cat">${p.cat}${p.city?' · '+p.city:''}</div>
+          <div class="recent-cat">${p.cat}${(p.address||p.city)?' · '+(p.address||p.city).split(',').slice(-2).join(',').trim():''}</div>
         </div>
         <div class="stars">${stars(p.rating)}</div>
       </div>`).join('')
@@ -1023,7 +1027,7 @@ function card(p) {
     </div>
     <div class="place-body">
       <div class="place-name">${p.name}</div>
-      <div class="place-cat">${p.cat}${p.city?' · '+p.city:''}</div>
+      <div class="place-cat">${p.cat}${(p.address||p.city)?' · '+(p.address||p.city).split(',').slice(-2).join(',').trim():''}</div>
       <div class="stars">${stars(p.rating)}</div>
       ${p.note ? `<div class="place-note">💬 ${p.note}</div>` : ''}
       <div class="place-footer">
@@ -1056,7 +1060,7 @@ function renderRanking() {
       <div class="rank-thumb">${p.photos?.[0]?`<img src="${p.photos[0]}" alt="">`:p.emoji||'🍴'}</div>
       <div style="flex:1;min-width:0">
         <div class="rank-name">${p.name}${p.pet?' 🐶':''}</div>
-        <div class="rank-cat">${p.cat}${p.city?' · '+p.city:''}</div>
+        <div class="rank-cat">${p.cat}${(p.address||p.city)?' · '+(p.address||p.city).split(',').slice(-2).join(',').trim():''}</div>
       </div>
       <div class="rank-score">${p.rating}<span>★</span></div>
     </div>`).join('');
@@ -1130,16 +1134,69 @@ function makeIcon(cat, status, pet) {
   });
 }
 
-async function geocode(p) {
-  const key = p.name+'|'+p.city;
-  if (geoCache[key]) return geoCache[key];
+async function geocodeQuery(query, structured) {
   try {
-    const q = encodeURIComponent(p.name+(p.city?' '+p.city:''));
-    const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`,
-      {headers:{'Accept-Language':'pt-BR','User-Agent':'GarfinhoApp/1.0'}});
+    let url;
+    if (structured) {
+      // Structured query is more precise for street addresses
+      const params = new URLSearchParams({format:'json',limit:'1',countrycodes:'br',addressdetails:'1',...structured});
+      url = `https://nominatim.openstreetmap.org/search?${params}`;
+    } else {
+      url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&countrycodes=br&addressdetails=1`;
+    }
+    const r = await fetch(url, {headers:{'Accept-Language':'pt-BR','User-Agent':'GarfinhoApp/1.0'}});
     const d = await r.json();
-    if (d[0]) { const c=[parseFloat(d[0].lat),parseFloat(d[0].lon)]; geoCache[key]=c; return c; }
+    if (d[0]) return [parseFloat(d[0].lat), parseFloat(d[0].lon)];
   } catch(e){}
+  return null;
+}
+
+// Parse "Rua X, 123, Bairro, Cidade" into structured Nominatim params
+function parseAddress(addr) {
+  if (!addr) return null;
+  const parts = addr.split(',').map(s => s.trim()).filter(Boolean);
+  if (parts.length < 2) return null;
+  const street = parts[0];
+  const houseNumber = parts[1]?.match(/^\d+/) ? parts[1] : null;
+  const city = parts[parts.length-1];
+  const state = parts.find(p => /^(RS|SP|RJ|MG|SC|PR|BA|GO|DF|PE|CE|AM|PA|MA|MT|MS|ES|AL|RN|PB|SE|PI|TO|RO|AC|AP|RR)$/i.test(p));
+  const obj = {street, city};
+  if (houseNumber) obj['house_number'] = houseNumber;
+  if (state) obj['state'] = state;
+  return obj;
+}
+
+async function geocode(p) {
+  const key = p.id || (p.name+'|'+(p.address||p.city||''));
+  if (geoCache[key]) return geoCache[key];
+
+  const addr = p.address || p.city || '';
+
+  if (addr) {
+    // Estratégia 1: endereço como query livre (mais tolerante a variações)
+    let c = await geocodeQuery(addr);
+    if (c) { geoCache[key]=c; return c; }
+
+    // Estratégia 2: query estruturada (mais precisa quando o endereço é bem formado)
+    const structured = parseAddress(addr);
+    if (structured) {
+      c = await geocodeQuery(null, structured);
+      if (c) { geoCache[key]=c; return c; }
+    }
+
+    // Estratégia 3: nome do lugar + endereço
+    if (p.name) {
+      c = await geocodeQuery(p.name + ', ' + addr);
+      if (c) { geoCache[key]=c; return c; }
+    }
+  }
+
+  // Estratégia 4: só o nome do lugar (último recurso)
+  if (p.name) {
+    const c = await geocodeQuery(p.name);
+    if (c) { geoCache[key]=c; return c; }
+  }
+
   return null;
 }
 
@@ -1166,10 +1223,10 @@ async function renderMap() {
       .addTo(leafletMap)
       .bindPopup(`<div class="map-popup">
         <div class="map-popup-name">${p.name}${p.pet?' 🐶':''}</div>
-        <div class="map-popup-meta">${p.cat}${p.city?' · '+p.city:''}</div>
+        <div class="map-popup-meta">${p.cat}${(p.address||p.city)?' · '+(p.address||p.city).split(',').slice(-2).join(',').trim():''}</div>
         <div style="font-size:.72rem;font-weight:700;margin-bottom:8px;color:${p.status==='visitado'?'#50a773':'#f5a623'}">${statusLabel}</div>
         ${p.rating?`<div style="color:#f5a623;margin-bottom:8px">${'★'.repeat(p.rating)}</div>`:''}
-        <button class="map-popup-btn" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent((p.name||'')+(p.city?' '+p.city:''))}','_blank')">🗺️ Abrir rota</button>
+        <button class="map-popup-btn" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent((p.address||p.name||'')+(p.city?' '+p.city:''))}','_blank')">🗺️ Abrir rota</button>
       </div>`,{maxWidth:220,minWidth:180});
     mapMarkers.push(marker); loaded++;
   }));
@@ -1221,6 +1278,52 @@ async function searchCity() {
       document.getElementById('map-city-input').placeholder='Cidade não encontrada…';
     }
   } catch(e){}
+}
+
+// ── AUTOCOMPLETE DE ENDEREÇO ──
+let addrTimer = null;
+document.addEventListener('DOMContentLoaded', () => setupAddrAutocomplete());
+// fallback caso DOMContentLoaded já tenha disparado
+if (document.readyState !== 'loading') setTimeout(setupAddrAutocomplete, 100);
+
+function setupAddrAutocomplete() {
+  const input = document.getElementById('f-address');
+  const box   = document.getElementById('addr-suggestions');
+  if (!input || !box) return;
+
+  input.addEventListener('input', () => {
+    clearTimeout(addrTimer);
+    const val = input.value.trim();
+    if (val.length < 4) { box.style.display='none'; return; }
+    addrTimer = setTimeout(async () => {
+      try {
+        const q = val + ', Brasil';
+        const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&countrycodes=br&addressdetails=1`,
+          {headers:{'Accept-Language':'pt-BR','User-Agent':'GarfinhoApp/1.0'}});
+        const d = await r.json();
+        if (!d.length) { box.style.display='none'; return; }
+        box.innerHTML = d.map(item => {
+          const label = item.display_name.split(',').slice(0,4).join(',');
+          return `<div class="addr-sug-item" data-display="${item.display_name}" style="padding:10px 14px;font-size:.82rem;cursor:pointer;border-bottom:1px solid var(--border);color:var(--black);transition:background .15s" onmousedown="pickAddr(this)">${label}</div>`;
+        }).join('');
+        box.style.display = 'block';
+      } catch(e){ box.style.display='none'; }
+    }, 400);
+  });
+
+  input.addEventListener('blur', () => setTimeout(()=>{ box.style.display='none'; }, 200));
+}
+
+function pickAddr(el) {
+  // Take the first 4 parts of the Nominatim display_name (most specific parts)
+  const full = el.dataset.display;
+  const parts = full.split(',').map(s=>s.trim());
+  // Use up to 4 parts but skip generic country/state-only tails
+  const meaningful = parts.slice(0, Math.min(4, parts.length));
+  document.getElementById('f-address').value = meaningful.join(', ');
+  document.getElementById('addr-suggestions').style.display = 'none';
+  // Clear cache so this place re-geocodes with the new address
+  geoCache = {};
 }
 
 function setMapFilter(el, f) {
