@@ -98,8 +98,8 @@ body.dark select{background:var(--card);color:var(--black);border-color:var(--bo
 .recent-list{display:flex;flex-direction:column;gap:2px}
 .recent-item{display:flex;align-items:center;gap:12px;padding:10px;border-radius:10px;cursor:pointer;transition:background var(--tr)}
 .recent-item:hover{background:var(--bg)}
-.recent-thumb{width:42px;height:42px;border-radius:10px;background:var(--red-soft);font-size:1.3rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
-.recent-thumb img{width:100%;height:100%;object-fit:contain;padding:3px}
+.recent-thumb{width:42px;height:42px;border-radius:50%;background:transparent;font-size:1.3rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+.recent-thumb img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 .recent-name{font-size:.9rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .recent-cat{font-size:.75rem;color:var(--gray2);margin-top:1px}
 .stars{display:flex;gap:1px}
@@ -850,11 +850,7 @@ function getFiltered(){
     const ms=!searchQuery||p.name.toLowerCase().includes(searchQuery)||(p.cat||'').toLowerCase().includes(searchQuery)||(p.city||'').toLowerCase().includes(searchQuery);
     return mf&&ms;
   });
-  const sort=(document.getElementById('sort-select')?.value)||'recentes';
-  if(sort==='avaliados') list=[...list].sort((a,b)=>(b.rating||0)-(a.rating||0));
-  else if(sort==='az') list=[...list].sort((a,b)=>a.name.localeCompare(b.name,'pt'));
-  else if(sort==='cat') list=[...list].sort((a,b)=>a.cat.localeCompare(b.cat,'pt')||a.name.localeCompare(b.name,'pt'));
-  // 'recentes' já está na ordem padrão (mais recente primeiro por unshift)
+  // Ordem padrão: mais recentes primeiro (por unshift no cadastro)
   return list;
 }
 function renderAll(){updateBadges();updateStats();renderDashboard();}
