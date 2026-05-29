@@ -98,8 +98,8 @@ body.dark select{background:var(--card);color:var(--black);border-color:var(--bo
 .recent-list{display:flex;flex-direction:column;gap:2px}
 .recent-item{display:flex;align-items:center;gap:12px;padding:10px;border-radius:10px;cursor:pointer;transition:background var(--tr)}
 .recent-item:hover{background:var(--bg)}
-.recent-thumb{width:42px;height:42px;border-radius:50%;background:transparent;font-size:1.3rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
-.recent-thumb img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.recent-thumb{width:42px;height:42px;border-radius:50%;background:none!important;font-size:1.3rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;box-shadow:none!important}
+.recent-thumb img{width:100%;height:100%;object-fit:cover;border-radius:50%;padding:0}
 .recent-name{font-size:.9rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .recent-cat{font-size:.75rem;color:var(--gray2);margin-top:1px}
 .stars{display:flex;gap:1px}
@@ -879,7 +879,7 @@ function thumbHtml(p){
 function renderDashboard(){
   updateStats();updateBadges();
   const rec=window.places.slice(0,5);
-  document.getElementById('recent-list').innerHTML=rec.length?rec.map(p=>`<div class="recent-item" onclick="openModal('${p.id}')"><div class="recent-thumb">${p.logo?`<img src="${p.logo}" alt="" style="border-radius:50%;object-fit:contain;padding:3px">`:p.photos?.[0]?`<img src="${p.photos[0]}" alt="">`:p.emoji||'🍴'}</div><div style="flex:1;min-width:0"><div class="recent-name">${p.name}${p.pet?' 🐶':''}</div><div class="recent-cat">${p.cat}${(p.address||p.city)?' · '+(p.address||p.city).split(',').slice(-2).join(',').trim():''}</div></div><div class="stars">${stars(p.rating)}</div></div>`).join(''):'<div style="text-align:center;padding:20px;color:var(--gray2);font-size:.85rem">Nenhum lugar ainda 🍴</div>';
+  document.getElementById('recent-list').innerHTML=rec.length?rec.map(p=>`<div class="recent-item" onclick="openModal('${p.id}')"><div class="recent-thumb">${p.logo?`<img src="${p.logo}" alt="" style="border-radius:50%;object-fit:cover;width:100%;height:100%">`:p.photos?.[0]?`<img src="${p.photos[0]}" alt="" style="border-radius:50%;object-fit:cover">`:p.emoji||'🍴'}</div><div style="flex:1;min-width:0"><div class="recent-name">${p.name}${p.pet?' 🐶':''}</div><div class="recent-cat">${p.cat}${(p.address||p.city)?' · '+(p.address||p.city).split(',').slice(-2).join(',').trim():''}</div></div><div class="stars">${stars(p.rating)}</div></div>`).join(''):'<div style="text-align:center;padding:20px;color:var(--gray2);font-size:.85rem">Nenhum lugar ainda 🍴</div>';
   const cats={};window.places.forEach(p=>{cats[p.cat]=(cats[p.cat]||0)+1;});
   const sorted=Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,6);const max=sorted[0]?.[1]||1;
   document.getElementById('cat-chart').innerHTML=sorted.length?sorted.map(([c,n])=>`<div class="cat-row"><div class="cat-header"><span>${CE[c]||'🍴'} ${c}</span><span style="font-weight:800;color:var(--red)">${n}</span></div><div class="cat-bar"><div class="cat-fill" style="width:${(n/max)*100}%"></div></div></div>`).join(''):'<span style="color:var(--gray2);font-size:.85rem">Adicione lugares para ver</span>';
