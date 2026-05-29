@@ -21,8 +21,16 @@
   --shadow:0 2px 12px rgba(0,0,0,.08);--shadow-lg:0 6px 28px rgba(0,0,0,.12);
   --r:14px;--tr:0.2s cubic-bezier(.4,0,.2,1);
 }
+body.dark{
+  --bg:#111318;--bg2:#1a1d24;--bg3:#22262f;--card:#1a1d24;--border:#2a2d36;
+  --black:#f0f0f0;--gray1:#d0d0d0;--gray2:#8a8a9a;--gray3:#4a4a5a;
+  --red-soft:#2a1215;--red-mid:#3a1820;
+  --shadow:0 2px 12px rgba(0,0,0,.3);--shadow-lg:0 6px 28px rgba(0,0,0,.45);
+}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:var(--black);min-height:100dvh;overflow-x:hidden}
+body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:var(--black);min-height:100dvh;overflow-x:hidden;transition:background .3s ease,color .3s ease}
+select{color-scheme:light dark}
+body.dark select{background:var(--card);color:var(--black);border-color:var(--border)}
 #splash{position:fixed;inset:0;z-index:999;background:var(--red);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .6s ease,visibility .6s ease}
 #splash.hidden{opacity:0;visibility:hidden;pointer-events:none}
 .splash-icon{font-size:4rem;animation:pop .6s ease}
@@ -63,6 +71,8 @@ body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:var(--black
 .view-map{display:none;flex-direction:column;flex:1;padding:0}
 .view-map.active{display:flex}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes cardIn{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
+.place-card{animation:cardIn .3s ease both}
 .hero-banner{background:var(--red);border-radius:var(--r);padding:22px 24px;margin-bottom:22px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 6px 24px rgba(234,29,44,.3);overflow:hidden;position:relative}
 .hero-banner::before{content:'🍔🍕🌮🍜🍣';position:absolute;right:-10px;top:50%;transform:translateY(-50%) rotate(-15deg);font-size:3.5rem;opacity:.12;letter-spacing:8px;white-space:nowrap;pointer-events:none}
 .hero-text h2{font-family:'Nunito',sans-serif;font-size:1.3rem;font-weight:900;color:#fff;margin-bottom:4px}
@@ -70,7 +80,7 @@ body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:var(--black
 .hero-btn{padding:10px 20px;background:#fff;color:var(--red);border-radius:99px;border:none;font-family:'Nunito',sans-serif;font-weight:800;font-size:.85rem;cursor:pointer;flex-shrink:0;transition:all var(--tr);box-shadow:0 3px 10px rgba(0,0,0,.15)}
 .hero-btn:hover{transform:scale(1.04)}
 .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
-.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--shadow);position:relative;overflow:hidden;transition:transform var(--tr),box-shadow var(--tr)}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--shadow);position:relative;overflow:hidden;transition:transform var(--tr),box-shadow var(--tr);cursor:pointer}
 .stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
 .stat-card.red-card{background:var(--red);border-color:var(--red)}
 .stat-card.red-card .stat-value,.stat-card.red-card .stat-label,.stat-card.red-card .stat-icon{color:#fff!important}
@@ -112,9 +122,10 @@ body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:var(--black
 .place-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
 .place-thumb{height:140px;background:var(--red-soft);display:flex;align-items:center;justify-content:center;font-size:3rem;position:relative;overflow:hidden}
 .place-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.place-thumb img.logo-img{object-fit:contain;padding:10px}
+.place-thumb img.logo-img{object-fit:contain;padding:8px;border-radius:50%;width:80px!important;height:80px!important;inset:unset!important;position:relative!important;box-shadow:0 2px 8px rgba(0,0,0,.12)}
 .place-thumb .emoji-bg{position:relative;z-index:1}
-.tc-cafe{background:#fff3e0}.tc-sorveteria{background:#e3f2fd}.tc-pizza{background:#fce4ec}.tc-burger{background:#fff3e0}.tc-lanches{background:#fff8e1}.tc-delivery{background:#e8f5e9}
+.tc-cafe{background:linear-gradient(135deg,#fff3e0,#ffe0b2)}.tc-sorveteria{background:linear-gradient(135deg,#e3f2fd,#bbdefb)}.tc-pizza{background:linear-gradient(135deg,#fce4ec,#f8bbd9)}.tc-burger{background:linear-gradient(135deg,#fff3e0,#ffe0b2)}.tc-lanches{background:linear-gradient(135deg,#fff8e1,#ffecb3)}.tc-delivery{background:linear-gradient(135deg,#e8f5e9,#c8e6c9)}
+.place-thumb:not(.tc-cafe):not(.tc-sorveteria):not(.tc-pizza):not(.tc-burger):not(.tc-lanches):not(.tc-delivery){background:linear-gradient(135deg,var(--red-soft),var(--red-mid))}
 .status-pill{position:absolute;top:10px;right:10px;padding:3px 9px;border-radius:99px;font-size:.68rem;font-weight:700;z-index:2}
 .sp-visitado{background:#e8f5e0;color:#3a8a4a}
 .sp-quero{background:var(--red-soft);color:var(--red)}
@@ -181,9 +192,12 @@ body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:var(--black
 .form-label{display:block;font-size:.75rem;font-weight:700;color:var(--gray2);letter-spacing:.06em;text-transform:uppercase;margin-bottom:7px}
 .form-input{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-family:'Nunito Sans',sans-serif;font-size:.9rem;color:var(--black);outline:none;transition:border-color var(--tr),box-shadow var(--tr)}
 .form-input:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(234,29,44,.1)}
-.star-input{display:flex;gap:8px}
-.star-pick{font-size:1.6rem;cursor:pointer;filter:grayscale(1) opacity(.3);transition:filter var(--tr),transform var(--tr)}
-.star-pick.on{filter:none;transform:scale(1.1)}
+.star-input{display:flex;gap:4px;align-items:center}
+.star-pick{font-size:1.5rem;cursor:pointer;opacity:.25;transition:opacity var(--tr),transform var(--tr);user-select:none;line-height:1}
+.star-pick.on{opacity:1;transform:scale(1.08)}
+.star-half{font-size:.75rem;opacity:.5;cursor:pointer;padding:0 1px;color:var(--yellow);user-select:none;transition:opacity var(--tr)}
+.star-half.on{opacity:1}
+.star-rating-val{font-size:.82rem;font-weight:800;color:var(--red);margin-left:6px;min-width:28px}
 .status-picker{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .sp-btn{border:2px solid var(--border);border-radius:12px;background:var(--bg);padding:12px 10px;text-align:center;cursor:pointer;transition:all var(--tr)}
 .sp-btn:hover{border-color:var(--red-mid)}
@@ -263,6 +277,62 @@ body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:var(--black
   .hero-banner::before{display:none}
 }
 @media(max-width:360px){.places-grid{grid-template-columns:1fr}}
+/* ── TELA DE DETALHES ── */
+.detail-overlay{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;opacity:0;visibility:hidden;transition:opacity .3s ease,visibility .3s ease}
+.detail-overlay.open{opacity:1;visibility:visible}
+.detail-modal{background:var(--card);border-radius:22px 22px 0 0;width:100%;max-width:560px;max-height:94dvh;overflow-y:auto;transform:translateY(40px);transition:transform .35s cubic-bezier(.4,0,.2,1)}
+.detail-overlay.open .detail-modal{transform:translateY(0)}
+.detail-hero{position:relative;height:200px;background:linear-gradient(135deg,var(--red-soft),var(--red-mid));display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:22px 22px 0 0}
+.detail-hero img{width:100%;height:100%;object-fit:cover}
+.detail-hero-logo{position:absolute;bottom:-28px;left:24px;width:56px;height:56px;border-radius:50%;background:var(--card);border:3px solid var(--card);box-shadow:0 4px 16px rgba(0,0,0,.15);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:1.8rem}
+.detail-hero-logo img{width:100%;height:100%;object-fit:contain;padding:6px}
+.detail-hero-emoji{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:5rem;opacity:.18}
+.detail-body{padding:44px 24px 32px}
+.detail-name{font-family:'Nunito',sans-serif;font-size:1.5rem;font-weight:900;color:var(--black);margin-bottom:4px}
+.detail-meta{font-size:.78rem;font-weight:700;color:var(--gray2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px}
+.detail-rating{display:flex;align-items:center;gap:8px;margin-bottom:16px}
+.detail-stars{display:flex;gap:2px}
+.detail-star{font-size:1.2rem;color:var(--bg3)}
+.detail-star.filled{color:var(--yellow)}
+.detail-rating-num{font-family:'Nunito',sans-serif;font-size:1.1rem;font-weight:900;color:var(--red)}
+.detail-section{margin-bottom:18px}
+.detail-section-title{font-size:.7rem;font-weight:700;color:var(--gray2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+.detail-note{background:var(--bg);border-radius:10px;padding:12px 14px;font-size:.88rem;color:var(--gray1);line-height:1.5;font-style:italic;border-left:3px solid var(--red)}
+.detail-info-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;font-size:.85rem;color:var(--gray1)}
+.detail-info-icon{font-size:1rem;flex-shrink:0;margin-top:1px}
+.detail-photos{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.detail-photo{border-radius:12px;overflow:hidden;background:var(--bg);display:flex;flex-direction:column}
+.detail-photo img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}
+.detail-actions{display:flex;gap:10px;margin-top:22px;padding-top:18px;border-top:1px solid var(--border)}
+.detail-btn{flex:1;padding:12px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--gray1);font-family:'Nunito',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all var(--tr)}
+.detail-btn:hover{border-color:var(--red);color:var(--red)}
+.detail-btn.primary{background:var(--red);border-color:var(--red);color:#fff;box-shadow:0 4px 14px rgba(234,29,44,.3)}
+.detail-btn.primary:hover{background:var(--red-dark)}
+.detail-handle{width:36px;height:4px;background:var(--border);border-radius:99px;margin:14px auto 0}
+.detail-badge-visitado{background:#e8f5e0;color:#3a8a4a;padding:4px 12px;border-radius:99px;font-size:.72rem;font-weight:700;display:inline-flex;align-items:center;gap:4px;margin-bottom:14px}
+.detail-badge-quero{background:var(--red-soft);color:var(--red);padding:4px 12px;border-radius:99px;font-size:.72rem;font-weight:700;display:inline-flex;align-items:center;gap:4px;margin-bottom:14px}
+/* ── LOGO REDONDA no slot do modal ── */
+.logo-slot img{border-radius:50%!important;padding:0!important;object-fit:cover!important}
+/* ── RANK THUMB REDONDO para logo ── */
+.rank-thumb img{border-radius:50%;object-fit:contain;padding:3px}
+/* ── RECENT THUMB REDONDO para logo ── */
+.recent-thumb img{border-radius:50%;object-fit:contain;padding:2px}
+/* ── CADASTRO DIVIDIDO: step 1 ── */
+.modal-step{display:none}
+.modal-step.active{display:block}
+.step-picker{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px}
+.step-card{border:2px solid var(--border);border-radius:16px;background:var(--bg);padding:20px 14px;text-align:center;cursor:pointer;transition:all var(--tr)}
+.step-card:hover{border-color:var(--red-mid);transform:translateY(-2px)}
+.step-card.sel-visitado{border-color:var(--green);background:rgba(80,167,115,.06)}
+.step-card.sel-quero{border-color:var(--red);background:var(--red-soft)}
+.step-card-icon{font-size:2.2rem;margin-bottom:8px}
+.step-card-title{font-family:'Nunito',sans-serif;font-size:1rem;font-weight:900;color:var(--black);margin-bottom:3px}
+.step-card-sub{font-size:.72rem;color:var(--gray2);font-weight:600}
+/* ── CARD LOGO CIRCLE ── */
+.place-logo-circle{position:absolute;bottom:-20px;left:14px;width:44px;height:44px;border-radius:50%;background:var(--card);border:3px solid var(--card);box-shadow:0 2px 10px rgba(0,0,0,.15);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:1.2rem;z-index:3}
+.place-logo-circle img{width:100%;height:100%;object-fit:contain;padding:5px}
+.place-body.has-logo{padding-top:28px}
+
 ::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
@@ -303,8 +373,7 @@ fbLoad();
       <div class="nav-section">Menu</div>
       <div class="nav-item active" onclick="navigate('inicio')"><span class="nav-icon">🏠</span>Início</div>
       <div class="nav-item" onclick="navigate('lugares')"><span class="nav-icon">🍴</span>Lugares<span class="nav-badge" id="badge-all">0</span></div>
-      <div class="nav-section">Listas</div>
-      <div class="nav-item" onclick="navigate('quero')"><span class="nav-icon">🔖</span>Quero Conhecer<span class="nav-badge" id="badge-want">0</span></div>
+
       <div class="nav-section">Mapa</div>
       <div class="nav-item" onclick="navigate('mapa')"><span class="nav-icon">🗺️</span>Perto de Mim</div>
       <div class="nav-section">Relatórios</div>
@@ -317,16 +386,19 @@ fbLoad();
     <div class="topbar">
       <button class="menu-btn" onclick="openSidebar()">☰</button>
       <div style="display:flex;align-items:baseline;gap:10px"><div class="topbar-title" id="topbar-title">Início</div><div id="topbar-date" style="font-size:.82rem;font-weight:600;color:var(--gray2)"></div></div>
-      <div class="topbar-actions"><div class="search-box" id="searchBox" style="display:none"><span style="color:var(--gray3)">🔍</span><input type="text" placeholder="Buscar lugares..." id="searchInput" oninput="applyFilters()"></div></div>
+      <div class="topbar-actions">
+        <button id="dark-btn" onclick="toggleDark()" title="Alternar modo escuro" style="background:none;border:none;font-size:1.2rem;cursor:pointer;padding:4px 6px;border-radius:8px;transition:background var(--tr);line-height:1">☀️</button>
+        <div class="search-box" id="searchBox" style="display:none"><span style="color:var(--gray3)">🔍</span><input type="text" placeholder="Buscar lugares..." id="searchInput" oninput="applyFilters()"></div>
+      </div>
     </div>
     <!-- INÍCIO -->
     <div class="view active" id="view-inicio">
       <div class="hero-banner"><div class="hero-text"><h2>Olá, Garfeiros! </h2><p>Débora & Iago</p></div><button class="hero-btn" onclick="openModal()">Adicionar</button></div>
       <div class="stats-grid">
-        <div class="stat-card red-card" data-icon="🍽️"><div class="stat-icon">🍽️</div><div class="stat-value" id="stat-total">0</div><div class="stat-label">Cadastrados</div></div>
-        <div class="stat-card" data-icon="✅"><div class="stat-icon">✅</div><div class="stat-value" id="stat-visited">0</div><div class="stat-label">Visitados</div></div>
+        <div class="stat-card red-card" data-icon="🍽️" onclick="navigate('lugares')" title="Ver todos os lugares"><div class="stat-icon">🍽️</div><div class="stat-value" id="stat-total">0</div><div class="stat-label">Cadastrados</div></div>
+        <div class="stat-card" data-icon="✅" onclick="navigateFiltered('visitado')" title="Ver visitados"><div class="stat-icon">✅</div><div class="stat-value" id="stat-visited">0</div><div class="stat-label">Visitados</div></div>
         <div class="stat-card" data-icon="⭐"><div class="stat-icon">⭐</div><div class="stat-value" id="stat-avg">—</div><div class="stat-label">Nota Média</div></div>
-        <div class="stat-card" data-icon="🔖"><div class="stat-icon">🔖</div><div class="stat-value" id="stat-want">0</div><div class="stat-label">Para Visitar</div></div>
+        <div class="stat-card" data-icon="🔖" onclick="navigateFiltered('quero')" title="Ver lista Quero ir"><div class="stat-icon">🔖</div><div class="stat-value" id="stat-want">0</div><div class="stat-label">Para Visitar</div></div>
       </div>
       <div class="dash-grid">
         <div><div class="panel"><div class="section-head"><div class="section-title">Adicionados <span>recentemente</span></div><div class="section-link" onclick="navigate('lugares')">Ver todos →</div></div><div class="recent-list" id="recent-list"></div></div></div>
@@ -353,10 +425,17 @@ fbLoad();
         <div class="filter-chip" onclick="setFilter(this,'Delivery')">🛵 Delivery</div>
         <div class="filter-chip" onclick="setFilter(this,'Outros')">🍴 Outros</div>
       </div>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:14px">
+        <select id="sort-select" onchange="renderPlacesGrid()" style="background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:7px 12px;font-family:'Nunito Sans',sans-serif;font-size:.82rem;font-weight:600;color:var(--gray1);outline:none;cursor:pointer;transition:border-color var(--tr)">
+          <option value="recentes">⏱ Mais recentes</option>
+          <option value="avaliados">⭐ Melhor avaliados</option>
+          <option value="az">🔤 A–Z</option>
+          <option value="cat">📂 Por categoria</option>
+        </select>
+      </div>
       <div class="places-grid" id="places-grid"></div>
     </div>
-    <!-- QUERO -->
-    <div class="view" id="view-quero"><div class="places-grid" id="want-grid"></div></div>
+
     <!-- MAPA -->
     <div class="view-map" id="view-mapa">
       <div class="map-header"><div class="map-filter-chips" id="map-chips"><div class="map-chip active" onclick="setMapFilter(this,'all')">Todos</div><div class="map-chip" onclick="setMapFilter(this,'quero')">🔖 Quero ir</div><div class="map-chip" onclick="setMapFilter(this,'visitado')">✅ Já fui</div><div class="map-chip" onclick="setMapFilter(this,'pet')">🐶 Pet friendly</div></div></div>
@@ -371,7 +450,6 @@ fbLoad();
 <div class="mobile-nav">
   <div class="mob-nav-item active" onclick="navigate('inicio')" data-nav="inicio"><span>🏠</span><span>Início</span></div>
   <div class="mob-nav-item" onclick="navigate('lugares')" data-nav="lugares"><span>🍴</span><span>Lugares</span></div>
-  <div class="mob-nav-item" onclick="navigate('quero')" data-nav="quero"><span>🔖</span><span>Quero</span></div>
   <div class="mob-nav-item" onclick="navigate('mapa')" data-nav="mapa"><span>🗺️</span><span>Perto</span></div>
   <div class="mob-nav-item" onclick="navigate('ranking')" data-nav="ranking"><span>🏆</span><span>Ranking</span></div>
 </div>
@@ -380,43 +458,111 @@ fbLoad();
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-title" id="modal-title">Novo Lugar 🍴</div>
-    <div class="form-field"><label class="form-label">Nome do Lugar</label><input class="form-input" id="f-name" placeholder="Ex: Cantina"></div>
-    <div class="form-field"><label class="form-label">Categoria</label><select class="form-input" id="f-cat"><option>Bar</option><option>Restaurante</option><option>Pizzaria</option><option>Hamburgueria</option><option>Café</option><option>Sorveteria</option><option>Lanches</option><option>Delivery</option><option>Outros</option></select></div>
-    <div class="form-field" style="position:relative">
-      <label class="form-label">Endereço <span style="font-size:.68rem;font-weight:600;color:var(--gray2);text-transform:none;letter-spacing:0;font-style:italic">— rua, número, bairro, cidade</span></label>
-      <input class="form-input" id="f-address" placeholder="Ex: Rua das Flores, 123, Moinhos de Vento, Porto Alegre" autocomplete="off">
-      <div id="addr-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:200;background:var(--card);border:1.5px solid var(--border);border-radius:10px;box-shadow:var(--shadow-lg);max-height:210px;overflow-y:auto;margin-top:4px"></div>
-    </div>
-    <input type="hidden" id="f-city" value="">
-    <div class="form-field"><label class="form-label">Instagram do Lugar</label><input class="form-input" id="f-ig" placeholder="https://instagram.com/nomedolugar" type="url"></div>
-    <div class="form-field"><label class="form-label">Status</label><div class="status-picker"><div class="sp-btn sel sp-quero" onclick="selStatus(this,'quero')"><div class="sp-btn-icon">🔖</div><div class="sp-btn-lbl">Quero ir</div></div><div class="sp-btn sp-visitado" onclick="selStatus(this,'visitado')"><div class="sp-btn-icon">✅</div><div class="sp-btn-lbl">Já fui</div></div></div></div>
-    <div class="form-field" id="rating-field" style="display:none"><label class="form-label">Avaliação</label><div class="star-input"><span class="star-pick" data-v="1" onclick="setRating(1)">⭐</span><span class="star-pick" data-v="2" onclick="setRating(2)">⭐</span><span class="star-pick" data-v="3" onclick="setRating(3)">⭐</span><span class="star-pick" data-v="4" onclick="setRating(4)">⭐</span><span class="star-pick" data-v="5" onclick="setRating(5)">⭐</span></div></div>
-    <div class="form-field"><label class="form-label">Dica / Anotação</label><input class="form-input" id="f-note" placeholder="Ex: Pedir o risoto de cogumelos!"></div>
-    <div class="form-field" id="date-field" style="display:none"><label class="form-label">Data da Visita</label><input class="form-input" type="date" id="f-date"></div>
-    <div class="form-field"><div class="pet-toggle" id="pet-toggle" onclick="togglePet()"><div class="pt-icon">🐶</div><div class="pt-info"><div class="pt-title">Pet Friendly</div><div class="pt-sub">Aceita animais de estimação</div></div><div class="pt-switch"></div></div></div>
-    <!-- LOGO -->
-    <div class="form-field">
-      <label class="form-label">Logo do Lugar</label>
-      <div class="logo-slot" id="slot-logo" onclick="triggerPhoto('logo')">
-        <div class="slot-icon">🏷️</div><div class="slot-txt">Toque para adicionar a logo</div>
-        <button class="slot-remove" onclick="removePhoto(event,'logo')">✕</button>
-        <input type="file" accept="image/*" style="display:none" id="photo-input-logo" onchange="loadPhoto(event,'logo')">
+
+    <!-- STEP 1: escolha status (só para novo lugar) -->
+    <div class="modal-step active" id="modal-step1">
+      <div class="step-picker">
+        <div class="step-card" id="step-card-quero" onclick="chooseStep('quero')">
+          <div class="step-card-icon">🔖</div>
+          <div class="step-card-title">Quero ir</div>
+          <div class="step-card-sub">Ainda não fui, mas quero visitar</div>
+        </div>
+        <div class="step-card" id="step-card-visitado" onclick="chooseStep('visitado')">
+          <div class="step-card-icon">✅</div>
+          <div class="step-card-title">Já fui</div>
+          <div class="step-card-sub">Já visitei e quero registrar</div>
+        </div>
+      </div>
+      <div class="modal-actions" style="margin-top:10px">
+        <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
       </div>
     </div>
-    <!-- FOTOS DOS PRATOS -->
-    <div class="form-field">
-      <label class="form-label">Fotos dos Pratos (até 2)</label>
-      <div class="photos-row">
-        <div class="photo-slot" id="slot0" onclick="triggerPhoto(0)"><div class="slot-icon">📷</div><div class="slot-txt">Foto 1</div><button class="slot-remove" onclick="removePhoto(event,0)">✕</button><input type="file" accept="image/*" style="display:none" id="photo-input-0" onchange="loadPhoto(event,0)"></div>
-        <div class="photo-slot" id="slot1" onclick="triggerPhoto(1)"><div class="slot-icon">📷</div><div class="slot-txt">Foto 2</div><button class="slot-remove" onclick="removePhoto(event,1)">✕</button><input type="file" accept="image/*" style="display:none" id="photo-input-1" onchange="loadPhoto(event,1)"></div>
+
+    <!-- STEP 2: formulário -->
+    <div class="modal-step" id="modal-step2">
+      <div class="form-field"><label class="form-label">Nome do Lugar</label><input class="form-input" id="f-name" placeholder="Ex: Cantina"></div>
+      <div class="form-field"><label class="form-label">Categoria</label><select class="form-input" id="f-cat"><option>Bar</option><option>Restaurante</option><option>Pizzaria</option><option>Hamburgueria</option><option>Café</option><option>Sorveteria</option><option>Lanches</option><option>Delivery</option><option>Outros</option></select></div>
+      <div class="form-field" style="position:relative">
+        <label class="form-label">Endereço <span style="font-size:.68rem;font-weight:600;color:var(--gray2);text-transform:none;letter-spacing:0;font-style:italic">— rua, número, bairro, cidade</span></label>
+        <input class="form-input" id="f-address" placeholder="Ex: Rua das Flores, 123, Moinhos de Vento, Porto Alegre" autocomplete="off">
+        <div id="addr-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:200;background:var(--card);border:1.5px solid var(--border);border-radius:10px;box-shadow:var(--shadow-lg);max-height:210px;overflow-y:auto;margin-top:4px"></div>
+      </div>
+      <input type="hidden" id="f-city" value="">
+      <div class="form-field"><label class="form-label">Instagram do Lugar</label><input class="form-input" id="f-ig" placeholder="https://instagram.com/nomedolugar" type="url"></div>
+      <!-- Logo sempre visível -->
+      <div class="form-field">
+        <label class="form-label">Logo do Lugar</label>
+        <div class="logo-slot" id="slot-logo" onclick="triggerPhoto('logo')">
+          <div class="slot-icon">🏷️</div><div class="slot-txt">Toque para adicionar a logo</div>
+          <button class="slot-remove" onclick="removePhoto(event,'logo')">✕</button>
+          <input type="file" accept="image/*" style="display:none" id="photo-input-logo" onchange="loadPhoto(event,'logo')">
+        </div>
+      </div>
+      <div class="form-field"><div class="pet-toggle" id="pet-toggle" onclick="togglePet()"><div class="pt-icon">🐶</div><div class="pt-info"><div class="pt-title">Pet Friendly</div><div class="pt-sub">Aceita animais de estimação</div></div><div class="pt-switch"></div></div></div>
+      <!-- Campos só para VISITADO -->
+      <div id="fields-visitado" style="display:none">
+        <div class="form-field"><label class="form-label">Avaliação</label><div class="star-input" id="star-input-wrap">
+  <span class="star-half" data-v="0.5" onclick="setRating(0.5)" title="0.5">½</span><span class="star-pick" data-v="1" onclick="setRating(1)" title="1">⭐</span>
+  <span class="star-half" data-v="1.5" onclick="setRating(1.5)" title="1.5">½</span><span class="star-pick" data-v="2" onclick="setRating(2)" title="2">⭐</span>
+  <span class="star-half" data-v="2.5" onclick="setRating(2.5)" title="2.5">½</span><span class="star-pick" data-v="3" onclick="setRating(3)" title="3">⭐</span>
+  <span class="star-half" data-v="3.5" onclick="setRating(3.5)" title="3.5">½</span><span class="star-pick" data-v="4" onclick="setRating(4)" title="4">⭐</span>
+  <span class="star-half" data-v="4.5" onclick="setRating(4.5)" title="4.5">½</span><span class="star-pick" data-v="5" onclick="setRating(5)" title="5">⭐</span>
+  <span class="star-rating-val" id="star-val-label"></span>
+</div></div>
+        <div class="form-field"><label class="form-label">Dica / Relato</label><input class="form-input" id="f-note" placeholder="Ex: Pedir o risoto de cogumelos!"></div>
+        <div class="form-field"><label class="form-label">Data da Visita</label><input class="form-input" type="date" id="f-date"></div>
+        <div class="form-field">
+          <label class="form-label">Fotos dos Pratos (até 2)</label>
+          <div class="photos-row">
+            <div class="photo-slot" id="slot0" onclick="triggerPhoto(0)"><div class="slot-icon">📷</div><div class="slot-txt">Foto 1</div><button class="slot-remove" onclick="removePhoto(event,0)">✕</button><input type="file" accept="image/*" style="display:none" id="photo-input-0" onchange="loadPhoto(event,0)"></div>
+            <div class="photo-slot" id="slot1" onclick="triggerPhoto(1)"><div class="slot-icon">📷</div><div class="slot-txt">Foto 2</div><button class="slot-remove" onclick="removePhoto(event,1)">✕</button><input type="file" accept="image/*" style="display:none" id="photo-input-1" onchange="loadPhoto(event,1)"></div>
+          </div>
+          <div class="photos-row" style="margin-top:8px;gap:10px">
+            <input class="form-input" id="f-caption0" placeholder="Legenda da foto 1…" style="font-size:.8rem;padding:8px 10px">
+            <input class="form-input" id="f-caption1" placeholder="Legenda da foto 2…" style="font-size:.8rem;padding:8px 10px">
+          </div>
+        </div>
+      </div>
+      <!-- Campo dica também para QUERO (opcional) -->
+      <div id="fields-quero-note" style="display:none">
+        <div class="form-field"><label class="form-label">Dica / Anotação <span style="font-size:.68rem;font-weight:500;color:var(--gray3);text-transform:none">(opcional)</span></label><input class="form-input" id="f-note-quero" placeholder="Ex: Recomendado pelo João…"></div>
+      </div>
+      <div class="upload-progress" id="upload-progress"><div class="up-bar-wrap"><div class="up-bar" id="up-bar"></div></div><div class="up-label" id="up-label">Enviando fotos…</div></div>
+      <div class="form-field" id="ig-open-wrap" style="display:none"><button class="ig-btn" onclick="openIG()"><span>📸</span> Abrir Instagram do lugar</button></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="btn-back" onclick="backToStep1()">← Voltar</button>
+        <button class="btn-save" id="btn-save" onclick="savePlace()">Salvar Lugar</button>
       </div>
     </div>
-    <!-- PROGRESSO -->
-    <div class="upload-progress" id="upload-progress"><div class="up-bar-wrap"><div class="up-bar" id="up-bar"></div></div><div class="up-label" id="up-label">Enviando fotos…</div></div>
-    <div class="form-field" id="ig-open-wrap" style="display:none"><button class="ig-btn" onclick="openIG()"><span>📸</span> Abrir Instagram do lugar</button></div>
-    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" id="btn-save" onclick="savePlace()">Salvar Lugar</button></div>
   </div>
 </div>
+<!-- TELA DE DETALHES -->
+<div class="detail-overlay" id="detail-overlay" onclick="onDetailOvClick(event)">
+  <div class="detail-modal" id="detail-modal">
+    <div class="detail-handle"></div>
+    <div class="detail-hero" id="detail-hero">
+      <div class="detail-hero-emoji" id="detail-hero-emoji"></div>
+      <div class="detail-hero-logo" id="detail-hero-logo"></div>
+    </div>
+    <div class="detail-body">
+      <div id="detail-status-badge"></div>
+      <div class="detail-name" id="detail-name"></div>
+      <div class="detail-meta" id="detail-meta"></div>
+      <div class="detail-rating" id="detail-rating"></div>
+      <div class="detail-section" id="detail-note-section">
+        <div class="detail-section-title">💬 Dica</div>
+        <div class="detail-note" id="detail-note"></div>
+      </div>
+      <div class="detail-section" id="detail-photos-section">
+        <div class="detail-section-title">📸 Fotos dos Pratos</div>
+        <div class="detail-photos" id="detail-photos"></div>
+      </div>
+      <div class="detail-section" id="detail-info-section"></div>
+      <div class="detail-actions" id="detail-actions"></div>
+    </div>
+  </div>
+</div>
+
 <div id="toast"><span id="ti">✅</span><span id="tm">Salvo!</span></div>
 <script>
 const CLOUD_NAME='djf09kd9g';
@@ -426,6 +572,7 @@ window.places=window.places||[];
 let editId=null,rating=0,curStatus='quero',curPet=false;
 let photoFiles={logo:null,0:null,1:null};
 let activeFilter='todos',searchQuery='',currentView='inicio';
+let isEditMode=false; // true quando abre modal para editar lugar existente
 const CE={'Bar':'🍺','Restaurante':'🍽️','Pizzaria':'🍕','Hamburgueria':'🍔','Café':'☕','Sorveteria':'🍦','Lanches':'🥪','Delivery':'🛵','Outros':'🍴'};
 const CB={'Bar':'tc-bar','Café':'tc-cafe','Sorveteria':'tc-sorveteria','Pizzaria':'tc-pizza','Hamburgueria':'tc-burger','Lanches':'tc-lanches','Delivery':'tc-delivery'};
 window._onPlacesLoaded=function(){window._appReady=true;renderAll();setTimeout(()=>document.getElementById('splash').classList.add('hidden'),300);};
@@ -463,6 +610,22 @@ async function uploadAllPhotos(){
   return results;
 }
 
+function toggleDark(){
+  const isDark=document.body.classList.toggle('dark');
+  document.getElementById('dark-btn').textContent=isDark?'🌙':'☀️';
+  localStorage.setItem('garfinho_dark',isDark?'1':'0');
+}
+// Restaura preferência salva
+(function(){
+  if(localStorage.getItem('garfinho_dark')==='1'){
+    document.body.classList.add('dark');
+    document.addEventListener('DOMContentLoaded',()=>{
+      const btn=document.getElementById('dark-btn');
+      if(btn)btn.textContent='🌙';
+    });
+  }
+})();
+
 function navigate(v){
   currentView=v;
   document.querySelectorAll('.view,.view-map').forEach(x=>x.classList.remove('active'));
@@ -471,52 +634,105 @@ function navigate(v){
   document.querySelectorAll('.mob-nav-item').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(x=>{if(x.getAttribute('onclick')?.includes("'"+v+"'"))x.classList.add('active');});
   document.querySelectorAll('.mob-nav-item').forEach(x=>{if(x.dataset.nav===v)x.classList.add('active');});
-  const T={inicio:'Início',lugares:'Lugares',quero:'Quero Conhecer',mapa:'Perto de Mim',ranking:'Ranking',timeline:'Timeline'};
+  const T={inicio:'Início',lugares:'Lugares',mapa:'Perto de Mim',ranking:'Ranking',timeline:'Timeline'};
   document.getElementById('topbar-title').textContent=T[v]||'';
   document.getElementById('searchBox').style.display=v==='lugares'?'flex':'none';
   if(v==='inicio')renderDashboard();
   else if(v==='lugares')renderPlacesGrid();
-  else if(v==='quero')renderWantGrid();
   else if(v==='mapa'){setTimeout(()=>{initMap();renderMap();centerOnMe();},120);}
   else if(v==='ranking')renderRanking();
   else if(v==='timeline')renderTimeline();
   closeSidebar();
+}
+// Navega para Lugares com filtro pré-aplicado (usado nos stat cards)
+function navigateFiltered(filter){
+  activeFilter=filter;
+  navigate('lugares');
+  // Atualiza chip de filtro visual
+  document.querySelectorAll('#filter-bar .filter-chip').forEach(c=>{
+    c.classList.toggle('active', c.getAttribute('onclick')?.includes("'"+filter+"'"));
+  });
 }
 function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('sidebarOverlay').classList.add('open');}
 function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebarOverlay').classList.remove('open');}
 
 function openModal(id=null){
   editId=id;rating=0;curPet=false;photoFiles={logo:null,0:null,1:null};
-  document.getElementById('modal-title').textContent=id?'Editar Lugar ✏️':'Novo Lugar 🍴';
+  isEditMode=!!id;
   document.getElementById('upload-progress').classList.remove('show');
   document.getElementById('up-bar').style.width='0%';
+
   if(id){
+    // MODO EDIÇÃO: pula step 1, vai direto ao formulário
     const p=window.places.find(x=>x.id===id);
     if(p){
-      document.getElementById('f-name').value=p.name;document.getElementById('f-cat').value=p.cat;
-      document.getElementById('f-address').value=p.address||p.city||'';document.getElementById('f-city').value='';
-      document.getElementById('f-ig').value=p.ig||'';document.getElementById('f-note').value=p.note||'';
+      document.getElementById('modal-title').textContent='Editar Lugar ✏️';
+      document.getElementById('f-name').value=p.name;
+      document.getElementById('f-cat').value=p.cat;
+      document.getElementById('f-address').value=p.address||p.city||'';
+      document.getElementById('f-city').value='';
+      document.getElementById('f-ig').value=p.ig||'';
+      // f-note pode ser de quero ou visitado
+      const noteEl=document.getElementById('f-note');
+      const noteQEl=document.getElementById('f-note-quero');
+      if(noteEl)noteEl.value=p.note||'';
+      if(noteQEl)noteQEl.value='';
       document.getElementById('f-date').value=p.date||'';
       curStatus=p.status||'quero';curPet=!!p.pet;
       photoFiles.logo=p.logo||null;photoFiles[0]=p.photos?.[0]||null;photoFiles[1]=p.photos?.[1]||null;
+      const c0=document.getElementById('f-caption0');const c1=document.getElementById('f-caption1');
+      if(c0)c0.value=p.captions?.[0]||'';if(c1)c1.value=p.captions?.[1]||'';
       setRating(p.rating||0);
     }
+    showStep2(curStatus);
+    document.getElementById('btn-back').textContent='Cancelar';
+    document.getElementById('btn-back').setAttribute('onclick','closeModal()');
   }else{
-    ['f-name','f-city','f-address','f-ig','f-note'].forEach(i=>document.getElementById(i).value='');
+    // MODO NOVO: mostra step 1
+    document.getElementById('modal-title').textContent='Novo Lugar 🍴';
+    ['f-name','f-city','f-address','f-ig','f-note','f-note-quero'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
     document.getElementById('f-cat').value='Restaurante';
     document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
     curStatus='quero';setRating(0);
+    // Reset step cards
+    document.getElementById('step-card-quero').className='step-card';
+    document.getElementById('step-card-visitado').className='step-card';
+    document.getElementById('modal-step1').classList.add('active');
+    document.getElementById('modal-step2').classList.remove('active');
   }
-  document.querySelectorAll('.sp-btn').forEach(b=>b.classList.remove('sel'));
-  document.querySelector('.sp-'+curStatus)?.classList.add('sel');
-  const isV=curStatus==='visitado';
-  document.getElementById('rating-field').style.display=isV?'block':'none';
-  document.getElementById('date-field').style.display=isV?'block':'none';
   document.getElementById('pet-toggle').classList.toggle('on',curPet);
   renderSlot('logo',photoFiles.logo);renderSlot(0,photoFiles[0]);renderSlot(1,photoFiles[1]);
   document.getElementById('ig-open-wrap').style.display=document.getElementById('f-ig').value?'block':'none';
-  document.getElementById('f-ig').addEventListener('input',()=>{document.getElementById('ig-open-wrap').style.display=document.getElementById('f-ig').value?'block':'none';});
+  document.getElementById('f-ig').oninput=()=>{document.getElementById('ig-open-wrap').style.display=document.getElementById('f-ig').value?'block':'none';};
   document.getElementById('overlay').classList.add('open');
+}
+
+function chooseStep(status){
+  curStatus=status;
+  document.getElementById('step-card-quero').className='step-card'+(status==='quero'?' sel-quero':'');
+  document.getElementById('step-card-visitado').className='step-card'+(status==='visitado'?' sel-visitado':'');
+  setTimeout(()=>showStep2(status),180);
+}
+
+function showStep2(status){
+  document.getElementById('modal-step1').classList.remove('active');
+  document.getElementById('modal-step2').classList.add('active');
+  // Mostrar/ocultar campos por status
+  document.getElementById('fields-visitado').style.display=status==='visitado'?'block':'none';
+  document.getElementById('fields-quero-note').style.display=status==='quero'?'block':'none';
+  // Data padrão
+  if(status==='visitado'&&!document.getElementById('f-date').value)
+    document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
+  // Botão voltar para edição
+  if(!isEditMode){
+    document.getElementById('btn-back').textContent='← Voltar';
+    document.getElementById('btn-back').setAttribute('onclick','backToStep1()');
+  }
+}
+
+function backToStep1(){
+  document.getElementById('modal-step2').classList.remove('active');
+  document.getElementById('modal-step1').classList.add('active');
 }
 
 function renderSlot(key,value){
@@ -533,7 +749,13 @@ function renderSlot(key,value){
 function closeModal(){document.getElementById('overlay').classList.remove('open');editId=null;}
 function onOvClick(e){if(e.target===document.getElementById('overlay'))closeModal();}
 function selStatus(el,st){document.querySelectorAll('.sp-btn').forEach(b=>b.classList.remove('sel'));el.classList.add('sel');curStatus=st;const isV=st==='visitado';document.getElementById('rating-field').style.display=isV?'block':'none';document.getElementById('date-field').style.display=isV?'block':'none';if(isV&&!document.getElementById('f-date').value)document.getElementById('f-date').value=new Date().toISOString().split('T')[0];}
-function setRating(v){rating=v;document.querySelectorAll('.star-pick').forEach(s=>s.classList.toggle('on',parseInt(s.dataset.v)<=v));}
+function setRating(v){
+  rating=v;
+  document.querySelectorAll('.star-pick').forEach(s=>s.classList.toggle('on',parseFloat(s.dataset.v)<=v));
+  document.querySelectorAll('.star-half').forEach(s=>s.classList.toggle('on',parseFloat(s.dataset.v)<=v));
+  const lbl=document.getElementById('star-val-label');
+  if(lbl)lbl.textContent=v>0?v+'★':'';
+}
 function togglePet(){curPet=!curPet;document.getElementById('pet-toggle').classList.toggle('on',curPet);}
 function triggerPhoto(key){const id=key==='logo'?'photo-input-logo':'photo-input-'+key;document.getElementById(id).click();}
 function loadPhoto(e,key){const f=e.target.files[0];if(!f)return;photoFiles[key]=f;renderSlot(key,f);}
@@ -547,7 +769,23 @@ async function savePlace(){
   try{
     const up=await uploadAllPhotos();
     const cat=document.getElementById('f-cat').value;
-    const p={id:editId||Date.now().toString(),name,cat,address:document.getElementById('f-address').value.trim(),city:'',ig:document.getElementById('f-ig').value.trim(),status:curStatus,rating,pet:curPet,logo:up.logo||null,photos:[up[0]||null,up[1]||null],note:document.getElementById('f-note').value.trim(),date:document.getElementById('f-date').value,emoji:CE[cat]||'🍴',createdAt:editId?(window.places.find(x=>x.id===editId)?.createdAt||Date.now()):Date.now()};
+    // Pega nota do campo correto dependendo do status
+    const noteVisitado=(document.getElementById('f-note')?.value||'').trim();
+    const noteQuero=(document.getElementById('f-note-quero')?.value||'').trim();
+    const note=curStatus==='visitado'?noteVisitado:noteQuero;
+    const p={
+      id:editId||Date.now().toString(),name,cat,
+      address:document.getElementById('f-address').value.trim(),city:'',
+      ig:document.getElementById('f-ig').value.trim(),
+      status:curStatus,rating,pet:curPet,
+      logo:up.logo||null,
+      photos:curStatus==='visitado'?[up[0]||null,up[1]||null]:[null,null],
+      captions:curStatus==='visitado'?[(document.getElementById('f-caption0')?.value||'').trim(),(document.getElementById('f-caption1')?.value||'').trim()]:['',''],
+      note,
+      date:curStatus==='visitado'?document.getElementById('f-date').value:'',
+      emoji:CE[cat]||'🍴',
+      createdAt:editId?(window.places.find(x=>x.id===editId)?.createdAt||Date.now()):Date.now()
+    };
     if(editId){window.places[window.places.findIndex(x=>x.id===editId)]=p;toast('✏️','Lugar atualizado!');}
     else{window.places.unshift(p);toast('✅','Lugar adicionado!');}
     if(window._fbSave)window._fbSave();closeModal();renderAll();
@@ -559,13 +797,38 @@ async function savePlace(){
 function deletePlace(id){if(!confirm('Remover este lugar?'))return;window.places=window.places.filter(p=>p.id!==id);if(window._fbSave)window._fbSave();renderAll();toast('🗑️','Removido');if(currentView!=='inicio')navigate(currentView);}
 function setFilter(el,v){document.querySelectorAll('#filter-bar .filter-chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');activeFilter=v;renderPlacesGrid();}
 function applyFilters(){searchQuery=document.getElementById('searchInput').value.toLowerCase();renderPlacesGrid();}
-function getFiltered(){return window.places.filter(p=>{const mf=activeFilter==='todos'||p.status===activeFilter||p.cat===activeFilter||(activeFilter==='pet'&&p.pet);const ms=!searchQuery||p.name.toLowerCase().includes(searchQuery)||(p.cat||'').toLowerCase().includes(searchQuery)||(p.city||'').toLowerCase().includes(searchQuery);return mf&&ms;});}
+function getFiltered(){
+  let list=window.places.filter(p=>{
+    const mf=activeFilter==='todos'||p.status===activeFilter||p.cat===activeFilter||(activeFilter==='pet'&&p.pet);
+    const ms=!searchQuery||p.name.toLowerCase().includes(searchQuery)||(p.cat||'').toLowerCase().includes(searchQuery)||(p.city||'').toLowerCase().includes(searchQuery);
+    return mf&&ms;
+  });
+  const sort=(document.getElementById('sort-select')?.value)||'recentes';
+  if(sort==='avaliados') list=[...list].sort((a,b)=>(b.rating||0)-(a.rating||0));
+  else if(sort==='az') list=[...list].sort((a,b)=>a.name.localeCompare(b.name,'pt'));
+  else if(sort==='cat') list=[...list].sort((a,b)=>a.cat.localeCompare(b.cat,'pt')||a.name.localeCompare(b.name,'pt'));
+  // 'recentes' já está na ordem padrão (mais recente primeiro por unshift)
+  return list;
+}
 function renderAll(){updateBadges();updateStats();renderDashboard();}
-function updateBadges(){document.getElementById('badge-all').textContent=window.places.length;document.getElementById('badge-want').textContent=window.places.filter(p=>p.status==='quero').length;}
-function updateStats(){document.getElementById('stat-total').textContent=window.places.length;document.getElementById('stat-visited').textContent=window.places.filter(p=>p.status==='visitado').length;document.getElementById('stat-want').textContent=window.places.filter(p=>p.status==='quero').length;const rated=window.places.filter(p=>p.rating>0);document.getElementById('stat-avg').textContent=rated.length?(rated.reduce((a,p)=>a+p.rating,0)/rated.length).toFixed(1)+'★':'—';}
+function updateBadges(){document.getElementById('badge-all').textContent=window.places.length;}
+function updateStats(){
+  document.getElementById('stat-total').textContent=window.places.length;
+  document.getElementById('stat-visited').textContent=window.places.filter(p=>p.status==='visitado').length;
+  document.getElementById('stat-want').textContent=window.places.filter(p=>p.status==='quero').length;
+  const rated=window.places.filter(p=>p.rating>0);
+  if(rated.length){
+    const avg=rated.reduce((a,p)=>a+p.rating,0)/rated.length;
+    // Arredonda para .5 mais próximo
+    const rounded=Math.round(avg*2)/2;
+    document.getElementById('stat-avg').textContent=rounded+'★';
+  }else{
+    document.getElementById('stat-avg').textContent='—';
+  }
+}
 
 function thumbHtml(p){
-  if(p.logo)return`<img src="${p.logo}" alt="" class="logo-img">`;
+  if(p.logo)return`<img src="${p.logo}" alt="" style="border-radius:50%;object-fit:contain;padding:6px">`;
   if(p.photos?.[0])return`<img src="${p.photos[0]}" alt="">`;
   return`<span class="emoji-bg">${p.emoji||'🍴'}</span>`;
 }
@@ -573,23 +836,173 @@ function thumbHtml(p){
 function renderDashboard(){
   updateStats();updateBadges();
   const rec=window.places.slice(0,5);
-  document.getElementById('recent-list').innerHTML=rec.length?rec.map(p=>`<div class="recent-item" onclick="openModal('${p.id}')"><div class="recent-thumb">${p.logo?`<img src="${p.logo}" alt="" style="object-fit:contain;padding:3px">`:p.photos?.[0]?`<img src="${p.photos[0]}" alt="">`:p.emoji||'🍴'}</div><div style="flex:1;min-width:0"><div class="recent-name">${p.name}${p.pet?' 🐶':''}</div><div class="recent-cat">${p.cat}${(p.address||p.city)?' · '+(p.address||p.city).split(',').slice(-2).join(',').trim():''}</div></div><div class="stars">${stars(p.rating)}</div></div>`).join(''):'<div style="text-align:center;padding:20px;color:var(--gray2);font-size:.85rem">Nenhum lugar ainda 🍴</div>';
+  document.getElementById('recent-list').innerHTML=rec.length?rec.map(p=>`<div class="recent-item" onclick="openModal('${p.id}')"><div class="recent-thumb">${p.logo?`<img src="${p.logo}" alt="" style="border-radius:50%;object-fit:contain;padding:3px">`:p.photos?.[0]?`<img src="${p.photos[0]}" alt="">`:p.emoji||'🍴'}</div><div style="flex:1;min-width:0"><div class="recent-name">${p.name}${p.pet?' 🐶':''}</div><div class="recent-cat">${p.cat}${(p.address||p.city)?' · '+(p.address||p.city).split(',').slice(-2).join(',').trim():''}</div></div><div class="stars">${stars(p.rating)}</div></div>`).join(''):'<div style="text-align:center;padding:20px;color:var(--gray2);font-size:.85rem">Nenhum lugar ainda 🍴</div>';
   const cats={};window.places.forEach(p=>{cats[p.cat]=(cats[p.cat]||0)+1;});
   const sorted=Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,6);const max=sorted[0]?.[1]||1;
   document.getElementById('cat-chart').innerHTML=sorted.length?sorted.map(([c,n])=>`<div class="cat-row"><div class="cat-header"><span>${CE[c]||'🍴'} ${c}</span><span style="font-weight:800;color:var(--red)">${n}</span></div><div class="cat-bar"><div class="cat-fill" style="width:${(n/max)*100}%"></div></div></div>`).join(''):'<span style="color:var(--gray2);font-size:.85rem">Adicione lugares para ver</span>';
   const words=[...new Set(window.places.filter(p=>p.note).flatMap(p=>p.note.split(/[\s,!.]+/)).filter(w=>w.length>3))].slice(0,12);
   document.getElementById('mood-cloud').innerHTML=words.length?words.map(w=>`<span class="mood-tag">${w}</span>`).join(''):'<span style="color:var(--gray2);font-size:.82rem">Adicione dicas nos lugares</span>';
 }
-function stars(r){return[1,2,3,4,5].map(i=>`<span class="star ${i<=(r||0)?'filled':''}">★</span>`).join('');}
+function stars(r){
+  if(!r)return[1,2,3,4,5].map(()=>`<span class="star">★</span>`).join('');
+  return[1,2,3,4,5].map(i=>{
+    if(i<=Math.floor(r))return`<span class="star filled">★</span>`;
+    if(i===Math.ceil(r)&&r%1!==0)return`<span class="star filled" style="opacity:.55">★</span>`;
+    return`<span class="star">★</span>`;
+  }).join('');
+}
 function card(p){
   const SL={visitado:'✅ Visitado',quero:'🔖 Quero'};
-  return`<div class="place-card"><div class="place-thumb ${CB[p.cat]||''}">${thumbHtml(p)}<span class="status-pill sp-${p.status}">${SL[p.status]||p.status}</span>${p.pet?`<span class="pet-badge">🐶 Pet</span>`:''}</div><div class="place-body"><div class="place-name">${p.name}</div><div class="place-cat">${p.cat}${(p.address||p.city)?' · '+(p.address||p.city).split(',').slice(-2).join(',').trim():''}</div><div class="stars">${stars(p.rating)}</div>${p.note?`<div class="place-note">💬 ${p.note}</div>`:''}<div class="place-footer"><span></span><div class="place-actions">${p.ig?`<div class="icon-btn" onclick="event.stopPropagation();window.open('${p.ig}','_blank')" title="Instagram">📸</div>`:''}<div class="icon-btn" onclick="event.stopPropagation();openModal('${p.id}')" title="Editar">✏️</div><div class="icon-btn" onclick="event.stopPropagation();deletePlace('${p.id}')" title="Remover">🗑️</div></div></div></div></div>`;
+  // Thumb: se tem logo, mostra gradiente de fundo + logo redonda flutuando
+  // Se tem foto de prato, mostra a foto. Senão emoji.
+  let thumbContent='';
+  if(p.logo){
+    thumbContent=`<div class="detail-hero-emoji">${p.emoji||'🍴'}</div><div class="place-logo-circle"><img src="${p.logo}" alt=""></div>`;
+  }else if(p.photos?.[0]){
+    thumbContent=`<img src="${p.photos[0]}" alt="">`;
+  }else{
+    thumbContent=`<span class="emoji-bg">${p.emoji||'🍴'}</span>`;
+  }
+  const hasLogo=!!p.logo;
+  return`<div class="place-card" onclick="openDetail('${p.id}')">
+    <div class="place-thumb ${CB[p.cat]||''}">
+      ${thumbContent}
+      <span class="status-pill sp-${p.status}">${SL[p.status]||p.status}</span>
+      ${p.pet?`<span class="pet-badge">🐶 Pet</span>`:''}
+    </div>
+    <div class="place-body ${hasLogo?'has-logo':''}">
+      <div class="place-name">${p.name}</div>
+      <div class="place-cat">${p.cat}${(p.address||p.city)?' · '+(p.address||p.city).split(',').slice(-2).join(',').trim():''}</div>
+      <div class="stars">${stars(p.rating)}</div>
+      ${p.note?`<div class="place-note">💬 ${p.note}</div>`:''}
+      <div class="place-footer"><span></span>
+        <div class="place-actions">
+          ${p.ig?`<div class="icon-btn" onclick="event.stopPropagation();window.open('${p.ig}','_blank')" title="Instagram">📸</div>`:''}
+          <div class="icon-btn" onclick="event.stopPropagation();openModal('${p.id}')" title="Editar">✏️</div>
+          <div class="icon-btn" onclick="event.stopPropagation();deletePlace('${p.id}')" title="Remover">🗑️</div>
+        </div>
+      </div>
+    </div>
+  </div>`;
 }
 function empty(t,s,cta=true){return`<div class="empty"><div class="empty-icon">🍴</div><div class="empty-title">${t}</div><div class="empty-sub">${s}</div>${cta?`<div class="empty-cta" onclick="openModal()">+ Adicionar Lugar</div>`:''}</div>`;}
-function renderPlacesGrid(){const g=document.getElementById('places-grid'),l=getFiltered();g.innerHTML=l.length?l.map(card).join(''):empty('Nada encontrado','Tente outro filtro ou busca',false);}
-function renderWantGrid(){const g=document.getElementById('want-grid'),l=window.places.filter(p=>p.status==='quero');g.innerHTML=l.length?l.map(card).join(''):empty('Lista vazia','Adicione lugares que querem conhecer 🔖');}
+function renderPlacesGrid(){
+  const g=document.getElementById('places-grid');
+  const l=getFiltered();
+  if(!l.length){g.innerHTML=empty('Nada encontrado','Tente outro filtro ou busca',false);return;}
+  g.innerHTML=l.map(card).join('');
+  // Animação escalonada nos cards
+  g.querySelectorAll('.place-card').forEach((c,i)=>{
+    c.style.animationDelay=`${i*40}ms`;
+  });
+}
+// renderWantGrid removida - use filtro na aba Lugares
 function renderRanking(){const rl=document.getElementById('ranking-list');const rk=[...places].filter(p=>p.rating>0).sort((a,b)=>b.rating-a.rating||a.name.localeCompare(b.name));if(!rk.length){rl.innerHTML=empty('Sem avaliações','Avalie os lugares visitados para ver o ranking');return;}const M=['🥇','🥈','🥉'];rl.innerHTML=rk.map((p,i)=>`<div class="ranking-item"><div class="rank-pos">${i<3?M[i]:i+1}</div><div class="rank-thumb">${p.logo?`<img src="${p.logo}" alt="">`:p.photos?.[0]?`<img src="${p.photos[0]}" alt="">`:p.emoji||'🍴'}</div><div style="flex:1;min-width:0"><div class="rank-name">${p.name}${p.pet?' 🐶':''}</div><div class="rank-cat">${p.cat}${(p.address||p.city)?' · '+(p.address||p.city).split(',').slice(-2).join(',').trim():''}</div></div><div class="rank-score">${p.rating}<span>★</span></div></div>`).join('');}
 function renderTimeline(){const tl=document.getElementById('timeline-list');const vs=[...places].filter(p=>p.date).sort((a,b)=>b.date.localeCompare(a.date));if(!vs.length){tl.innerHTML=empty('Sem histórico','Adicione datas de visita aos seus lugares');return;}const MN=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];tl.innerHTML=vs.map(p=>{const[y,m,d]=p.date.split('-');return`<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-inner"><div class="timeline-date">${parseInt(d)} ${MN[parseInt(m)-1]} ${y}</div><div class="timeline-card"><div class="timeline-title">${p.logo?`<img src="${p.logo}" style="width:22px;height:22px;object-fit:contain;border-radius:4px" alt="">`:p.emoji||'🍴'} ${p.name}${p.pet?' 🐶':''}</div>${p.note?`<div class="timeline-note">💬 ${p.note}</div>`:''}<div style="margin-top:6px">${stars(p.rating)}</div></div></div></div>`;}).join('');}
+
+/* ── TELA DE DETALHES ── */
+function openDetail(id){
+  const p=window.places.find(x=>x.id===id);
+  if(!p)return;
+
+  // Hero: foto do prato ou gradiente com emoji
+  const hero=document.getElementById('detail-hero');
+  const heroEmoji=document.getElementById('detail-hero-emoji');
+  const heroLogo=document.getElementById('detail-hero-logo');
+
+  heroEmoji.textContent=p.emoji||'🍴';
+  // Fundo do hero: primeira foto do prato se tiver
+  const heroImg=hero.querySelector('img.hero-bg-img');
+  if(heroImg)heroImg.remove();
+  if(p.photos?.[0]){
+    const img=document.createElement('img');
+    img.className='hero-bg-img';
+    img.src=p.photos[0];
+    img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0';
+    hero.insertBefore(img,hero.firstChild);
+    heroEmoji.style.display='none';
+  }else{
+    heroEmoji.style.display='';
+  }
+  // Logo redonda no hero
+  heroLogo.innerHTML='';
+  if(p.logo){
+    const img=document.createElement('img');img.src=p.logo;heroLogo.appendChild(img);
+    heroLogo.style.display='flex';
+  }else{
+    heroLogo.style.display='none';
+  }
+
+  // Badge status
+  const badge=document.getElementById('detail-status-badge');
+  badge.innerHTML=p.status==='visitado'
+    ?`<span class="detail-badge-visitado">✅ Visitado${p.date?' · '+formatDate(p.date):''}</span>`
+    :`<span class="detail-badge-quero">🔖 Quero conhecer</span>`;
+
+  document.getElementById('detail-name').textContent=p.name+(p.pet?' 🐶':'');
+  document.getElementById('detail-meta').textContent=p.cat+(p.address?' · '+p.address.split(',').slice(-2).join(',').trim():'');
+
+  // Avaliação (só para visitado)
+  const ratingEl=document.getElementById('detail-rating');
+  if(p.status==='visitado'&&p.rating>0){
+    ratingEl.innerHTML=`<div class="detail-stars">${[1,2,3,4,5].map(i=>`<span class="detail-star ${i<=p.rating?'filled':''}">★</span>`).join('')}</div><div class="detail-rating-num">${p.rating}★</div>`;
+    ratingEl.style.display='flex';
+  }else{
+    ratingEl.style.display='none';
+  }
+
+  // Dica/relato
+  const noteSection=document.getElementById('detail-note-section');
+  if(p.note){
+    document.getElementById('detail-note').textContent=p.note;
+    noteSection.style.display='block';
+  }else{
+    noteSection.style.display='none';
+  }
+
+  // Fotos dos pratos (só para visitado)
+  const photosSection=document.getElementById('detail-photos-section');
+  const photosEl=document.getElementById('detail-photos');
+  const fotos=(p.photos||[]).filter(Boolean);
+  if(p.status==='visitado'&&fotos.length>0){
+    photosEl.innerHTML=fotos.map((f,i)=>{
+      const cap=(p.captions&&p.captions[i])?p.captions[i]:'';
+      return`<div class="detail-photo"><img src="${f}" alt="Foto do prato">${cap?`<div style="padding:6px 8px;font-size:.75rem;color:var(--gray2);font-style:italic;background:var(--bg);border-radius:0 0 10px 10px">💬 ${cap}</div>`:''}</div>`;
+    }).join('');
+    photosSection.style.display='block';
+  }else{
+    photosSection.style.display='none';
+  }
+
+  // Info: endereço
+  const infoSection=document.getElementById('detail-info-section');
+  let infoHtml='';
+  if(p.address)infoHtml+=`<div class="detail-info-row"><span class="detail-info-icon">📍</span><span>${p.address}</span></div>`;
+  if(p.ig)infoHtml+=`<div class="detail-info-row"><span class="detail-info-icon">📸</span><a href="${p.ig}" target="_blank" style="color:var(--red);font-weight:700">Ver Instagram</a></div>`;
+  infoSection.innerHTML=infoHtml?`<div class="detail-section-title">ℹ️ Informações</div>${infoHtml}`:'';
+
+  // Ações
+  const actionsEl=document.getElementById('detail-actions');
+  const mapsUrl=`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(p.address||p.name||'')}`;
+  actionsEl.innerHTML=`
+    <button class="detail-btn" onclick="window.open('${mapsUrl}','_blank')">🗺️ Ver rota</button>
+    <button class="detail-btn" onclick="closeDetail();openModal('${p.id}')">✏️ Editar</button>
+    <button class="detail-btn primary" onclick="closeDetail()">Fechar</button>
+  `;
+
+  document.getElementById('detail-overlay').classList.add('open');
+}
+
+function formatDate(d){
+  if(!d)return'';
+  const[y,m,day]=d.split('-');
+  const MN=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  return`${parseInt(day)} ${MN[parseInt(m)-1]} ${y}`;
+}
+
+function closeDetail(){document.getElementById('detail-overlay').classList.remove('open');}
+function onDetailOvClick(e){if(e.target===document.getElementById('detail-overlay'))closeDetail();}
+
 function toast(icon,msg){document.getElementById('ti').textContent=icon;document.getElementById('tm').textContent=msg;const t=document.getElementById('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
 </script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
