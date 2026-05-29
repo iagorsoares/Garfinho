@@ -63,8 +63,8 @@ body.dark select{background:var(--card);color:var(--black);border-color:var(--bo
 .menu-btn{display:none;background:none;border:none;color:var(--gray1);font-size:1.3rem;cursor:pointer;padding:4px}
 .topbar-title{font-family:'Nunito',sans-serif;font-size:1.3rem;font-weight:900;color:var(--black);letter-spacing:-.01em}
 .topbar-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
-.search-box{display:flex;align-items:center;gap:8px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:7px 14px}
-.search-box input{background:none;border:none;outline:none;font-family:'Nunito Sans',sans-serif;font-size:.85rem;color:var(--black);width:160px}
+.search-box{display:flex;align-items:center;gap:8px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:7px 14px;min-width:0}
+.search-box input{background:none;border:none;outline:none;font-family:'Nunito Sans',sans-serif;font-size:.85rem;color:var(--black);width:100%;min-width:0}
 .search-box input::placeholder{color:var(--gray3)}
 .view{display:none;padding:22px 24px;flex:1}
 .view.active{display:block;animation:fadeIn .25s ease}
@@ -446,14 +446,19 @@ fbLoad();
         <div class="filter-chip" onclick="setFilter(this,'Delivery')">🛵 Delivery</div>
         <div class="filter-chip" onclick="setFilter(this,'Outros')">🍴 Outros</div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
-        <div class="search-box" id="searchBox" style="flex:1;min-width:0"><span style="color:var(--gray3)">🔍</span><input type="text" placeholder="Buscar lugares..." id="searchInput" oninput="applyFilters()" style="width:100%"></div>
-        <select id="sort-select" onchange="renderPlacesGrid()" style="background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:7px 12px;font-family:'Nunito Sans',sans-serif;font-size:.82rem;font-weight:600;color:var(--gray1);outline:none;cursor:pointer;transition:border-color var(--tr);flex-shrink:0">
-          <option value="recentes">⏱ Mais recentes</option>
-          <option value="avaliados">⭐ Melhor avaliados</option>
-          <option value="az">🔤 A–Z</option>
-          <option value="cat">📂 Por categoria</option>
-        </select>
+      <div style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <div class="search-box" id="searchBox" style="flex:1;min-width:0;width:100%">
+            <span style="color:var(--gray3)">🔍</span>
+            <input type="text" placeholder="Buscar lugares..." id="searchInput" oninput="applyFilters()" style="width:100%">
+          </div>
+          <select id="sort-select" onchange="renderPlacesGrid()" style="background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:7px 12px;font-family:'Nunito Sans',sans-serif;font-size:.82rem;font-weight:600;color:var(--gray1);outline:none;cursor:pointer;transition:border-color var(--tr);flex-shrink:0;white-space:nowrap">
+            <option value="recentes">⏱ Recentes</option>
+            <option value="avaliados">⭐ Avaliados</option>
+            <option value="az">🔤 A–Z</option>
+            <option value="cat">📂 Categoria</option>
+          </select>
+        </div>
       </div>
       <div class="places-grid" id="places-grid"></div>
     </div>
