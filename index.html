@@ -305,12 +305,11 @@ body.dark select{background:var(--card);color:var(--black);border-color:var(--bo
 .detail-overlay.open{opacity:1;visibility:visible}
 .detail-modal{background:var(--card);border-radius:22px 22px 0 0;width:100%;max-width:560px;max-height:94dvh;overflow-y:auto;transform:translateY(40px);transition:transform .35s cubic-bezier(.4,0,.2,1)}
 .detail-overlay.open .detail-modal{transform:translateY(0)}
-.detail-hero{position:relative;height:200px;background:linear-gradient(135deg,var(--red-soft),var(--red-mid));display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:22px 22px 0 0}
-.detail-hero img{width:100%;height:100%;object-fit:cover}
-.detail-hero-logo{position:absolute;bottom:-28px;left:24px;width:56px;height:56px;border-radius:50%;background:var(--card);border:3px solid var(--card);box-shadow:0 4px 16px rgba(0,0,0,.15);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:1.8rem}
-.detail-hero-logo img{width:100%;height:100%;object-fit:contain;padding:6px}
-.detail-hero-emoji{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:5rem;opacity:.18}
-.detail-body{padding:44px 24px 32px}
+.detail-hero{position:relative;height:160px;background:none;display:flex;align-items:center;justify-content:center;overflow:visible;border-radius:22px 22px 0 0;padding-top:24px}
+.detail-hero-logo{width:110px;height:110px;border-radius:50%;background:var(--bg);border:4px solid var(--card);box-shadow:0 6px 24px rgba(0,0,0,.13);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:3rem;position:relative;z-index:2}
+.detail-hero-logo img{width:100%;height:100%;object-fit:cover}
+.detail-hero-emoji{display:none}
+.detail-body{padding:16px 24px 32px;text-align:center}
 .detail-name{font-family:'Nunito',sans-serif;font-size:1.5rem;font-weight:900;color:var(--black);margin-bottom:4px}
 .detail-meta{font-size:.78rem;font-weight:700;color:var(--gray2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px}
 .detail-rating{display:flex;align-items:center;gap:8px;margin-bottom:16px}
@@ -334,6 +333,7 @@ body.dark select{background:var(--card);color:var(--black);border-color:var(--bo
 .detail-handle{width:36px;height:4px;background:var(--border);border-radius:99px;margin:14px auto 0}
 .detail-badge-visitado{background:#e8f5e0;color:#3a8a4a;padding:4px 12px;border-radius:99px;font-size:.72rem;font-weight:700;display:inline-flex;align-items:center;gap:4px;margin-bottom:14px}
 .detail-badge-quero{background:var(--red-soft);color:var(--red);padding:4px 12px;border-radius:99px;font-size:.72rem;font-weight:700;display:inline-flex;align-items:center;gap:4px;margin-bottom:14px}
+#detail-status-badge{text-align:center}
 
 /* ── RANK THUMB REDONDO para logo ── */
 .rank-thumb img{border-radius:50%;object-fit:contain;padding:3px}
@@ -952,28 +952,23 @@ function openDetail(id){
   const heroEmoji=document.getElementById('detail-hero-emoji');
   const heroLogo=document.getElementById('detail-hero-logo');
 
-  heroEmoji.textContent=p.emoji||'🍴';
-  // Fundo do hero: primeira foto do prato se tiver
+  // Círculo central: logo se tiver, senão emoji grande
   const heroImg=hero.querySelector('img.hero-bg-img');
   if(heroImg)heroImg.remove();
-  if(p.photos?.[0]){
-    const img=document.createElement('img');
-    img.className='hero-bg-img';
-    img.src=p.photos[0];
-    img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0';
-    hero.insertBefore(img,hero.firstChild);
-    heroEmoji.style.display='none';
-  }else{
-    heroEmoji.style.display='';
-  }
-  // Logo redonda no hero
   heroLogo.innerHTML='';
   if(p.logo){
-    const img=document.createElement('img');img.src=p.logo;heroLogo.appendChild(img);
-    heroLogo.style.display='flex';
+    const img=document.createElement('img');
+    img.src=p.logo;
+    heroLogo.appendChild(img);
+    heroLogo.style.background='var(--bg)';
   }else{
-    heroLogo.style.display='none';
+    heroLogo.textContent=p.emoji||'🍴';
+    // Cor de fundo por categoria
+    const catBg={'Bar':'#fff3e0','Café':'#fff3e0','Sorveteria':'#e3f2fd','Pizzaria':'#fce4ec',
+      'Hamburgueria':'#fff3e0','Lanches':'#fff8e1','Delivery':'#e8f5e9'};
+    heroLogo.style.background=catBg[p.cat]||'var(--red-soft)';
   }
+  heroEmoji.style.display='none';
 
   // Badge status
   const badge=document.getElementById('detail-status-badge');
