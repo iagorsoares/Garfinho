@@ -447,17 +447,9 @@ fbLoad();
         <div class="filter-chip" onclick="setFilter(this,'Outros')">🍴 Outros</div>
       </div>
       <div style="margin-bottom:14px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-          <div class="search-box" id="searchBox" style="flex:1;min-width:0;width:100%">
-            <span style="color:var(--gray3)">🔍</span>
-            <input type="text" placeholder="Buscar lugares..." id="searchInput" oninput="applyFilters()" style="width:100%">
-          </div>
-          <select id="sort-select" onchange="renderPlacesGrid()" style="background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:7px 12px;font-family:'Nunito Sans',sans-serif;font-size:.82rem;font-weight:600;color:var(--gray1);outline:none;cursor:pointer;transition:border-color var(--tr);flex-shrink:0;white-space:nowrap">
-            <option value="recentes">⏱ Recentes</option>
-            <option value="avaliados">⭐ Avaliados</option>
-            <option value="az">🔤 A–Z</option>
-            <option value="cat">📂 Categoria</option>
-          </select>
+        <div class="search-box" id="searchBox" style="width:100%">
+          <span style="color:var(--gray3)">🔍</span>
+          <input type="text" placeholder="Buscar lugares..." id="searchInput" oninput="applyFilters()" style="width:100%">
         </div>
       </div>
       <div class="places-grid" id="places-grid"></div>
