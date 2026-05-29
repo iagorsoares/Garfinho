@@ -410,7 +410,6 @@ fbLoad();
       <div style="display:flex;align-items:baseline;gap:10px"><div class="topbar-title" id="topbar-title">Início</div><div id="topbar-date" style="font-size:.82rem;font-weight:600;color:var(--gray2)"></div></div>
       <div class="topbar-actions">
         <button id="dark-btn" onclick="toggleDark()" title="Alternar modo escuro" style="background:none;border:none;font-size:1.2rem;cursor:pointer;padding:4px 6px;border-radius:8px;transition:background var(--tr);line-height:1">☀️</button>
-        <div class="search-box" id="searchBox" style="display:none"><span style="color:var(--gray3)">🔍</span><input type="text" placeholder="Buscar lugares..." id="searchInput" oninput="applyFilters()"></div>
       </div>
     </div>
     <!-- INÍCIO -->
@@ -447,8 +446,9 @@ fbLoad();
         <div class="filter-chip" onclick="setFilter(this,'Delivery')">🛵 Delivery</div>
         <div class="filter-chip" onclick="setFilter(this,'Outros')">🍴 Outros</div>
       </div>
-      <div style="display:flex;justify-content:flex-end;margin-bottom:14px">
-        <select id="sort-select" onchange="renderPlacesGrid()" style="background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:7px 12px;font-family:'Nunito Sans',sans-serif;font-size:.82rem;font-weight:600;color:var(--gray1);outline:none;cursor:pointer;transition:border-color var(--tr)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+        <div class="search-box" id="searchBox" style="flex:1;min-width:0"><span style="color:var(--gray3)">🔍</span><input type="text" placeholder="Buscar lugares..." id="searchInput" oninput="applyFilters()" style="width:100%"></div>
+        <select id="sort-select" onchange="renderPlacesGrid()" style="background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:7px 12px;font-family:'Nunito Sans',sans-serif;font-size:.82rem;font-weight:600;color:var(--gray1);outline:none;cursor:pointer;transition:border-color var(--tr);flex-shrink:0">
           <option value="recentes">⏱ Mais recentes</option>
           <option value="avaliados">⭐ Melhor avaliados</option>
           <option value="az">🔤 A–Z</option>
@@ -679,7 +679,7 @@ function navigate(v){
   document.querySelectorAll('.mob-nav-item').forEach(x=>{if(x.dataset.nav===v)x.classList.add('active');});
   const T={inicio:'Início',lugares:'Lugares',mapa:'Perto de Mim',ranking:'Ranking',timeline:'Timeline'};
   document.getElementById('topbar-title').textContent=T[v]||'';
-  document.getElementById('searchBox').style.display=v==='lugares'?'flex':'none';
+  // searchBox agora fica fixo na view lugares
   if(v==='inicio')renderDashboard();
   else if(v==='lugares')renderPlacesGrid();
   else if(v==='mapa'){setTimeout(()=>{initMap();renderMap();centerOnMe();},120);}
