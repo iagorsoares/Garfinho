@@ -71,8 +71,8 @@ body.dark select{background:var(--card);color:var(--black);border-color:var(--bo
 .view-map{display:none;flex-direction:column;flex:1;padding:0}
 .view-map.active{display:flex}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-@keyframes cardIn{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
-.place-card{animation:cardIn .3s ease both}
+@keyframes cardIn{from{opacity:0;transform:translateY(24px) scale(.94)}to{opacity:1;transform:none}}
+.place-card{animation:cardIn .45s cubic-bezier(.4,0,.2,1) both}
 .hero-banner{background:var(--red);border-radius:var(--r);padding:22px 24px;margin-bottom:22px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 6px 24px rgba(234,29,44,.3);overflow:hidden;position:relative}
 .hero-banner::before{content:'🍔🍕🌮🍜🍣';position:absolute;right:-10px;top:50%;transform:translateY(-50%) rotate(-15deg);font-size:3.5rem;opacity:.12;letter-spacing:8px;white-space:nowrap;pointer-events:none}
 .hero-text h2{font-family:'Nunito',sans-serif;font-size:1.3rem;font-weight:900;color:#fff;margin-bottom:4px}
@@ -147,8 +147,8 @@ body.dark select{background:var(--card);color:var(--black);border-color:var(--bo
 .ranking-item{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);transition:transform var(--tr),box-shadow var(--tr)}
 .ranking-item:hover{transform:translateX(4px);box-shadow:var(--shadow-lg)}
 .rank-pos{font-family:'Nunito',sans-serif;font-size:1.4rem;font-weight:900;width:32px;text-align:center;flex-shrink:0}
-.rank-thumb{width:42px;height:42px;border-radius:10px;background:var(--red-soft);font-size:1.3rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
-.rank-thumb img{width:100%;height:100%;object-fit:contain;padding:4px}
+.rank-thumb{width:42px;height:42px;border-radius:50%;background:none!important;font-size:1.3rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+.rank-thumb img{width:100%;height:100%;object-fit:cover;border-radius:50%;padding:0}
 .rank-name{font-size:.95rem;font-weight:700}
 .rank-cat{font-size:.75rem;color:var(--gray2);margin-top:2px}
 .rank-score{font-family:'Nunito',sans-serif;font-size:1.4rem;font-weight:900;color:var(--red);display:flex;align-items:center;gap:3px}
@@ -935,7 +935,7 @@ function renderPlacesGrid(){
   g.innerHTML=l.map(card).join('');
   // Animação escalonada nos cards
   g.querySelectorAll('.place-card').forEach((c,i)=>{
-    c.style.animationDelay=`${i*40}ms`;
+    c.style.animationDelay=`${i*90}ms`;
   });
 }
 // renderWantGrid removida - use filtro na aba Lugares
