@@ -682,9 +682,9 @@ const CE={'Bar':'🍺','Restaurante':'🍽️','Pizzaria':'🍕','Hamburgueria':
 window._onPlacesLoaded=function(){
   // Limpa coords de todos os lugares para forçar re-geocodificação correta
   // com o novo geocoder ViaCEP (corrige coords erradas: Goiânia, SP, etc)
-  if(!localStorage.getItem('garfinho_geocoder_v3')){
+  if(!localStorage.getItem('garfinho_geocoder_v5')){
     window.places.forEach(p=>{delete p.lat;delete p.lng;});
-    localStorage.setItem('garfinho_geocoder_v3','1');
+    localStorage.setItem('garfinho_geocoder_v5','1');
   }window._appReady=true;renderAll();setTimeout(()=>document.getElementById('splash').classList.add('hidden'),300);};
 window.addEventListener('load',()=>{setTimeout(()=>{if(!window._appReady){window._appReady=true;renderAll();document.getElementById('splash').classList.add('hidden');}},6000);});
 
@@ -1331,46 +1331,64 @@ async function geocodePlace(p){
   const cep=extrairCep(addr);
   const num=extrairNumero(addr);
 
-  // ── CAMINHO PRINCIPAL: via CEP ──
+  // Resolve cidade/rua/bairro pelo CEP (ViaCEP — preciso e gratuito)
+  let rua='',bairro='',cidade='',uf='';
   if(cep){
     const info=await viaCep(cep);
     if(info){
-      const rua=info.logradouro||'';
-      const bairro=info.bairro||'';
-      const cidade=info.localidade||'';
-      const uf=info.uf||'';
-
-      // 1) rua + número + cidade (estruturado, ponto mais exato)
-      if(rua&&num){
-        let c=await nominatimStruct({street:`${num} ${rua}`,city:cidade,state:uf});
-        if(c)return c;
-      }
-      // 2) rua + cidade (sem número)
-      if(rua){
-        let c=await nominatimStruct({street:rua,city:cidade,state:uf});
-        if(c)return c;
-      }
-      // 3) rua + número + bairro + cidade como texto livre
-      if(rua){
-        let c=await nominatim(`${rua}${num?', '+num:''}, ${bairro}, ${cidade}, ${uf}, Brasil`);
-        if(c)return c;
-      }
-      // 4) bairro + cidade (CEP sem logradouro específico — cidades pequenas)
-      if(bairro||cidade){
-        let c=await nominatim(`${bairro?bairro+', ':''}${cidade}, ${uf}, Brasil`);
-        if(c)return c;
-      }
-      // 5) só a cidade (último recurso via CEP — sempre acerta a cidade)
-      if(cidade){
-        let c=await nominatim(`${cidade}, ${uf}, Brasil`);
-        if(c)return c;
-      }
+      rua=info.logradouro||'';
+      bairro=info.bairro||'';
+      cidade=info.localidade||'';
+      uf=info.uf||'';
     }
   }
 
-  // ── FALLBACK: sem CEP, usa o texto do endereço ──
+  // ── ESTRATÉGIA 1: nome do local + cidade ──
+  // Restaurantes/bares costumam estar no OpenStreetMap como ponto de interesse,
+  // então o PIN cai exatamente no estabelecimento (número exato).
+  if(p.name&&cidade){
+    let c=await nominatim(`${p.name}, ${cidade}, ${uf}, Brasil`);
+    if(c)return c;
+    // tenta também nome + bairro + cidade
+    if(bairro){
+      c=await nominatim(`${p.name}, ${bairro}, ${cidade}, ${uf}, Brasil`);
+      if(c)return c;
+    }
+  }
+
+  // ── ESTRATÉGIA 2: rua + número + cidade (ponto na rua) ──
+  if(rua&&num&&cidade){
+    let c=await nominatimStruct({street:`${num} ${rua}`,city:cidade,state:uf});
+    if(c)return c;
+    c=await nominatim(`${rua}, ${num}, ${cidade}, ${uf}, Brasil`);
+    if(c)return c;
+  }
+
+  // ── ESTRATÉGIA 3: rua + cidade (sem número) ──
+  if(rua&&cidade){
+    let c=await nominatimStruct({street:rua,city:cidade,state:uf});
+    if(c)return c;
+  }
+
+  // ── ESTRATÉGIA 4: bairro + cidade ──
+  if((bairro||cidade)){
+    let c=await nominatim(`${bairro?bairro+', ':''}${cidade}, ${uf}, Brasil`);
+    if(c)return c;
+  }
+
+  // ── ESTRATÉGIA 5: só a cidade (último recurso via CEP) ──
+  if(cidade){
+    let c=await nominatim(`${cidade}, ${uf}, Brasil`);
+    if(c)return c;
+  }
+
+  // ── FALLBACK: sem CEP, usa o texto do endereço ou nome ──
   if(addr){
     let c=await nominatim(addr+', Brasil');
+    if(c)return c;
+  }
+  if(p.name){
+    let c=await nominatim(`${p.name}, Brasil`);
     if(c)return c;
   }
 
