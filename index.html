@@ -678,7 +678,13 @@ let activeFilter='todos',searchQuery='',currentView='inicio';
 let isEditMode=false; // true quando abre modal para editar lugar existente
 const CE={'Bar':'🍺','Restaurante':'🍽️','Pizzaria':'🍕','Hamburgueria':'🍔','Café':'☕','Sorveteria':'🍦','Lanches':'🥪','Delivery':'🛵','Outros':'🍴'};
 
-window._onPlacesLoaded=function(){window._appReady=true;renderAll();setTimeout(()=>document.getElementById('splash').classList.add('hidden'),300);};
+window._onPlacesLoaded=function(){
+  // Limpa coords de todos os lugares para forçar re-geocodificação correta
+  // (remove coords erradas geradas pela versão anterior do geocoder)
+  if(!localStorage.getItem('garfinho_geocoder_v2')){
+    window.places.forEach(p=>{delete p.lat;delete p.lng;});
+    localStorage.setItem('garfinho_geocoder_v2','1');
+  }window._appReady=true;renderAll();setTimeout(()=>document.getElementById('splash').classList.add('hidden'),300);};
 window.addEventListener('load',()=>{setTimeout(()=>{if(!window._appReady){window._appReady=true;renderAll();document.getElementById('splash').classList.add('hidden');}},6000);});
 
 async function uploadToCloudinary(file,onProgress){
@@ -1274,32 +1280,76 @@ async function geocodeQuery(query,structured){
 
 function parseAddress(addr){
   if(!addr)return null;
-  const parts=addr.split(',').map(s=>s.trim()).filter(Boolean);
+  // Remover CEP antes de parsear
+  const clean=addr.replace(/\d{5}-\d{3}/g,'').replace(/,\s*,/g,',').trim().replace(/,\s*$/,'');
+  const parts=clean.split(',').map(s=>s.trim()).filter(Boolean);
   if(parts.length<2)return null;
   const street=parts[0];
   const houseNumber=parts[1]?.match(/^\d+/)?parts[1]:null;
-  const city=parts[parts.length-1];
-  const state=parts.find(p=>/^(RS|SP|RJ|MG|SC|PR|BA|GO|DF|PE|CE|AM|PA|MA|MT|MS|ES|AL|RN|PB|SE|PI|TO|RO|AC|AP|RR)$/i.test(p));
+  // Cidade: procurar parte com "cidade - UF" e extrair só a cidade
+  let city='';
+  let state='';
+  for(const pt of parts){
+    const m=pt.match(/^(.+?)\s*-\s*(RS|SP|RJ|MG|SC|PR|BA|GO|DF|PE|CE|AM|PA|MA|MT|MS|ES|AL|RN|PB|SE|PI|TO|RO|AC|AP|RR)$/i);
+    if(m){city=m[1].trim();state=m[2].toUpperCase();break;}
+  }
+  if(!city)city=parts[parts.length-1];
+  if(!state){
+    const s=parts.find(p=>/^(RS|SP|RJ|MG|SC|PR|BA|GO|DF|PE|CE|AM|PA|MA|MT|MS|ES|AL|RN|PB|SE|PI|TO|RO|AC|AP|RR)$/i.test(p));
+    if(s)state=s;
+  }
   const obj={street,city};
   if(houseNumber)obj['house_number']=houseNumber;
   if(state)obj['state']=state;
   return obj;
 }
 
-// Geocodifica um lugar e tenta todas as estratégias
+// Geocodifica um lugar priorizando CEP + número
 async function geocodePlace(p){
-  // Se já tem coords salvas, retorna direto — ZERO chamada ao Nominatim
+  // Se já tem coords salvas, retorna direto
   if(p.lat&&p.lng)return[p.lat,p.lng];
 
-  const addr=p.address||p.city||'';
+  const addr=(p.address||p.city||'').trim();
+
+  // Extrai CEP e número do endereço
+  const cepMatch=addr.match(/\d{5}-\d{3}/);
+  const cep=cepMatch?cepMatch[0]:null;
+  const parts=addr.split(',').map(s=>s.trim()).filter(Boolean);
+  const numMatch=parts[1]?.match(/^\d+/);
+  const num=numMatch?numMatch[0]:'';
+
+  if(cep){
+    // Estratégia 1: CEP + número (ponto exato na rua)
+    if(num){
+      const c=await geocodeQuery(`${num}, ${cep}, Brasil`);
+      if(c)return c;
+    }
+
+    // Estratégia 2: CEP + número + nome do lugar
+    if(num&&p.name){
+      const c=await geocodeQuery(`${p.name}, ${num}, ${cep}, Brasil`);
+      if(c)return c;
+    }
+
+    // Estratégia 3: nome + CEP
+    if(p.name){
+      const c=await geocodeQuery(`${p.name}, ${cep}, Brasil`);
+      if(c)return c;
+    }
+
+    // Estratégia 4: só CEP (localiza o bairro/logradouro)
+    const c=await geocodeQuery(`${cep}, Brasil`);
+    if(c)return c;
+  }
+
+  // Estratégia 5: endereço completo (fallback sem CEP)
   if(addr){
-    let c=await geocodeQuery(addr);
+    const c=await geocodeQuery(addr+', Brasil');
     if(c)return c;
     const structured=parseAddress(addr);
-    if(structured){c=await geocodeQuery(null,structured);if(c)return c;}
-    if(p.name){c=await geocodeQuery(p.name+', '+addr);if(c)return c;}
+    if(structured){const c2=await geocodeQuery(null,structured);if(c2)return c2;}
   }
-  if(p.name){const c=await geocodeQuery(p.name);if(c)return c;}
+
   return null;
 }
 
@@ -1318,7 +1368,8 @@ async function geocodeAndSave(p){
 // Roda em background sem bloquear o mapa — plota os que já têm coords imediatamente
 async function migrateCoords(){
   if(_geoMigrating)return;
-  const semCoords=window.places.filter(p=>!p.lat||!p.lng);
+  // Reprocessa TODOS — corrige coords erradas salvas anteriormente
+  const semCoords=window.places.filter(p=>!p.lat||!p.lng||p._coordsBad);
   if(!semCoords.length)return;
   _geoMigrating=true;
   const sb=document.getElementById('map-status');
