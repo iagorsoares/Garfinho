@@ -1410,33 +1410,38 @@ async function geocodeAndSave(p){
 // Roda em background sem bloquear o mapa — plota os que já têm coords imediatamente
 async function migrateCoords(){
   if(_geoMigrating)return;
-  // Reprocessa TODOS — corrige coords erradas salvas anteriormente
+  // Reprocessa lugares sem coords (ou todos, após recalcCoords limpar)
   const semCoords=window.places.filter(p=>!p.lat||!p.lng||p._coordsBad);
   if(!semCoords.length)return;
   _geoMigrating=true;
   const sb=document.getElementById('map-status');
   let migrados=0;
-  for(let i=0;i<semCoords.length;i++){
-    const p=semCoords[i];
-    if(sb)sb.textContent=`📡 Atualizando coords ${i+1}/${semCoords.length}…`;
-    const coords=await geocodePlace(p);
-    if(coords){
-      const idx=window.places.findIndex(x=>x.id===p.id);
-      if(idx>=0){
-        window.places[idx].lat=coords[0];
-        window.places[idx].lng=coords[1];
-        migrados++;
-        // Adiciona o marker ao mapa em tempo real conforme geocodifica
-        addMarker(window.places[idx]);
+  try{
+    for(let i=0;i<semCoords.length;i++){
+      const p=semCoords[i];
+      if(sb)sb.textContent=`📡 Atualizando coords ${i+1}/${semCoords.length}…`;
+      let coords=null;
+      try{ coords=await geocodePlace(p); }
+      catch(err){ console.error('Erro geocode',p.name,err); }
+      if(coords){
+        const idx=window.places.findIndex(x=>x.id===p.id);
+        if(idx>=0){
+          window.places[idx].lat=coords[0];
+          window.places[idx].lng=coords[1];
+          delete window.places[idx]._coordsBad;
+          migrados++;
+          addMarker(window.places[idx]);
+        }
       }
+      if(i<semCoords.length-1)await new Promise(r=>setTimeout(r,1100));
     }
-    if(i<semCoords.length-1)await new Promise(r=>setTimeout(r,1100));
+  }finally{
+    // SEMPRE reseta a flag, mesmo se der erro — evita travar o botão 🔄
+    _geoMigrating=false;
   }
-  _geoMigrating=false;
   if(migrados>0)window._fbSave&&window._fbSave();
   const total=mapMarkers.length;
   if(sb)sb.textContent=total?`📍 ${total} lugar${total>1?'es':''} encontrado${total>1?'s':''}`:'😕 Não encontrei coordenadas';
-  // Ajusta bounds com todos os markers
   if(mapMarkers.length>1){
     const bounds=mapMarkers.map(m=>m.getLatLng());
     leafletMap.fitBounds(bounds,{padding:[48,48]});
@@ -1446,14 +1451,17 @@ async function migrateCoords(){
 // Força recálculo de TODAS as coordenadas (botão 🔄)
 // Use quando lugares estiverem com localização errada
 async function recalcCoords(){
-  if(_geoMigrating){return;}
   if(!confirm('Recalcular a localização de todos os lugares? Pode levar alguns segundos.'))return;
-  // Limpa todas as coords salvas
+  // Reseta a flag (caso uma migração anterior tenha travado)
+  _geoMigrating=false;
+  // Limpa todas as coords salvas (local)
   window.places.forEach(p=>{delete p.lat;delete p.lng;});
   // Remove markers do mapa
   mapMarkers.forEach(m=>leafletMap.removeLayer(m));
   mapMarkers=[];
-  // Regeocodifica tudo
+  const sb=document.getElementById('map-status');
+  if(sb)sb.textContent='🔄 Recalculando…';
+  // Regeocodifica tudo do zero
   await migrateCoords();
 }
 
