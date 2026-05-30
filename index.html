@@ -521,7 +521,8 @@ fbLoad();
     <!-- MAPA -->
     <div class="view-map" id="view-mapa">
       <div class="map-header"><div class="map-filter-chips" id="map-chips"><div class="map-chip active" onclick="setMapFilter(this,'all')">Todos</div><div class="map-chip" onclick="setMapFilter(this,'quero')">🔖 Quero ir</div><div class="map-chip" onclick="setMapFilter(this,'visitado')">✅ Já fui</div><div class="map-chip" onclick="setMapFilter(this,'pet')">🐶 Pet friendly</div></div></div>
-      <div class="map-container"><div id="leaflet-map"></div><div class="map-status-bar" id="map-status">📍 Buscando localização…</div><div class="map-city-search" id="map-city-search"><input type="text" id="map-city-input" placeholder="Digite uma cidade…" onkeydown="if(event.key==='Enter')searchCity()"><button onclick="searchCity()">Ir</button></div><button class="map-loc-btn" onclick="centerOnMe()">📍</button></div>
+      <div class="map-container"><div id="leaflet-map"></div><div class="map-status-bar" id="map-status">📍 Buscando localização…</div><div class="map-city-search" id="map-city-search"><input type="text" id="map-city-input" placeholder="Digite uma cidade…" onkeydown="if(event.key==='Enter')searchCity()"><button onclick="searchCity()">Ir</button></div><button class="map-loc-btn" onclick="centerOnMe()">📍</button>
+        <button class="map-loc-btn" onclick="recalcCoords()" title="Recalcular localizações" style="bottom:74px">🔄</button></div>
     </div>
     <!-- RANKING -->
     <div class="view" id="view-ranking"><div class="ranking-list" id="ranking-list"></div></div>
@@ -1422,6 +1423,20 @@ async function migrateCoords(){
     const bounds=mapMarkers.map(m=>m.getLatLng());
     leafletMap.fitBounds(bounds,{padding:[48,48]});
   }
+}
+
+// Força recálculo de TODAS as coordenadas (botão 🔄)
+// Use quando lugares estiverem com localização errada
+async function recalcCoords(){
+  if(_geoMigrating){return;}
+  if(!confirm('Recalcular a localização de todos os lugares? Pode levar alguns segundos.'))return;
+  // Limpa todas as coords salvas
+  window.places.forEach(p=>{delete p.lat;delete p.lng;});
+  // Remove markers do mapa
+  mapMarkers.forEach(m=>leafletMap.removeLayer(m));
+  mapMarkers=[];
+  // Regeocodifica tudo
+  await migrateCoords();
 }
 
 function addMarker(p){
