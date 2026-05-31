@@ -275,7 +275,7 @@ body.dark select{background:var(--card);color:var(--black);border-color:var(--bo
 .empty-sub{font-size:.85rem;color:var(--gray2)}
 .empty-cta{display:inline-block;margin-top:16px;padding:10px 22px;background:var(--red);color:#fff;border-radius:99px;font-weight:800;font-size:.85rem;cursor:pointer;transition:all var(--tr)}
 .empty-cta:hover{background:var(--red-dark)}
-.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:1100;background:var(--card);border-top:1px solid var(--border);padding:6px 0 env(safe-area-inset-bottom,6px);justify-content:space-around;box-shadow:0 -4px 16px rgba(0,0,0,.07)}
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:50;background:var(--card);border-top:1px solid var(--border);padding:6px 0 env(safe-area-inset-bottom,6px);justify-content:space-around;box-shadow:0 -4px 16px rgba(0,0,0,.07)}
 .mob-nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 10px;cursor:pointer;color:var(--gray2);font-size:.6rem;font-weight:700;transition:color var(--tr);border-radius:8px;text-transform:uppercase;letter-spacing:.03em}
 .mob-nav-item.active{color:var(--red)}
 .mob-nav-item span:first-child{font-size:1.2rem}
@@ -397,12 +397,27 @@ async function fbLoad(){
         const remoteTs=data._ts||0;
         if(remoteTs>0&&remoteTs===_lastSaveTs&&!pv)return;
         let lista=data.lista||[];
+        // MIGRAÇÃO v7: na primeira carga, remove coords antigas erradas
+        // direto da fonte (Firebase), forçando recálculo com o geocoder novo
+        if(pv&&!localStorage.getItem('garfinho_geocoder_v7')){
+          let tinha=false;
+          lista.forEach(p=>{if(p.lat||p.lng)tinha=true;delete p.lat;delete p.lng;});
+          localStorage.setItem('garfinho_geocoder_v7','1');
+          if(tinha){
+            // Salva a limpeza de volta no Firebase (uma vez)
+            window.places=lista;
+            setTimeout(()=>{if(window._fbSave)window._fbSave();},1500);
+          }
+        }
         if(!pv&&window.places.length>0){
           const localMap={};
           window.places.forEach(p=>localMap[p.id]=p);
           lista=lista.map(remote=>{
             const local=localMap[remote.id];
-            if(local&&local.logo&&!remote.logo)return local;
+            // Preserva logo local se o remoto perdeu
+            if(local&&local.logo&&!remote.logo){
+              return {...remote,logo:local.logo,lat:remote.lat||local.lat,lng:remote.lng||local.lng};
+            }
             return remote;
           });
         }
@@ -648,11 +663,7 @@ let isEditMode=false;
 const CE={'Bar':'🍺','Restaurante':'🍽️','Pizzaria':'🍕','Hamburgueria':'🍔','Café':'☕','Sorveteria':'🍦','Lanches':'🥪','Delivery':'🛵','Outros':'🍴'};
 
 window._onPlacesLoaded=function(){
-  // Migração: limpa coords antigas (geradas com geocoder impreciso) uma única vez
-  if(!localStorage.getItem('garfinho_geocoder_v7')){
-    window.places.forEach(p=>{delete p.lat;delete p.lng;});
-    localStorage.setItem('garfinho_geocoder_v7','1');
-  }
+  // (Migração de coords agora roda dentro do onSnapshot, na fonte)
   window._appReady=true;renderAll();setTimeout(()=>document.getElementById('splash').classList.add('hidden'),300);
 };
 window.addEventListener('load',()=>{setTimeout(()=>{if(!window._appReady){window._appReady=true;renderAll();document.getElementById('splash').classList.add('hidden');}},6000);});
