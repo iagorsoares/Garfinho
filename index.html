@@ -14,7 +14,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
-  --bg:#f2f2f2;--bg2:#ffffff;--bg3:#e8e8e8;--card:#ffffff;--border:#e0e0e0;
+  --bg:#eceef1;--bg2:#ffffff;--bg3:#e2e5e9;--card:#ffffff;--border:#e0e0e0;
   --red:#ea1d2c;--red-dark:#c0111e;--red-soft:#ffeaec;--red-mid:#ffd0d3;
   --black:#1a1a1a;--gray1:#3d3d3d;--gray2:#7a7a7a;--gray3:#b0b0b0;
   --green:#50a773;--yellow:#f5a623;--pet:#4caf7d;
@@ -231,7 +231,6 @@ body.dark select{background:var(--card);color:var(--black);border-color:var(--bo
 .logo-slot-circle.has-img .slot-remove{display:flex}
 .logo-slot-circle.has-img .slot-icon,.logo-slot-circle.has-img .slot-txt{display:none}
 .logo-slot-circle.has-img{border-style:solid;border-color:var(--red)}
-/* Editor de recorte circular */
 .crop-overlay{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.88);flex-direction:column;align-items:center;justify-content:center;gap:16px;display:none}
 .crop-overlay.open{display:flex}
 .crop-scene{position:relative;width:260px;height:260px;flex-shrink:0}
@@ -276,7 +275,7 @@ body.dark select{background:var(--card);color:var(--black);border-color:var(--bo
 .empty-sub{font-size:.85rem;color:var(--gray2)}
 .empty-cta{display:inline-block;margin-top:16px;padding:10px 22px;background:var(--red);color:#fff;border-radius:99px;font-weight:800;font-size:.85rem;cursor:pointer;transition:all var(--tr)}
 .empty-cta:hover{background:var(--red-dark)}
-.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:50;background:var(--card);border-top:1px solid var(--border);padding:6px 0 env(safe-area-inset-bottom,6px);justify-content:space-around;box-shadow:0 -4px 16px rgba(0,0,0,.07)}
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:1100;background:var(--card);border-top:1px solid var(--border);padding:6px 0 env(safe-area-inset-bottom,6px);justify-content:space-around;box-shadow:0 -4px 16px rgba(0,0,0,.07)}
 .mob-nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 10px;cursor:pointer;color:var(--gray2);font-size:.6rem;font-weight:700;transition:color var(--tr);border-radius:8px;text-transform:uppercase;letter-spacing:.03em}
 .mob-nav-item.active{color:var(--red)}
 .mob-nav-item span:first-child{font-size:1.2rem}
@@ -288,7 +287,8 @@ body.dark select{background:var(--card);color:var(--black);border-color:var(--bo
   .menu-btn{display:flex}
   .mobile-nav{display:flex}
   .view{padding:16px 14px 80px}
-  .view-map{padding-bottom:env(safe-area-inset-bottom,0px)}
+  .view-map{height:calc(100dvh - 60px - 66px);max-height:calc(100dvh - 60px - 66px);flex:none}
+  #leaflet-map{height:100%}
   .stats-grid{grid-template-columns:repeat(2,1fr);gap:10px}
   .dash-grid{grid-template-columns:1fr}
   .places-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
@@ -298,7 +298,6 @@ body.dark select{background:var(--card);color:var(--black);border-color:var(--bo
   .hero-banner::before{display:none}
 }
 @media(max-width:360px){.places-grid{grid-template-columns:1fr}}
-/* ── TELA DE DETALHES ── */
 .detail-overlay{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;opacity:0;visibility:hidden;transition:opacity .3s ease,visibility .3s ease}
 .detail-overlay.open{opacity:1;visibility:visible}
 .detail-modal{background:var(--card);border-radius:22px 22px 0 0;width:100%;max-width:560px;max-height:94dvh;overflow-y:auto;transform:translateY(40px);transition:transform .35s cubic-bezier(.4,0,.2,1)}
@@ -332,12 +331,8 @@ body.dark select{background:var(--card);color:var(--black);border-color:var(--bo
 .detail-badge-visitado{background:#e8f5e0;color:#3a8a4a;padding:4px 12px;border-radius:99px;font-size:.72rem;font-weight:700;display:inline-flex;align-items:center;gap:4px;margin-bottom:14px}
 .detail-badge-quero{background:var(--red-soft);color:var(--red);padding:4px 12px;border-radius:99px;font-size:.72rem;font-weight:700;display:inline-flex;align-items:center;gap:4px;margin-bottom:14px}
 #detail-status-badge{text-align:center}
-
-/* ── RANK THUMB REDONDO para logo ── */
 .rank-thumb img{border-radius:50%;object-fit:contain;padding:3px}
-/* ── RECENT THUMB REDONDO para logo ── */
 .recent-thumb img{border-radius:50%;object-fit:cover;padding:0}
-/* ── CADASTRO DIVIDIDO: step 1 ── */
 .modal-step{display:none}
 .modal-step.active{display:block}
 .step-picker{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px}
@@ -371,7 +366,6 @@ const db=getFirestore(initializeApp({apiKey:"AIzaSyAck2Sz_o_U0f99bCRmN2cpWVYpWk3
 const REF=doc(db,'garfinho','lugares');
 let saveTimer=null,listening=false,saving=false;
 function syncBar(msg,cls){const b=document.getElementById('fb-sync');if(!b)return;b.textContent=msg;b.className='fb-sync-bar show '+cls;clearTimeout(b._t);if(cls==='ok')b._t=setTimeout(()=>b.classList.remove('show'),2000);}
-// Timestamp do último save local — usado para ignorar o próprio echo do onSnapshot
 let _lastSaveTs=0;
 window._fbSave=function(){
   clearTimeout(saveTimer);
@@ -383,7 +377,6 @@ window._fbSave=function(){
       await setDoc(REF,{lista:window.places,_ts:_lastSaveTs});
       localStorage.setItem('garfinho_bkp',JSON.stringify(window.places));
       syncBar('✅ Salvo','ok');
-      // Libera saving após 2s para dar tempo do onSnapshot retornar
       setTimeout(()=>{saving=false;},2000);
     }catch(e){
       saving=false;
@@ -399,21 +392,16 @@ async function fbLoad(){
       listening=true;
       let pv=true;
       onSnapshot(REF,s=>{
-        // Ignorar se foi um save nosso (echo)
         if(saving)return;
         const data=s.exists()?s.data():{};
         const remoteTs=data._ts||0;
-        // Se o timestamp remoto é do nosso próprio save, ignora
         if(remoteTs>0&&remoteTs===_lastSaveTs&&!pv)return;
         let lista=data.lista||[];
-        // Merge inteligente: preservar dados locais mais novos
         if(!pv&&window.places.length>0){
-          // Para cada lugar remoto, se temos versão local mais nova, usa a local
           const localMap={};
           window.places.forEach(p=>localMap[p.id]=p);
           lista=lista.map(remote=>{
             const local=localMap[remote.id];
-            // Usa local se tem logo e remoto não tem (proteção contra perda de logo)
             if(local&&local.logo&&!remote.logo)return local;
             return remote;
           });
@@ -458,7 +446,6 @@ fbLoad();
       <div class="nav-section">Menu</div>
       <div class="nav-item active" onclick="navigate('inicio')"><span class="nav-icon">🏠</span>Início</div>
       <div class="nav-item" onclick="navigate('lugares')"><span class="nav-icon">🍴</span>Lugares<span class="nav-badge" id="badge-all">0</span></div>
-
       <div class="nav-section">Mapa</div>
       <div class="nav-item" onclick="navigate('mapa')"><span class="nav-icon">🗺️</span>Perto de Mim</div>
       <div class="nav-section">Relatórios</div>
@@ -475,7 +462,6 @@ fbLoad();
         <button id="dark-btn" onclick="toggleDark()" title="Alternar modo escuro" style="background:none;border:none;font-size:1.2rem;cursor:pointer;padding:4px 6px;border-radius:8px;transition:background var(--tr);line-height:1">☀️</button>
       </div>
     </div>
-    <!-- INÍCIO -->
     <div class="view active" id="view-inicio">
       <div class="hero-banner"><div class="hero-text"><h2>Olá, Garfeiros! </h2><p>Débora & Iago</p></div><button class="hero-btn" onclick="openModal()">Adicionar</button></div>
       <div class="stats-grid">
@@ -492,7 +478,6 @@ fbLoad();
         </div>
       </div>
     </div>
-    <!-- LUGARES -->
     <div class="view" id="view-lugares">
       <div class="filter-bar" id="filter-bar">
         <div class="filter-chip active" onclick="setFilter(this,'todos')">Todos</div>
@@ -517,15 +502,11 @@ fbLoad();
       </div>
       <div class="places-grid" id="places-grid"></div>
     </div>
-
-    <!-- MAPA -->
     <div class="view-map" id="view-mapa">
       <div class="map-header"><div class="map-filter-chips" id="map-chips"><div class="map-chip active" onclick="setMapFilter(this,'all')">Todos</div><div class="map-chip" onclick="setMapFilter(this,'quero')">🔖 Quero ir</div><div class="map-chip" onclick="setMapFilter(this,'visitado')">✅ Já fui</div><div class="map-chip" onclick="setMapFilter(this,'pet')">🐶 Pet friendly</div></div></div>
-      <div class="map-container"><div id="leaflet-map"></div><div class="map-status-bar" id="map-status">📍 Buscando localização…</div><div class="map-city-search" id="map-city-search"><input type="text" id="map-city-input" placeholder="Digite uma cidade…" onkeydown="if(event.key==='Enter')searchCity()"><button onclick="searchCity()">Ir</button></div><button class="map-loc-btn" onclick="centerOnMe()">📍</button></div>
+      <div class="map-container"><div id="leaflet-map"></div><div class="map-status-bar" id="map-status">📍 Buscando localização…</div><div class="map-city-search" id="map-city-search"><input type="text" id="map-city-input" placeholder="Digite uma cidade…" onkeydown="if(event.key==='Enter')searchCity()"><button onclick="searchCity()">Ir</button></div><button class="map-loc-btn" onclick="recalcCoords()" title="Recalcular localizações" style="bottom:74px">🔄</button><button class="map-loc-btn" onclick="centerOnMe()">📍</button></div>
     </div>
-    <!-- RANKING -->
     <div class="view" id="view-ranking"><div class="ranking-list" id="ranking-list"></div></div>
-    <!-- TIMELINE -->
     <div class="view" id="view-timeline"><div class="timeline" id="timeline-list"></div></div>
   </main>
 </div>
@@ -535,13 +516,10 @@ fbLoad();
   <div class="mob-nav-item" onclick="navigate('mapa')" data-nav="mapa"><span>🗺️</span><span>Perto</span></div>
   <div class="mob-nav-item" onclick="navigate('ranking')" data-nav="ranking"><span>🏆</span><span>Ranking</span></div>
 </div>
-<!-- MODAL -->
 <div class="overlay" id="overlay" onclick="onOvClick(event)">
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-title" id="modal-title">Novo Lugar 🍴</div>
-
-    <!-- STEP 1: escolha status (só para novo lugar) -->
     <div class="modal-step active" id="modal-step1">
       <div class="step-picker">
         <div class="step-card" id="step-card-quero" onclick="chooseStep('quero')">
@@ -559,8 +537,6 @@ fbLoad();
         <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
       </div>
     </div>
-
-    <!-- STEP 2: formulário -->
     <div class="modal-step" id="modal-step2">
       <div class="form-field"><label class="form-label">Nome do Lugar</label><input class="form-input" id="f-name" placeholder="Ex: Cantina"></div>
       <div class="form-field"><label class="form-label">Categoria</label><select class="form-input" id="f-cat"><option>Bar</option><option>Restaurante</option><option>Pizzaria</option><option>Hamburgueria</option><option>Café</option><option>Sorveteria</option><option>Lanches</option><option>Delivery</option><option>Outros</option></select></div>
@@ -571,7 +547,6 @@ fbLoad();
       </div>
       <input type="hidden" id="f-city" value="">
       <div class="form-field"><label class="form-label">Instagram do Lugar</label><input class="form-input" id="f-ig" placeholder="https://instagram.com/nomedolugar" type="url"></div>
-      <!-- Logo circular -->
       <div class="form-field">
         <label class="form-label">Logo do Lugar</label>
         <div class="logo-slot-circle-wrap">
@@ -584,7 +559,6 @@ fbLoad();
         </div>
       </div>
       <div class="form-field"><div class="pet-toggle" id="pet-toggle" onclick="togglePet()"><div class="pt-icon">🐶</div><div class="pt-info"><div class="pt-title">Pet Friendly</div><div class="pt-sub">Aceita animais de estimação</div></div><div class="pt-switch"></div></div></div>
-      <!-- Campos só para VISITADO -->
       <div id="fields-visitado" style="display:none">
         <div class="form-field"><label class="form-label">Avaliação</label><div class="star-input" id="star-input-wrap">
   <span class="star-half" data-v="0.5" onclick="setRating(0.5)" title="0.5">½</span><span class="star-pick" data-v="1" onclick="setRating(1)" title="1">⭐</span>
@@ -608,7 +582,6 @@ fbLoad();
           </div>
         </div>
       </div>
-      <!-- Campo dica também para QUERO (opcional) -->
       <div id="fields-quero-note" style="display:none">
         <div class="form-field"><label class="form-label">Dica / Anotação <span style="font-size:.68rem;font-weight:500;color:var(--gray3);text-transform:none">(opcional)</span></label><input class="form-input" id="f-note-quero" placeholder="Ex: Recomendado pelo João…"></div>
       </div>
@@ -621,7 +594,6 @@ fbLoad();
     </div>
   </div>
 </div>
-<!-- TELA DE DETALHES -->
 <div class="detail-overlay" id="detail-overlay" onclick="onDetailOvClick(event)">
   <div class="detail-modal" id="detail-modal">
     <div class="detail-handle"></div>
@@ -647,8 +619,6 @@ fbLoad();
     </div>
   </div>
 </div>
-
-<!-- EDITOR DE RECORTE DA LOGO -->
 <div class="crop-overlay" id="crop-overlay">
   <div class="crop-hint">Arraste para reposicionar · scroll/pinça para zoom</div>
   <div class="crop-scene">
@@ -665,7 +635,6 @@ fbLoad();
     <button class="crop-btn confirm" onclick="confirmCrop()">Usar foto ✓</button>
   </div>
 </div>
-
 <div id="toast"><span id="ti">✅</span><span id="tm">Salvo!</span></div>
 <script>
 const CLOUD_NAME='djf09kd9g';
@@ -675,16 +644,17 @@ window.places=window.places||[];
 let editId=null,rating=0,curStatus='quero',curPet=false;
 let photoFiles={logo:null,0:null,1:null};
 let activeFilter='todos',searchQuery='',currentView='inicio';
-let isEditMode=false; // true quando abre modal para editar lugar existente
+let isEditMode=false;
 const CE={'Bar':'🍺','Restaurante':'🍽️','Pizzaria':'🍕','Hamburgueria':'🍔','Café':'☕','Sorveteria':'🍦','Lanches':'🥪','Delivery':'🛵','Outros':'🍴'};
 
 window._onPlacesLoaded=function(){
-  // Limpa coords de todos os lugares para forçar re-geocodificação correta
-  // (remove coords erradas geradas pela versão anterior do geocoder)
-  if(!localStorage.getItem('garfinho_geocoder_v2')){
+  // Migração: limpa coords antigas (geradas com geocoder impreciso) uma única vez
+  if(!localStorage.getItem('garfinho_geocoder_v7')){
     window.places.forEach(p=>{delete p.lat;delete p.lng;});
-    localStorage.setItem('garfinho_geocoder_v2','1');
-  }window._appReady=true;renderAll();setTimeout(()=>document.getElementById('splash').classList.add('hidden'),300);};
+    localStorage.setItem('garfinho_geocoder_v7','1');
+  }
+  window._appReady=true;renderAll();setTimeout(()=>document.getElementById('splash').classList.add('hidden'),300);
+};
 window.addEventListener('load',()=>{setTimeout(()=>{if(!window._appReady){window._appReady=true;renderAll();document.getElementById('splash').classList.add('hidden');}},6000);});
 
 async function uploadToCloudinary(file,onProgress){
@@ -724,7 +694,6 @@ function toggleDark(){
   document.getElementById('dark-btn').textContent=isDark?'🌙':'☀️';
   localStorage.setItem('garfinho_dark',isDark?'1':'0');
 }
-// Restaura preferência salva
 (function(){
   if(localStorage.getItem('garfinho_dark')==='1'){
     document.body.classList.add('dark');
@@ -745,19 +714,24 @@ function navigate(v){
   document.querySelectorAll('.mob-nav-item').forEach(x=>{if(x.dataset.nav===v)x.classList.add('active');});
   const T={inicio:'Início',lugares:'Lugares',mapa:'Perto de Mim',ranking:'Ranking',timeline:'Timeline'};
   document.getElementById('topbar-title').textContent=T[v]||'';
-  // searchBox agora fica fixo na view lugares
   if(v==='inicio')renderDashboard();
   else if(v==='lugares')renderPlacesGrid();
-  else if(v==='mapa'){setTimeout(()=>{initMap();renderMap();centerOnMe();},120);}
+  else if(v==='mapa'){
+    setTimeout(()=>{
+      initMap();
+      leafletMap.invalidateSize();
+      setTimeout(()=>leafletMap.invalidateSize(),250);
+      setTimeout(()=>leafletMap.invalidateSize(),600);
+      renderMap();
+    },350);
+  }
   else if(v==='ranking')renderRanking();
   else if(v==='timeline')renderTimeline();
   closeSidebar();
 }
-// Navega para Lugares com filtro pré-aplicado (usado nos stat cards)
 function navigateFiltered(filter){
   activeFilter=filter;
   navigate('lugares');
-  // Atualiza chip de filtro visual
   document.querySelectorAll('#filter-bar .filter-chip').forEach(c=>{
     c.classList.toggle('active', c.getAttribute('onclick')?.includes("'"+filter+"'"));
   });
@@ -770,9 +744,7 @@ function openModal(id=null){
   isEditMode=!!id;
   document.getElementById('upload-progress').classList.remove('show');
   document.getElementById('up-bar').style.width='0%';
-
   if(id){
-    // MODO EDIÇÃO: pula step 1, vai direto ao formulário
     const p=window.places.find(x=>x.id===id);
     if(p){
       document.getElementById('modal-title').textContent='Editar Lugar ✏️';
@@ -781,10 +753,8 @@ function openModal(id=null){
       document.getElementById('f-address').value=p.address||p.city||'';
       document.getElementById('f-city').value='';
       document.getElementById('f-ig').value=p.ig||'';
-      // f-note pode ser de quero ou visitado
       const noteEl=document.getElementById('f-note');
       const noteQEl=document.getElementById('f-note-quero');
-      // Nota vai pro campo correto de acordo com o status do lugar
       if(p.status==='visitado'){if(noteEl)noteEl.value=p.note||'';if(noteQEl)noteQEl.value='';}
       else{if(noteQEl)noteQEl.value=p.note||'';if(noteEl)noteEl.value='';}
       document.getElementById('f-date').value=p.date||'';
@@ -798,13 +768,11 @@ function openModal(id=null){
     document.getElementById('btn-back').textContent='Cancelar';
     document.getElementById('btn-back').setAttribute('onclick','closeModal()');
   }else{
-    // MODO NOVO: mostra step 1
     document.getElementById('modal-title').textContent='Novo Lugar 🍴';
     ['f-name','f-city','f-address','f-ig','f-note','f-note-quero'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
     document.getElementById('f-cat').value='Restaurante';
     document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
     curStatus='quero';setRating(0);
-    // Reset step cards
     document.getElementById('step-card-quero').className='step-card';
     document.getElementById('step-card-visitado').className='step-card';
     document.getElementById('modal-step1').classList.add('active');
@@ -823,28 +791,22 @@ function chooseStep(status){
   document.getElementById('step-card-visitado').className='step-card'+(status==='visitado'?' sel-visitado':'');
   setTimeout(()=>showStep2(status),180);
 }
-
 function showStep2(status){
   document.getElementById('modal-step1').classList.remove('active');
   document.getElementById('modal-step2').classList.add('active');
-  // Mostrar/ocultar campos por status
   document.getElementById('fields-visitado').style.display=status==='visitado'?'block':'none';
   document.getElementById('fields-quero-note').style.display=status==='quero'?'block':'none';
-  // Data padrão
   if(status==='visitado'&&!document.getElementById('f-date').value)
     document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
-  // Botão voltar para edição
   if(!isEditMode){
     document.getElementById('btn-back').textContent='← Voltar';
     document.getElementById('btn-back').setAttribute('onclick','backToStep1()');
   }
 }
-
 function backToStep1(){
   document.getElementById('modal-step2').classList.remove('active');
   document.getElementById('modal-step1').classList.add('active');
 }
-
 function renderSlot(key,value){
   const slotId=key==='logo'?'slot-logo':'slot'+key;
   const slot=document.getElementById(slotId);if(!slot)return;
@@ -859,7 +821,6 @@ function renderSlot(key,value){
     if(img)img.remove();slot.classList.remove('has-img');
   }
 }
-
 function closeModal(){document.getElementById('overlay').classList.remove('open');editId=null;}
 function onOvClick(e){if(e.target===document.getElementById('overlay'))closeModal();}
 function selStatus(el,st){document.querySelectorAll('.sp-btn').forEach(b=>b.classList.remove('sel'));el.classList.add('sel');curStatus=st;}
@@ -887,11 +848,11 @@ async function savePlace(){
   try{
     const up=await uploadAllPhotos();
     const cat=document.getElementById('f-cat').value;
-    // Pega nota do campo correto dependendo do status
     const noteVisitado=(document.getElementById('f-note')?.value||'').trim();
     const noteQuero=(document.getElementById('f-note-quero')?.value||'').trim();
     const note=curStatus==='visitado'?noteVisitado:noteQuero;
     const existing=editId?window.places.find(x=>x.id===editId):null;
+    const addrChanged=existing&&(existing.address!==document.getElementById('f-address').value.trim());
     const p={
       id:editId||Date.now().toString(),name,cat,
       address:document.getElementById('f-address').value.trim(),city:'',
@@ -904,15 +865,13 @@ async function savePlace(){
       date:curStatus==='visitado'?document.getElementById('f-date').value:'',
       emoji:CE[cat]||'🍴',
       createdAt:existing?.createdAt||Date.now(),
-      // Preservar coords existentes para não perder geocodificação
-      lat:existing?.lat||null,
-      lng:existing?.lng||null,
+      lat:addrChanged?null:(existing?.lat||null),
+      lng:addrChanged?null:(existing?.lng||null),
     };
     if(editId){window.places[window.places.findIndex(x=>x.id===editId)]=p;toast('✏️','Lugar atualizado!');}
     else{window.places.unshift(p);toast('✅','Lugar adicionado!');}
     if(window._fbSave)window._fbSave();closeModal();renderAll();
     if(currentView!=='inicio')navigate(currentView);
-    // Geocodifica em background se ainda não tem coords
     if(!p.lat||!p.lng) geocodeAndSave(p);
   }catch(e){console.error(e);toast('❌','Erro ao salvar. Tente novamente.');}
   finally{btn.disabled=false;btn.textContent='Salvar Lugar';}
@@ -927,7 +886,6 @@ function getFiltered(){
     const ms=!searchQuery||p.name.toLowerCase().includes(searchQuery)||(p.cat||'').toLowerCase().includes(searchQuery)||(p.city||'').toLowerCase().includes(searchQuery);
     return mf&&ms;
   });
-  // Ordem padrão: mais recentes primeiro (por unshift no cadastro)
   return list;
 }
 function renderAll(){updateBadges();updateStats();renderDashboard();}
@@ -939,7 +897,6 @@ function updateStats(){
   const rated=window.places.filter(p=>p.rating>0);
   if(rated.length){
     const avg=rated.reduce((a,p)=>a+p.rating,0)/rated.length;
-    // Arredonda para .5 mais próximo
     const rounded=Math.round(avg*2)/2;
     document.getElementById('stat-avg').textContent=rounded+'★';
   }else{
@@ -952,13 +909,11 @@ function renderDashboard(){
   const rec=window.places.slice(0,5);
   document.getElementById('recent-list').innerHTML=rec.length?rec.map(p=>`<div class="recent-item" onclick="openModal('${p.id}')"><div class="recent-thumb">${p.logo?`<img src="${p.logo}" alt="" style="border-radius:50%;object-fit:cover;width:100%;height:100%">`:p.photos?.[0]?`<img src="${p.photos[0]}" alt="" style="border-radius:50%;object-fit:cover">`:p.emoji||'🍴'}</div><div style="flex:1;min-width:0"><div class="recent-name">${p.name}${p.pet?' 🐶':''}</div><div class="recent-cat">${p.cat}${(p.address||p.city)?' · '+(p.address||p.city).split(',').slice(-2).join(',').trim():''}</div></div><div class="stars">${stars(p.rating)}</div></div>`).join(''):'<div style="text-align:center;padding:20px;color:var(--gray2);font-size:.85rem">Nenhum lugar ainda 🍴</div>';
   const cats={};window.places.forEach(p=>{cats[p.cat]=(cats[p.cat]||0)+1;});
-  // Mostra TODAS as categorias, ordenadas por quantidade
   const sorted=Object.entries(cats).sort((a,b)=>b[1]-a[1]);
   const max=sorted[0]?.[1]||1;
   document.getElementById('cat-chart').innerHTML=sorted.length
     ?sorted.map(([c,n])=>`<div class="cat-row" onclick="navigateFiltered('${c}')" style="cursor:pointer;padding:4px 6px;border-radius:8px;transition:background var(--tr)" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''"><div class="cat-header"><span>${CE[c]||'🍴'} ${c}</span><span style="font-weight:800;color:var(--red)">${n} →</span></div><div class="cat-bar"><div class="cat-fill" style="width:${(n/max)*100}%"></div></div></div>`).join('')
     :'<span style="color:var(--gray2);font-size:.85rem">Adicione lugares para ver</span>';
-  // Mostra todas as dicas completas (não palavras soltas), clicáveis
   const dicas=window.places.filter(p=>p.note);
   document.getElementById('mood-cloud').innerHTML=dicas.length
     ?dicas.map(p=>`<span class="mood-tag" onclick="openDetail('${p.id}')" style="cursor:pointer" title="${p.name}">💬 ${p.note.length>40?p.note.slice(0,40)+'…':p.note}</span>`).join('')
@@ -1011,26 +966,19 @@ function renderPlacesGrid(){
   const l=getFiltered();
   if(!l.length){g.innerHTML=empty('Nada encontrado','Tente outro filtro ou busca',false);return;}
   g.innerHTML=l.map(card).join('');
-  // Animação escalonada nos cards
   g.querySelectorAll('.place-card').forEach((c,i)=>{
     c.style.animationDelay=`${i*90}ms`;
   });
 }
-// renderWantGrid removida - use filtro na aba Lugares
-function renderRanking(){const rl=document.getElementById('ranking-list');const rk=[...places].filter(p=>p.rating>0).sort((a,b)=>b.rating-a.rating||a.name.localeCompare(b.name));if(!rk.length){rl.innerHTML=empty('Sem avaliações','Avalie os lugares visitados para ver o ranking');return;}const M=['🥇','🥈','🥉'];rl.innerHTML=rk.map((p,i)=>`<div class="ranking-item"><div class="rank-pos">${i<3?M[i]:i+1}</div><div class="rank-thumb">${p.logo?`<img src="${p.logo}" alt="">`:p.photos?.[0]?`<img src="${p.photos[0]}" alt="">`:p.emoji||'🍴'}</div><div style="flex:1;min-width:0"><div class="rank-name">${p.name}${p.pet?' 🐶':''}</div><div class="rank-cat">${p.cat}${(p.address||p.city)?' · '+(p.address||p.city).split(',').slice(-2).join(',').trim():''}</div></div><div class="rank-score">${p.rating}<span>★</span></div></div>`).join('');}
-function renderTimeline(){const tl=document.getElementById('timeline-list');const vs=[...places].filter(p=>p.date).sort((a,b)=>b.date.localeCompare(a.date));if(!vs.length){tl.innerHTML=empty('Sem histórico','Adicione datas de visita aos seus lugares');return;}const MN=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];tl.innerHTML=vs.map(p=>{const[y,m,d]=p.date.split('-');return`<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-inner"><div class="timeline-date">${parseInt(d)} ${MN[parseInt(m)-1]} ${y}</div><div class="timeline-card"><div class="timeline-title">${p.logo?`<img src="${p.logo}" style="width:22px;height:22px;object-fit:contain;border-radius:4px" alt="">`:p.emoji||'🍴'} ${p.name}${p.pet?' 🐶':''}</div>${p.note?`<div class="timeline-note">💬 ${p.note}</div>`:''}<div style="margin-top:6px">${stars(p.rating)}</div></div></div></div>`;}).join('');}
+function renderRanking(){const rl=document.getElementById('ranking-list');const rk=[...window.places].filter(p=>p.rating>0).sort((a,b)=>b.rating-a.rating||a.name.localeCompare(b.name));if(!rk.length){rl.innerHTML=empty('Sem avaliações','Avalie os lugares visitados para ver o ranking');return;}const M=['🥇','🥈','🥉'];rl.innerHTML=rk.map((p,i)=>`<div class="ranking-item"><div class="rank-pos">${i<3?M[i]:i+1}</div><div class="rank-thumb">${p.logo?`<img src="${p.logo}" alt="">`:p.photos?.[0]?`<img src="${p.photos[0]}" alt="">`:p.emoji||'🍴'}</div><div style="flex:1;min-width:0"><div class="rank-name">${p.name}${p.pet?' 🐶':''}</div><div class="rank-cat">${p.cat}${(p.address||p.city)?' · '+(p.address||p.city).split(',').slice(-2).join(',').trim():''}</div></div><div class="rank-score">${p.rating}<span>★</span></div></div>`).join('');}
+function renderTimeline(){const tl=document.getElementById('timeline-list');const vs=[...window.places].filter(p=>p.date).sort((a,b)=>b.date.localeCompare(a.date));if(!vs.length){tl.innerHTML=empty('Sem histórico','Adicione datas de visita aos seus lugares');return;}const MN=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];tl.innerHTML=vs.map(p=>{const[y,m,d]=p.date.split('-');return`<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-inner"><div class="timeline-date">${parseInt(d)} ${MN[parseInt(m)-1]} ${y}</div><div class="timeline-card"><div class="timeline-title">${p.logo?`<img src="${p.logo}" style="width:22px;height:22px;object-fit:cover;border-radius:50%" alt="">`:p.emoji||'🍴'} ${p.name}${p.pet?' 🐶':''}</div>${p.note?`<div class="timeline-note">💬 ${p.note}</div>`:''}<div style="margin-top:6px">${stars(p.rating)}</div></div></div></div>`;}).join('');}
 
-/* ── TELA DE DETALHES ── */
 function openDetail(id){
   const p=window.places.find(x=>x.id===id);
   if(!p)return;
-
-  // Hero: foto do prato ou gradiente com emoji
   const hero=document.getElementById('detail-hero');
   const heroEmoji=document.getElementById('detail-hero-emoji');
   const heroLogo=document.getElementById('detail-hero-logo');
-
-  // Círculo central: logo se tiver, senão emoji grande
   const heroImg=hero.querySelector('img.hero-bg-img');
   if(heroImg)heroImg.remove();
   heroLogo.innerHTML='';
@@ -1041,23 +989,17 @@ function openDetail(id){
     heroLogo.style.background='var(--bg)';
   }else{
     heroLogo.textContent=p.emoji||'🍴';
-    // Cor de fundo por categoria
     const catBg={'Bar':'#fff3e0','Café':'#fff3e0','Sorveteria':'#e3f2fd','Pizzaria':'#fce4ec',
       'Hamburgueria':'#fff3e0','Lanches':'#fff8e1','Delivery':'#e8f5e9'};
     heroLogo.style.background=catBg[p.cat]||'var(--red-soft)';
   }
   heroEmoji.style.display='none';
-
-  // Badge status
   const badge=document.getElementById('detail-status-badge');
   badge.innerHTML=p.status==='visitado'
     ?`<span class="detail-badge-visitado">✅ Visitado${p.date?' · '+formatDate(p.date):''}</span>`
     :`<span class="detail-badge-quero">🔖 Quero conhecer</span>`;
-
   document.getElementById('detail-name').textContent=p.name+(p.pet?' 🐶':'');
   document.getElementById('detail-meta').textContent=p.cat+(p.address?' · '+p.address.split(',').slice(-2).join(',').trim():'');
-
-  // Avaliação (só para visitado)
   const ratingEl=document.getElementById('detail-rating');
   if(p.status==='visitado'&&p.rating>0){
     ratingEl.innerHTML=`<div class="detail-stars">${[1,2,3,4,5].map(i=>`<span class="detail-star ${i<=p.rating?'filled':''}">★</span>`).join('')}</div><div class="detail-rating-num">${p.rating}★</div>`;
@@ -1065,8 +1007,6 @@ function openDetail(id){
   }else{
     ratingEl.style.display='none';
   }
-
-  // Dica/relato
   const noteSection=document.getElementById('detail-note-section');
   if(p.note){
     document.getElementById('detail-note').textContent=p.note;
@@ -1074,8 +1014,6 @@ function openDetail(id){
   }else{
     noteSection.style.display='none';
   }
-
-  // Fotos dos pratos (só para visitado)
   const photosSection=document.getElementById('detail-photos-section');
   const photosEl=document.getElementById('detail-photos');
   const fotos=(p.photos||[]).filter(Boolean);
@@ -1088,15 +1026,11 @@ function openDetail(id){
   }else{
     photosSection.style.display='none';
   }
-
-  // Info: endereço
   const infoSection=document.getElementById('detail-info-section');
   let infoHtml='';
   if(p.address)infoHtml+=`<div class="detail-info-row"><span class="detail-info-icon">📍</span><span>${p.address}</span></div>`;
   if(p.ig)infoHtml+=`<div class="detail-info-row"><span class="detail-info-icon">📸</span><a href="${p.ig}" target="_blank" style="color:var(--red);font-weight:700">Ver Instagram</a></div>`;
   infoSection.innerHTML=infoHtml?`<div class="detail-section-title">ℹ️ Informações</div>${infoHtml}`:'';
-
-  // Ações
   const actionsEl=document.getElementById('detail-actions');
   const mapsUrl=`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(p.address||p.name||'')}`;
   actionsEl.innerHTML=`
@@ -1104,27 +1038,18 @@ function openDetail(id){
     <button class="detail-btn" onclick="closeDetail();openModal('${p.id}')">✏️ Editar</button>
     <button class="detail-btn primary" onclick="closeDetail()">Fechar</button>
   `;
-
   document.getElementById('detail-overlay').classList.add('open');
 }
-
 function formatDate(d){
   if(!d)return'';
   const[y,m,day]=d.split('-');
   const MN=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   return`${parseInt(day)} ${MN[parseInt(m)-1]} ${y}`;
 }
-
 function closeDetail(){document.getElementById('detail-overlay').classList.remove('open');}
 function onDetailOvClick(e){if(e.target===document.getElementById('detail-overlay'))closeDetail();}
 
-
-
-
-
-/* ══ CROP ENGINE ══ */
 let _cImg=null,_cX=0,_cY=0,_cScale=1,_cDrag=false,_cLast={x:0,y:0},_cSZ=260;
-
 function openCrop(file){
   const reader=new FileReader();
   reader.onload=ev=>{
@@ -1144,7 +1069,6 @@ function openCrop(file){
   };
   reader.readAsDataURL(file);
 }
-
 function _drawCrop(){
   const cv=document.getElementById('crop-canvas');
   if(!cv||!_cImg)return;
@@ -1155,19 +1079,16 @@ function _drawCrop(){
   ctx.drawImage(_cImg,_cX,_cY,_cImg.width*_cScale,_cImg.height*_cScale);
   ctx.restore();
 }
-
 function _updateZoomLabel(){
   const lbl=document.getElementById('crop-zoom-val');
   if(lbl)lbl.textContent=_cScale.toFixed(1)+'x';
 }
-
 function closeCrop(){
   document.getElementById('crop-overlay').classList.remove('open');
   _cImg=null;
   const inp=document.getElementById('photo-input-logo');
   if(inp)inp.value='';
 }
-
 function confirmCrop(){
   const cv=document.getElementById('crop-canvas');
   const dataUrl=cv.toDataURL('image/png');
@@ -1179,12 +1100,10 @@ function confirmCrop(){
     _cImg=null;
   });
 }
-
 document.addEventListener('DOMContentLoaded',()=>{
   const zr=document.getElementById('crop-zoom-range');
   const cv=document.getElementById('crop-canvas');
   if(!zr||!cv)return;
-
   zr.addEventListener('input',e=>{
     if(!_cImg)return;
     const old=_cScale;
@@ -1194,7 +1113,6 @@ document.addEventListener('DOMContentLoaded',()=>{
     _cY=cy+(_cY-cy)*(_cScale/old);
     _updateZoomLabel();_drawCrop();
   });
-
   cv.addEventListener('mousedown',e=>{_cDrag=true;_cLast={x:e.clientX,y:e.clientY};});
   window.addEventListener('mousemove',e=>{
     if(!_cDrag||!_cImg)return;
@@ -1202,14 +1120,12 @@ document.addEventListener('DOMContentLoaded',()=>{
     _cLast={x:e.clientX,y:e.clientY};_drawCrop();
   });
   window.addEventListener('mouseup',()=>{_cDrag=false;});
-
   cv.addEventListener('wheel',e=>{
     e.preventDefault();if(!_cImg)return;
     const delta=e.deltaY>0?-0.07:0.07;
     _cScale=Math.min(3,Math.max(0.3,_cScale+delta));
     zr.value=_cScale;_updateZoomLabel();_drawCrop();
   },{passive:false});
-
   cv.addEventListener('touchstart',e=>{
     e.preventDefault();
     if(e.touches.length===1){_cDrag=true;_cLast={x:e.touches[0].clientX,y:e.touches[0].clientY};}
@@ -1236,169 +1152,215 @@ document.addEventListener('DOMContentLoaded',()=>{
   },{passive:false});
   cv.addEventListener('touchend',()=>{_cDrag=false;cv._lp=null;});
 });
-/* ══ FIM CROP ENGINE ══ */
 
 function toast(icon,msg){document.getElementById('ti').textContent=icon;document.getElementById('tm').textContent=msg;const t=document.getElementById('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
 </script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 (function(){const d=new Date();const dias=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];const dia=dias[d.getDay()];const data=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});const semFeira=['Domingo','Sábado'];const label=semFeira.includes(dia)?dia:dia+'-feira';document.getElementById('topbar-date').textContent=label+' '+data;})();
+
 let leafletMap=null,mapMarkers=[],userMarker=null,mapFilter='all',userCoords=null;
-let _geoMigrating=false; // flag para migração one-time dos lugares sem coords
+let _geoMigrating=false;
 
 function initMap(){
   if(leafletMap)return;
   leafletMap=L.map('leaflet-map',{zoomControl:false,attributionControl:false});
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18}).addTo(leafletMap);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(leafletMap);
   L.control.zoom({position:'topright'}).addTo(leafletMap);
-  leafletMap.setView([-15.77,-47.92],4);
+  leafletMap.setView([-30.0346,-51.2177],11);
+  setTimeout(()=>leafletMap.invalidateSize(),200);
 }
 
 function makeIcon(cat,status,pet){
   const color=status==='visitado'?'#ea1d2c':'#f5a623';
-  const emoji=({Restaurante:'🍽️',Pizzaria:'🍕',Hamburgueria:'🍔',Café:'☕',Sorveteria:'🍦',Lanches:'🥪',Delivery:'🛵',Outros:'🍴'})[cat]||'📍';
+  const emoji=({Restaurante:'🍽️',Pizzaria:'🍕',Hamburgueria:'🍔',Café:'☕',Sorveteria:'🍦',Lanches:'🥪',Delivery:'🛵',Outros:'🍴',Bar:'🍺'})[cat]||'📍';
   const petEl=pet?`<div style="position:absolute;top:-4px;right:-4px;background:#4caf7d;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;font-size:9px">🐶</div>`:'';
   return L.divIcon({html:`<div style="position:relative;width:40px;height:48px"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="48" viewBox="0 0 40 48"><path d="M20 2C11.16 2 4 9.16 4 18c0 12 16 28 16 28s16-16 16-28C36 9.16 28.84 2 20 2z" fill="${color}"/><circle cx="20" cy="18" r="10" fill="white" opacity=".95"/><text x="20" y="22" text-anchor="middle" font-size="11">${emoji}</text></svg>${petEl}</div>`,className:'',iconSize:[40,48],iconAnchor:[20,48],popupAnchor:[0,-50]});
 }
 
-// Geocodifica uma query no Nominatim
-async function geocodeQuery(query,structured){
-  try{
-    let url;
-    if(structured){
-      const params=new URLSearchParams({format:'json',limit:'1',countrycodes:'br',addressdetails:'1',...structured});
-      url=`https://nominatim.openstreetmap.org/search?${params}`;
-    }else{
-      url=`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&countrycodes=br&addressdetails=1`;
-    }
-    const r=await fetch(url,{headers:{'Accept-Language':'pt-BR','User-Agent':'GarfinhoApp/1.0'}});
-    const d=await r.json();
-    if(d[0])return[parseFloat(d[0].lat),parseFloat(d[0].lon)];
-  }catch(e){}
-  return null;
-}
+// ════════════════════════════════════════════════════
+//  GEOLOCALIZAÇÃO — ViaCEP resolve CEP→cidade/UF (preciso),
+//  Nominatim recebe parâmetros ESTRUTURADOS (cidade/UF travados),
+//  o que impede qualquer PIN cair em cidade/estado errado.
+// ════════════════════════════════════════════════════
 
-function parseAddress(addr){
+// Extrai CEP (8 dígitos) do endereço
+function extrairCep(addr){
   if(!addr)return null;
-  // Remover CEP antes de parsear
-  const clean=addr.replace(/\d{5}-\d{3}/g,'').replace(/,\s*,/g,',').trim().replace(/,\s*$/,'');
-  const parts=clean.split(',').map(s=>s.trim()).filter(Boolean);
-  if(parts.length<2)return null;
-  const street=parts[0];
-  const houseNumber=parts[1]?.match(/^\d+/)?parts[1]:null;
-  // Cidade: procurar parte com "cidade - UF" e extrair só a cidade
-  let city='';
-  let state='';
-  for(const pt of parts){
-    const m=pt.match(/^(.+?)\s*-\s*(RS|SP|RJ|MG|SC|PR|BA|GO|DF|PE|CE|AM|PA|MA|MT|MS|ES|AL|RN|PB|SE|PI|TO|RO|AC|AP|RR)$/i);
-    if(m){city=m[1].trim();state=m[2].toUpperCase();break;}
+  let m=addr.match(/(\d{5})-(\d{3})/);
+  if(m)return m[1]+m[2];
+  m=addr.match(/(?:^|[^\d])(\d{8})(?:[^\d]|$)/);
+  return m?m[1]:null;
+}
+// Extrai número predial (1º grupo de dígitos após a 1ª vírgula)
+function extrairNumero(addr){
+  if(!addr)return'';
+  const parts=addr.split(',');
+  for(let i=1;i<parts.length;i++){
+    const m=parts[i].trim().match(/^(\d+)/);
+    if(m)return m[1];
   }
-  if(!city)city=parts[parts.length-1];
-  if(!state){
-    const s=parts.find(p=>/^(RS|SP|RJ|MG|SC|PR|BA|GO|DF|PE|CE|AM|PA|MA|MT|MS|ES|AL|RN|PB|SE|PI|TO|RO|AC|AP|RR)$/i.test(p));
-    if(s)state=s;
-  }
-  const obj={street,city};
-  if(houseNumber)obj['house_number']=houseNumber;
-  if(state)obj['state']=state;
-  return obj;
+  return'';
+}
+// Normaliza abreviações de logradouro (R. → Rua, Av. → Avenida, etc)
+function normalizarRua(rua){
+  if(!rua)return'';
+  let r=rua.trim();
+  r=r.replace(/^R\.?\s+/i,'Rua ');
+  r=r.replace(/^Av\.?\s+/i,'Avenida ');
+  r=r.replace(/^Trav\.?\s+/i,'Travessa ');
+  r=r.replace(/^Tv\.?\s+/i,'Travessa ');
+  r=r.replace(/^Pç\.?\s+/i,'Praça ');
+  r=r.replace(/^Pca\.?\s+/i,'Praça ');
+  r=r.replace(/^Al\.?\s+/i,'Alameda ');
+  r=r.replace(/^Rod\.?\s+/i,'Rodovia ');
+  r=r.replace(/^Estr\.?\s+/i,'Estrada ');
+  return r;
+}
+// Extrai a rua (1º componente) já normalizada
+function extrairRua(addr){
+  if(!addr)return'';
+  return normalizarRua(addr.split(',')[0].trim());
 }
 
-// Geocodifica um lugar priorizando CEP + número
+// Consulta ViaCEP → {logradouro,bairro,localidade,uf} | null
+async function viaCep(cep){
+  try{
+    const ctrl=new AbortController();
+    const t=setTimeout(()=>ctrl.abort(),7000);
+    const r=await fetch(`https://viacep.com.br/ws/${cep}/json/`,{signal:ctrl.signal});
+    clearTimeout(t);
+    if(r.ok){
+      const d=await r.json();
+      if(d&&!d.erro)return d;
+    }
+  }catch(e){console.warn('ViaCEP falhou:',cep,e.message);}
+  return null;
+}
+
+// Busca ESTRUTURADA no Nominatim (cidade/estado/país travados)
+async function nominatimStruct({street,city,state}){
+  try{
+    const qp=new URLSearchParams({format:'json',limit:'1',countrycodes:'br',country:'Brasil'});
+    if(street)qp.set('street',street);
+    if(city)qp.set('city',city);
+    if(state)qp.set('state',state);
+    const ctrl=new AbortController();
+    const t=setTimeout(()=>ctrl.abort(),8000);
+    const r=await fetch(`https://nominatim.openstreetmap.org/search?${qp}`,{headers:{'Accept-Language':'pt-BR'},signal:ctrl.signal});
+    clearTimeout(t);
+    if(r.ok){
+      const d=await r.json();
+      if(d&&d[0])return[parseFloat(d[0].lat),parseFloat(d[0].lon)];
+    }
+  }catch(e){console.warn('Nominatim falhou:',e.message);}
+  return null;
+}
+
+// Resolve coordenadas de um lugar
 async function geocodePlace(p){
-  // Se já tem coords salvas, retorna direto
   if(p.lat&&p.lng)return[p.lat,p.lng];
-
   const addr=(p.address||p.city||'').trim();
+  if(!addr)return null;
 
-  // Extrai CEP e número do endereço
-  const cepMatch=addr.match(/\d{5}-\d{3}/);
-  const cep=cepMatch?cepMatch[0]:null;
-  const parts=addr.split(',').map(s=>s.trim()).filter(Boolean);
-  const numMatch=parts[1]?.match(/^\d+/);
-  const num=numMatch?numMatch[0]:'';
+  const cep=extrairCep(addr);
+  const num=extrairNumero(addr);
+  let rua=extrairRua(addr);
+  let cidade='',uf='';
 
+  // 1) CEP resolve cidade/rua/UF com precisão via ViaCEP
   if(cep){
-    // Estratégia 1: CEP + número (ponto exato na rua)
-    if(num){
-      const c=await geocodeQuery(`${num}, ${cep}, Brasil`);
-      if(c)return c;
+    const info=await viaCep(cep);
+    if(info){
+      if(info.logradouro)rua=normalizarRua(info.logradouro);
+      cidade=info.localidade||'';
+      uf=info.uf||'';
     }
+  }
+  // 2) Se ViaCEP não deu cidade, extrai do texto "Cidade - UF"
+  if(!cidade){
+    const m=addr.match(/([A-Za-zÀ-ÿ\s.]+?)\s*-\s*(RS|SP|RJ|MG|SC|PR|BA|GO|DF|PE|CE|AM|PA|MA|MT|MS|ES|AL|RN|PB|SE|PI|TO|RO|AC|AP|RR)\b/);
+    if(m){cidade=m[1].trim();uf=m[2];}
+  }
+  // Sem cidade não dá para garantir precisão — aborta (não chuta)
+  if(!cidade)return null;
 
-    // Estratégia 2: CEP + número + nome do lugar
-    if(num&&p.name){
-      const c=await geocodeQuery(`${p.name}, ${num}, ${cep}, Brasil`);
-      if(c)return c;
-    }
-
-    // Estratégia 3: nome + CEP
-    if(p.name){
-      const c=await geocodeQuery(`${p.name}, ${cep}, Brasil`);
-      if(c)return c;
-    }
-
-    // Estratégia 4: só CEP (localiza o bairro/logradouro)
-    const c=await geocodeQuery(`${cep}, Brasil`);
+  // 3) rua + número, cidade/UF travados (ponto exato)
+  if(rua&&num){
+    const c=await nominatimStruct({street:`${num} ${rua}`,city:cidade,state:uf});
     if(c)return c;
   }
-
-  // Estratégia 5: endereço completo (fallback sem CEP)
-  if(addr){
-    const c=await geocodeQuery(addr+', Brasil');
+  // 4) rua sem número (meio da rua)
+  if(rua){
+    const c=await nominatimStruct({street:rua,city:cidade,state:uf});
     if(c)return c;
-    const structured=parseAddress(addr);
-    if(structured){const c2=await geocodeQuery(null,structured);if(c2)return c2;}
   }
+  // 5) só cidade/UF (centro — nunca erra de cidade)
+  const c=await nominatimStruct({city:cidade,state:uf});
+  if(c)return c;
 
   return null;
 }
 
-// Geocodifica um lugar e salva lat/lng no Firebase (chamado após salvar/editar)
 async function geocodeAndSave(p){
   const coords=await geocodePlace(p);
-  if(!coords)return;
-  const idx=window.places.findIndex(x=>x.id===p.id);
-  if(idx<0)return;
-  window.places[idx].lat=coords[0];
-  window.places[idx].lng=coords[1];
-  if(window._fbSave)window._fbSave();
+  if(coords){
+    const idx=window.places.findIndex(x=>x.id===p.id);
+    if(idx>=0){
+      window.places[idx].lat=coords[0];
+      window.places[idx].lng=coords[1];
+      if(window._fbSave)window._fbSave();
+    }
+  }
+  return coords;
 }
 
-// Migração one-time: geocodifica todos os lugares que ainda não têm coords
-// Roda em background sem bloquear o mapa — plota os que já têm coords imediatamente
 async function migrateCoords(){
   if(_geoMigrating)return;
-  // Reprocessa TODOS — corrige coords erradas salvas anteriormente
-  const semCoords=window.places.filter(p=>!p.lat||!p.lng||p._coordsBad);
+  const semCoords=window.places.filter(p=>!p.lat||!p.lng);
   if(!semCoords.length)return;
   _geoMigrating=true;
   const sb=document.getElementById('map-status');
   let migrados=0;
-  for(let i=0;i<semCoords.length;i++){
-    const p=semCoords[i];
-    if(sb)sb.textContent=`📡 Atualizando coords ${i+1}/${semCoords.length}…`;
-    const coords=await geocodePlace(p);
-    if(coords){
-      const idx=window.places.findIndex(x=>x.id===p.id);
-      if(idx>=0){
-        window.places[idx].lat=coords[0];
-        window.places[idx].lng=coords[1];
-        migrados++;
-        // Adiciona o marker ao mapa em tempo real conforme geocodifica
-        addMarker(window.places[idx]);
+  try{
+    for(let i=0;i<semCoords.length;i++){
+      const p=semCoords[i];
+      if(sb)sb.textContent=`📡 Localizando ${i+1}/${semCoords.length}…`;
+      let coords=null;
+      try{coords=await geocodePlace(p);}catch(err){console.error('Erro geocode',p.name,err);}
+      if(coords){
+        const idx=window.places.findIndex(x=>x.id===p.id);
+        if(idx>=0){
+          window.places[idx].lat=coords[0];
+          window.places[idx].lng=coords[1];
+          migrados++;
+          addMarker(window.places[idx]);
+        }
       }
+      if(i<semCoords.length-1)await new Promise(r=>setTimeout(r,1100));
     }
-    if(i<semCoords.length-1)await new Promise(r=>setTimeout(r,1100));
+  }finally{
+    _geoMigrating=false;
   }
-  _geoMigrating=false;
-  if(migrados>0)window._fbSave&&window._fbSave();
+  if(migrados>0&&window._fbSave)window._fbSave();
   const total=mapMarkers.length;
-  if(sb)sb.textContent=total?`📍 ${total} lugar${total>1?'es':''} encontrado${total>1?'s':''}`:'😕 Não encontrei coordenadas';
-  // Ajusta bounds com todos os markers
+  if(sb)sb.textContent=total?`📍 ${total} lugar${total>1?'es':''} no mapa`:'😕 Nenhum local encontrado';
   if(mapMarkers.length>1){
-    const bounds=mapMarkers.map(m=>m.getLatLng());
-    leafletMap.fitBounds(bounds,{padding:[48,48]});
+    leafletMap.fitBounds(mapMarkers.map(m=>m.getLatLng()),{padding:[48,48]});
+  }else if(mapMarkers.length===1){
+    leafletMap.setView(mapMarkers[0].getLatLng(),14);
   }
+}
+
+async function recalcCoords(){
+  if(!confirm('Recalcular a localização de todos os lugares? Pode levar até 1 minuto.'))return;
+  _geoMigrating=false;
+  window.places.forEach(p=>{delete p.lat;delete p.lng;});
+  mapMarkers.forEach(m=>leafletMap.removeLayer(m));
+  mapMarkers=[];
+  const sb=document.getElementById('map-status');
+  if(sb)sb.textContent='🔄 Recalculando…';
+  await migrateCoords();
 }
 
 function addMarker(p){
@@ -1412,7 +1374,7 @@ function addMarker(p){
       <div class="map-popup-meta">${p.cat}${(p.address||p.city)?' · '+(p.address||p.city).split(',').slice(-2).join(',').trim():''}</div>
       <div style="font-size:.72rem;font-weight:700;margin-bottom:8px;color:${p.status==='visitado'?'#50a773':'#f5a623'}">${statusLabel}</div>
       ${p.rating?`<div style="color:#f5a623;margin-bottom:8px">${'★'.repeat(Math.floor(p.rating))}</div>`:''}
-      <button class="map-popup-btn" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent((p.address||p.name||'')+(p.city?' '+p.city:''))}','_blank')">🗺️ Abrir rota</button>
+      <button class="map-popup-btn" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent((p.address||p.name||''))}','_blank')">🗺️ Abrir rota</button>
     </div>`,{maxWidth:220,minWidth:180});
   mapMarkers.push(marker);
 }
@@ -1422,48 +1384,50 @@ async function renderMap(){
   const sb=document.getElementById('map-status');
   mapMarkers.forEach(m=>leafletMap.removeLayer(m));
   mapMarkers=[];
-
-  let list=places;
-  if(mapFilter==='quero')   list=places.filter(p=>p.status==='quero');
-  if(mapFilter==='visitado')list=places.filter(p=>p.status==='visitado');
-  if(mapFilter==='pet')     list=places.filter(p=>p.pet);
+  let list=window.places;
+  if(mapFilter==='quero')   list=window.places.filter(p=>p.status==='quero');
+  if(mapFilter==='visitado')list=window.places.filter(p=>p.status==='visitado');
+  if(mapFilter==='pet')     list=window.places.filter(p=>p.pet);
   if(!list.length){sb.textContent='📭 Nenhum lugar para mostrar';return;}
-
-  // Plotar IMEDIATAMENTE os lugares que já têm coords salvas
   const comCoords=list.filter(p=>p.lat&&p.lng);
   const semCoords=list.filter(p=>!p.lat||!p.lng);
-
   comCoords.forEach(p=>addMarker(p));
-
   if(comCoords.length){
-    sb.textContent=`📍 ${comCoords.length} lugar${comCoords.length>1?'es':''} carregado${comCoords.length>1?'s':''}${semCoords.length?' · buscando mais…':''}`;
-    if(comCoords.length===1)leafletMap.setView([comCoords[0].lat,comCoords[0].lng],13);
-    else{
-      const bounds=comCoords.map(p=>[p.lat,p.lng]);
-      leafletMap.fitBounds(bounds,{padding:[48,48]});
-    }
+    sb.textContent=`📍 ${comCoords.length} lugar${comCoords.length>1?'es':''}${semCoords.length?' · localizando mais…':''}`;
+    if(comCoords.length===1)leafletMap.setView([comCoords[0].lat,comCoords[0].lng],14);
+    else leafletMap.fitBounds(comCoords.map(p=>[p.lat,p.lng]),{padding:[48,48]});
   }else{
-    sb.textContent=semCoords.length?'📡 Buscando coordenadas…':'📭 Nenhum lugar para mostrar';
+    sb.textContent=semCoords.length?'📡 Localizando lugares…':'📭 Nenhum lugar para mostrar';
   }
-
-  // Geocodificar os que ainda não têm coords (one-time migration)
-  if(semCoords.length&&!_geoMigrating){
-    migrateCoords();
-  }
+  if(semCoords.length&&!_geoMigrating)migrateCoords();
 }
-function centerOnMe(){if(!leafletMap)return;if(userCoords){leafletMap.setView(userCoords,13,{animate:true});return;}if(!navigator.geolocation){showCitySearch();return;}document.getElementById('map-status').textContent='📡 Obtendo localização…';navigator.geolocation.getCurrentPosition(pos=>{userCoords=[pos.coords.latitude,pos.coords.longitude];if(userMarker)leafletMap.removeLayer(userMarker);userMarker=L.circleMarker(userCoords,{radius:8,fillColor:'#ea1d2c',fillOpacity:1,color:'#fff',weight:3}).addTo(leafletMap).bindPopup('<div class="map-popup"><div class="map-popup-name">Você está aqui</div></div>');leafletMap.setView(userCoords,13,{animate:true});fetch(`https://nominatim.openstreetmap.org/reverse?lat=${userCoords[0]}&lon=${userCoords[1]}&format=json`,{headers:{'Accept-Language':'pt-BR'}}).then(r=>r.json()).then(d=>{const city=d.address?.city||d.address?.town||d.address?.state||'sua região';document.getElementById('map-status').textContent=`📍 Você está em ${city}`;});},()=>{showCitySearch();},{timeout:8000});}
+
+function centerOnMe(){
+  if(!leafletMap)return;
+  if(userCoords){leafletMap.setView(userCoords,14,{animate:true});return;}
+  if(!navigator.geolocation){showCitySearch();return;}
+  document.getElementById('map-status').textContent='📡 Obtendo localização…';
+  navigator.geolocation.getCurrentPosition(pos=>{
+    userCoords=[pos.coords.latitude,pos.coords.longitude];
+    if(userMarker)leafletMap.removeLayer(userMarker);
+    userMarker=L.circleMarker(userCoords,{radius:8,fillColor:'#ea1d2c',fillOpacity:1,color:'#fff',weight:3}).addTo(leafletMap).bindPopup('<div class="map-popup"><div class="map-popup-name">Você está aqui</div></div>');
+    leafletMap.setView(userCoords,14,{animate:true});
+    document.getElementById('map-status').textContent='📍 Você está aqui';
+  },()=>{showCitySearch();},{timeout:8000});
+}
 function showCitySearch(){document.getElementById('map-status').style.display='none';document.getElementById('map-city-search').classList.add('show');setTimeout(()=>document.getElementById('map-city-input').focus(),100);}
-async function searchCity(){const val=document.getElementById('map-city-input').value.trim();if(!val)return;try{const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(val)}&format=json&limit=1`,{headers:{'Accept-Language':'pt-BR','User-Agent':'GarfinhoApp/1.0'}});const d=await r.json();if(d[0]){leafletMap.setView([parseFloat(d[0].lat),parseFloat(d[0].lon)],12,{animate:true});document.getElementById('map-city-search').classList.remove('show');document.getElementById('map-status').style.display='';document.getElementById('map-status').textContent=`📍 Mostrando: ${val}`;}else{document.getElementById('map-city-input').placeholder='Cidade não encontrada…';}}catch(e){}}
+async function searchCity(){const val=document.getElementById('map-city-input').value.trim();if(!val)return;const c=await nominatimStruct({city:val});if(c){leafletMap.setView(c,12,{animate:true});document.getElementById('map-city-search').classList.remove('show');document.getElementById('map-status').style.display='';document.getElementById('map-status').textContent=`📍 ${val}`;}else{document.getElementById('map-city-input').placeholder='Cidade não encontrada…';}}
+
 let addrTimer=null;
 document.addEventListener('DOMContentLoaded',()=>setupAddrAutocomplete());
 if(document.readyState!=='loading')setTimeout(setupAddrAutocomplete,100);
-function setupAddrAutocomplete(){const input=document.getElementById('f-address');const box=document.getElementById('addr-suggestions');if(!input||!box)return;input.addEventListener('input',()=>{clearTimeout(addrTimer);const val=input.value.trim();if(val.length<4){box.style.display='none';return;}addrTimer=setTimeout(async()=>{try{const q=val+', Brasil';const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&countrycodes=br&addressdetails=1`,{headers:{'Accept-Language':'pt-BR','User-Agent':'GarfinhoApp/1.0'}});const d=await r.json();if(!d.length){box.style.display='none';return;}box.innerHTML=d.map(item=>{const label=item.display_name.split(',').slice(0,4).join(',');return`<div class="addr-sug-item" data-display="${item.display_name}" style="padding:10px 14px;font-size:.82rem;cursor:pointer;border-bottom:1px solid var(--border);color:var(--black);transition:background .15s" onmousedown="pickAddr(this)">${label}</div>`;}).join('');box.style.display='block';}catch(e){box.style.display='none';}},400);});input.addEventListener('blur',()=>setTimeout(()=>{box.style.display='none';},200));}
-function pickAddr(el){const full=el.dataset.display;const parts=full.split(',').map(s=>s.trim());const meaningful=parts.slice(0,Math.min(4,parts.length));document.getElementById('f-address').value=meaningful.join(', ');document.getElementById('addr-suggestions').style.display='none';geoCache={};}
+function setupAddrAutocomplete(){const input=document.getElementById('f-address');const box=document.getElementById('addr-suggestions');if(!input||!box)return;input.addEventListener('input',()=>{clearTimeout(addrTimer);const val=input.value.trim();if(val.length<4){box.style.display='none';return;}addrTimer=setTimeout(async()=>{try{const q=val+', Brasil';const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&countrycodes=br&addressdetails=1`,{headers:{'Accept-Language':'pt-BR'}});const d=await r.json();if(!d.length){box.style.display='none';return;}box.innerHTML=d.map(item=>{const label=item.display_name.split(',').slice(0,4).join(',');return`<div class="addr-sug-item" data-display="${item.display_name}" style="padding:10px 14px;font-size:.82rem;cursor:pointer;border-bottom:1px solid var(--border);color:var(--black);transition:background .15s" onmousedown="pickAddr(this)">${label}</div>`;}).join('');box.style.display='block';}catch(e){box.style.display='none';}},400);});input.addEventListener('blur',()=>setTimeout(()=>{box.style.display='none';},200));}
+function pickAddr(el){const full=el.dataset.display;const parts=full.split(',').map(s=>s.trim());const meaningful=parts.slice(0,Math.min(4,parts.length));document.getElementById('f-address').value=meaningful.join(', ');document.getElementById('addr-suggestions').style.display='none';}
 function setMapFilter(el,f){document.querySelectorAll('.map-chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');mapFilter=f;renderMap();}
 </script>
 <script>
 function gerarIconeGarfinho(s){const cv=document.createElement('canvas');cv.width=s;cv.height=s;const x=cv.getContext('2d'),r=s*.22;const g=x.createLinearGradient(0,0,s,s);g.addColorStop(0,'#ea1d2c');g.addColorStop(1,'#c0111e');x.beginPath();x.moveTo(r,0);x.lineTo(s-r,0);x.quadraticCurveTo(s,0,s,r);x.lineTo(s,s-r);x.quadraticCurveTo(s,s,s-r,s);x.lineTo(r,s);x.quadraticCurveTo(0,s,0,s-r);x.lineTo(0,r);x.quadraticCurveTo(0,0,r,0);x.closePath();x.fillStyle=g;x.fill();x.font=s*.52+'px serif';x.textAlign='center';x.textBaseline='middle';x.fillText('🍽️',s/2,s/2+s*.02);if(s>=96){x.font='bold '+s*.1+'px -apple-system,sans-serif';x.fillStyle='rgba(255,255,255,.8)';x.fillText('GARFINHO',s/2,s*.84);}return cv.toDataURL('image/png');}
-(function(){const icon=gerarIconeGarfinho(180);document.getElementById('appleTouchIcon').href=icon;let fav=document.querySelector("link[rel='icon']")||document.createElement('link');fav.rel='icon';fav.href=gerarIconeGarfinho(64);document.head.appendChild(fav);const i192=gerarIconeGarfinho(192),i512=gerarIconeGarfinho(512);const m={name:'Garfinho 🍽️',short_name:'Garfinho',start_url:location.href,display:'standalone',background_color:'#f2f2f2',theme_color:'#ea1d2c',orientation:'portrait',icons:[{src:i192,sizes:'192x192',type:'image/png',purpose:'any maskable'},{src:i512,sizes:'512x512',type:'image/png',purpose:'any maskable'}]};document.getElementById('pwaManifest').href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/json'}));})();
+(function(){const icon=gerarIconeGarfinho(180);document.getElementById('appleTouchIcon').href=icon;let fav=document.querySelector("link[rel='icon']")||document.createElement('link');fav.rel='icon';fav.href=gerarIconeGarfinho(64);document.head.appendChild(fav);const i192=gerarIconeGarfinho(192),i512=gerarIconeGarfinho(512);const m={name:'Garfinho 🍽️',short_name:'Garfinho',start_url:location.href,display:'standalone',background_color:'#eceef1',theme_color:'#ea1d2c',orientation:'portrait',icons:[{src:i192,sizes:'192x192',type:'image/png',purpose:'any maskable'},{src:i512,sizes:'512x512',type:'image/png',purpose:'any maskable'}]};document.getElementById('pwaManifest').href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/json'}));})();
 let _dp=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();_dp=e;document.getElementById('ib').classList.add('show');});
 document.getElementById('ibBtn').addEventListener('click',async()=>{if(!_dp)return;_dp.prompt();await _dp.userChoice;_dp=null;document.getElementById('ib').classList.remove('show');});
