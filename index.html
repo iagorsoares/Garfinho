@@ -1263,182 +1263,148 @@ function makeIcon(cat,status,pet){
   const emoji=({Restaurante:'🍽️',Pizzaria:'🍕',Hamburgueria:'🍔',Café:'☕',Sorveteria:'🍦',Lanches:'🥪',Delivery:'🛵',Outros:'🍴'})[cat]||'📍';
   const petEl=pet?`<div style="position:absolute;top:-4px;right:-4px;background:#4caf7d;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;font-size:9px">🐶</div>`:'';
   return L.divIcon({html:`<div style="position:relative;width:40px;height:48px"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="48" viewBox="0 0 40 48"><path d="M20 2C11.16 2 4 9.16 4 18c0 12 16 28 16 28s16-16 16-28C36 9.16 28.84 2 20 2z" fill="${color}"/><circle cx="20" cy="18" r="10" fill="white" opacity=".95"/><text x="20" y="22" text-anchor="middle" font-size="11">${emoji}</text></svg>${petEl}</div>`,className:'',iconSize:[40,48],iconAnchor:[20,48],popupAnchor:[0,-50]});
-}
 
-// Geocodifica uma query no Nominatim
-// ── GEOCODIFICAÇÃO via ViaCEP + Nominatim ──
-// Estratégia: o CEP resolve cidade/bairro/rua com 100% de precisão (ViaCEP),
-// e o Nominatim converte esse endereço estruturado em coordenadas.
+// ════════════════════════════════════════════════════
+//  GEOCODIFICAÇÃO — reescrita do zero, confiável
+//  Estratégia: ViaCEP resolve o CEP em cidade/UF exatos,
+//  e o Nominatim recebe esses dados como parâmetros ESTRUTURADOS
+//  (city, state, country travados) — impede resultados em outras cidades.
+// ════════════════════════════════════════════════════
 
-// Extrai CEP (00000-000 ou 00000000) do texto do endereço
+// Extrai o CEP (8 dígitos) do texto do endereço
 function extrairCep(addr){
   if(!addr)return null;
-  // Primeiro tenta o formato com hífen (mais confiável): 00000-000
-  let m=addr.match(/(\d{5})-?(\d{3})/);
+  // Formato com hífen é o mais confiável: 00000-000
+  let m=addr.match(/(\d{5})-(\d{3})/);
   if(m)return m[1]+m[2];
-  // Senão, procura uma sequência isolada de 8 dígitos (não colada a outros números)
-  m=addr.match(/(?:^|\D)(\d{8})(?:\D|$)/);
+  // Sequência isolada de 8 dígitos (não colada a outros números)
+  m=addr.match(/(?:^|[^\d])(\d{8})(?:[^\d]|$)/);
   return m?m[1]:null;
 }
 
-// Extrai o número da rua do endereço (segundo componente que começa com dígitos)
+// Extrai o número predial: primeiro grupo de dígitos após a primeira vírgula
 function extrairNumero(addr){
   if(!addr)return'';
-  const parts=addr.split(',').map(s=>s.trim());
+  const parts=addr.split(',');
   for(let i=1;i<parts.length;i++){
-    const m=parts[i].match(/^(\d+)/);
+    const m=parts[i].trim().match(/^(\d+)/);
     if(m)return m[1];
   }
   return'';
 }
 
-// Consulta ViaCEP → retorna {logradouro,bairro,localidade,uf} ou null
+// Extrai o nome da rua: primeiro componente antes da primeira vírgula
+function extrairRua(addr){
+  if(!addr)return'';
+  return addr.split(',')[0].trim();
+}
+
+// Consulta ViaCEP → {logradouro,bairro,localidade,uf} | null
 async function viaCep(cep){
   try{
     const ctrl=new AbortController();
-    const t=setTimeout(()=>ctrl.abort(),6000);
+    const t=setTimeout(()=>ctrl.abort(),7000);
     const r=await fetch(`https://viacep.com.br/ws/${cep}/json/`,{signal:ctrl.signal});
     clearTimeout(t);
     if(r.ok){
       const d=await r.json();
       if(d&&!d.erro)return d;
     }
-  }catch(e){console.warn('ViaCEP falhou para',cep,e.message);}
+  }catch(e){console.warn('ViaCEP falhou:',cep,e.message);}
   return null;
 }
 
-// Geocodifica via Nominatim (texto livre). Fallback para Photon se falhar.
-async function nominatim(query){
-  // 1) Nominatim
+// Busca ESTRUTURADA no Nominatim (parâmetros separados, cidade/UF travados)
+// Esta é a chave: o Nominatim NÃO faz fuzzy entre cidades quando recebe
+// city/state/country como campos distintos.
+async function nominatimStruct({street,city,state}){
   try{
-    const url=`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&countrycodes=br`;
-    const r=await fetch(url,{headers:{'Accept-Language':'pt-BR'}});
+    const qp=new URLSearchParams({
+      format:'json',limit:'1',countrycodes:'br',
+      country:'Brasil'
+    });
+    if(street)qp.set('street',street);
+    if(city)qp.set('city',city);
+    if(state)qp.set('state',state);
+    const ctrl=new AbortController();
+    const t=setTimeout(()=>ctrl.abort(),8000);
+    const r=await fetch(`https://nominatim.openstreetmap.org/search?${qp}`,
+      {headers:{'Accept-Language':'pt-BR'},signal:ctrl.signal});
+    clearTimeout(t);
     if(r.ok){
       const d=await r.json();
       if(d&&d[0])return[parseFloat(d[0].lat),parseFloat(d[0].lon)];
     }
-  }catch(e){}
-  // 2) Photon (Komoot) — sem rate limit nem header obrigatório
-  try{
-    const url=`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=1&lang=pt`;
-    const r=await fetch(url);
-    if(r.ok){
-      const d=await r.json();
-      if(d&&d.features&&d.features[0]){
-        const c=d.features[0].geometry.coordinates;
-        return[c[1],c[0]];
-      }
-    }
-  }catch(e){}
+  }catch(e){console.warn('Nominatim struct falhou:',e.message);}
   return null;
 }
 
-// Geocodifica via Nominatim com query estruturada (mais preciso)
-async function nominatimStruct(params){
-  try{
-    const qp=new URLSearchParams({format:'json',limit:'1',countrycodes:'br',...params});
-    const url=`https://nominatim.openstreetmap.org/search?${qp}`;
-    const r=await fetch(url,{headers:{'Accept-Language':'pt-BR'}});
-    const d=await r.json();
-    if(d&&d[0])return[parseFloat(d[0].lat),parseFloat(d[0].lon)];
-  }catch(e){}
-  return null;
-}
-
-// Função principal: resolve as coordenadas de um lugar
+// Resolve as coordenadas de um lugar
 async function geocodePlace(p){
-  // Já tem coords salvas → retorna direto, zero requisições
   if(p.lat&&p.lng)return[p.lat,p.lng];
 
   const addr=(p.address||p.city||'').trim();
+  if(!addr)return null;
+
   const cep=extrairCep(addr);
   const num=extrairNumero(addr);
+  const ruaRaw=extrairRua(addr);
 
-  // Resolve cidade/rua/bairro pelo CEP (ViaCEP). Se falhar, segue mesmo assim.
-  let rua='',bairro='',cidade='',uf='';
+  // Resolve cidade/rua/UF pelo CEP — fonte de verdade
+  let rua=ruaRaw,cidade='',uf='';
   if(cep){
-    try{
-      const info=await viaCep(cep);
-      if(info){
-        rua=info.logradouro||'';
-        bairro=info.bairro||'';
-        cidade=info.localidade||'';
-        uf=info.uf||'';
-      }
-    }catch(e){}
-  }
-
-  // ── ESTRATÉGIA 1: nome do local + cidade (PIN exato no estabelecimento) ──
-  if(p.name&&cidade){
-    let c=await nominatim(`${p.name}, ${cidade}, ${uf}, Brasil`);
-    if(c)return c;
-    if(bairro){
-      c=await nominatim(`${p.name}, ${bairro}, ${cidade}, ${uf}, Brasil`);
-      if(c)return c;
+    const info=await viaCep(cep);
+    if(info){
+      if(info.logradouro)rua=info.logradouro;
+      cidade=info.localidade||'';
+      uf=info.uf||'';
     }
   }
 
-  // ── ESTRATÉGIA 2: rua + número + cidade ──
-  if(rua&&num&&cidade){
-    let c=await nominatim(`${rua}, ${num}, ${cidade}, ${uf}, Brasil`);
-    if(c)return c;
+  // Se o ViaCEP não deu cidade, tenta extrair do texto "Cidade - UF"
+  if(!cidade){
+    const m=addr.match(/([A-Za-zÀ-ÿ\s.]+?)\s*-\s*(RS|SP|RJ|MG|SC|PR|BA|GO|DF|PE|CE|AM|PA|MA|MT|MS|ES|AL|RN|PB|SE|PI|TO|RO|AC|AP|RR)\b/);
+    if(m){cidade=m[1].trim();uf=m[2];}
   }
 
-  // ── ESTRATÉGIA 3: rua + cidade ──
-  if(rua&&cidade){
-    let c=await nominatim(`${rua}, ${cidade}, ${uf}, Brasil`);
-    if(c)return c;
-  }
+  // Sem cidade não dá para geocodificar com segurança
+  if(!cidade)return null;
 
-  // ── ESTRATÉGIA 4: bairro + cidade ──
-  if(bairro&&cidade){
-    let c=await nominatim(`${bairro}, ${cidade}, ${uf}, Brasil`);
+  // ESTRATÉGIA 1: rua + número, com cidade/UF travados (ponto exato)
+  if(rua&&num){
+    const c=await nominatimStruct({street:`${num} ${rua}`,city:cidade,state:uf});
     if(c)return c;
   }
-
-  // ── ESTRATÉGIA 5: CEP direto no Nominatim (caso ViaCEP tenha falhado) ──
-  if(cep){
-    const cepFmt=cep.slice(0,5)+'-'+cep.slice(5);
-    let c=await nominatim(`${cepFmt}, Brasil`);
+  // ESTRATÉGIA 2: rua sem número, cidade/UF travados (meio da rua)
+  if(rua){
+    const c=await nominatimStruct({street:rua,city:cidade,state:uf});
     if(c)return c;
   }
-
-  // ── ESTRATÉGIA 6: só a cidade ──
-  if(cidade){
-    let c=await nominatim(`${cidade}, ${uf}, Brasil`);
-    if(c)return c;
-  }
-
-  // ── FALLBACK: texto do endereço / nome (ViaCEP indisponível) ──
-  if(addr){
-    let c=await nominatim(addr+', Brasil');
-    if(c)return c;
-  }
-  if(p.name){
-    let c=await nominatim(`${p.name}, Brasil`);
-    if(c)return c;
-  }
+  // ESTRATÉGIA 3: só cidade/UF (centro da cidade — nunca erra de cidade)
+  const c=await nominatimStruct({city:cidade,state:uf});
+  if(c)return c;
 
   return null;
 }
 
-// Geocodifica um lugar e salva lat/lng no Firebase (chamado após salvar/editar)
+// Geocodifica e salva no Firebase
 async function geocodeAndSave(p){
   const coords=await geocodePlace(p);
-  if(!coords)return;
-  const idx=window.places.findIndex(x=>x.id===p.id);
-  if(idx<0)return;
-  window.places[idx].lat=coords[0];
-  window.places[idx].lng=coords[1];
-  if(window._fbSave)window._fbSave();
+  if(coords){
+    const idx=window.places.findIndex(x=>x.id===p.id);
+    if(idx>=0){
+      window.places[idx].lat=coords[0];
+      window.places[idx].lng=coords[1];
+      if(window._fbSave)window._fbSave();
+    }
+  }
+  return coords;
 }
 
-// Migração one-time: geocodifica todos os lugares que ainda não têm coords
-// Roda em background sem bloquear o mapa — plota os que já têm coords imediatamente
+// Migração: geocodifica os lugares sem coords, plotando em tempo real
 async function migrateCoords(){
   if(_geoMigrating)return;
-  // Reprocessa lugares sem coords (ou todos, após recalcCoords limpar)
-  const semCoords=window.places.filter(p=>!p.lat||!p.lng||p._coordsBad);
+  const semCoords=window.places.filter(p=>!p.lat||!p.lng);
   if(!semCoords.length)return;
   _geoMigrating=true;
   const sb=document.getElementById('map-status');
@@ -1446,49 +1412,44 @@ async function migrateCoords(){
   try{
     for(let i=0;i<semCoords.length;i++){
       const p=semCoords[i];
-      if(sb)sb.textContent=`📡 Atualizando coords ${i+1}/${semCoords.length}…`;
+      if(sb)sb.textContent=`📡 Localizando ${i+1}/${semCoords.length}…`;
       let coords=null;
-      try{ coords=await geocodePlace(p); }
-      catch(err){ console.error('Erro geocode',p.name,err); }
+      try{coords=await geocodePlace(p);}
+      catch(err){console.error('Erro geocode',p.name,err);}
       if(coords){
         const idx=window.places.findIndex(x=>x.id===p.id);
         if(idx>=0){
           window.places[idx].lat=coords[0];
           window.places[idx].lng=coords[1];
-          delete window.places[idx]._coordsBad;
           migrados++;
           addMarker(window.places[idx]);
         }
       }
+      // Delay para respeitar o limite do Nominatim (1 req/s)
       if(i<semCoords.length-1)await new Promise(r=>setTimeout(r,1100));
     }
   }finally{
-    // SEMPRE reseta a flag, mesmo se der erro — evita travar o botão 🔄
     _geoMigrating=false;
   }
-  if(migrados>0)window._fbSave&&window._fbSave();
+  if(migrados>0&&window._fbSave)window._fbSave();
   const total=mapMarkers.length;
-  if(sb)sb.textContent=total?`📍 ${total} lugar${total>1?'es':''} encontrado${total>1?'s':''}`:'😕 Não encontrei coordenadas';
+  if(sb)sb.textContent=total?`📍 ${total} lugar${total>1?'es':''} no mapa`:'😕 Nenhum local encontrado';
   if(mapMarkers.length>1){
-    const bounds=mapMarkers.map(m=>m.getLatLng());
-    leafletMap.fitBounds(bounds,{padding:[48,48]});
+    leafletMap.fitBounds(mapMarkers.map(m=>m.getLatLng()),{padding:[48,48]});
+  }else if(mapMarkers.length===1){
+    leafletMap.setView(mapMarkers[0].getLatLng(),14);
   }
 }
 
-// Força recálculo de TODAS as coordenadas (botão 🔄)
-// Use quando lugares estiverem com localização errada
+// Botão 🔄: recalcula TODAS as localizações do zero
 async function recalcCoords(){
-  if(!confirm('Recalcular a localização de todos os lugares? Pode levar alguns segundos.'))return;
-  // Reseta a flag (caso uma migração anterior tenha travado)
+  if(!confirm('Recalcular a localização de todos os lugares? Pode levar até 1 minuto.'))return;
   _geoMigrating=false;
-  // Limpa todas as coords salvas (local)
   window.places.forEach(p=>{delete p.lat;delete p.lng;});
-  // Remove markers do mapa
   mapMarkers.forEach(m=>leafletMap.removeLayer(m));
   mapMarkers=[];
   const sb=document.getElementById('map-status');
   if(sb)sb.textContent='🔄 Recalculando…';
-  // Regeocodifica tudo do zero
   await migrateCoords();
 }
 
