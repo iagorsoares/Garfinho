@@ -752,7 +752,16 @@ function navigate(v){
   // searchBox agora fica fixo na view lugares
   if(v==='inicio')renderDashboard();
   else if(v==='lugares')renderPlacesGrid();
-  else if(v==='mapa'){setTimeout(()=>{initMap();renderMap();centerOnMe();},120);}
+  else if(v==='mapa'){
+    setTimeout(()=>{
+      initMap();
+      // Múltiplos invalidateSize para garantir que o mapa renderize após a transição
+      leafletMap.invalidateSize();
+      setTimeout(()=>leafletMap.invalidateSize(),250);
+      setTimeout(()=>leafletMap.invalidateSize(),600);
+      renderMap();
+    },350);
+  }
   else if(v==='ranking')renderRanking();
   else if(v==='timeline')renderTimeline();
   closeSidebar();
@@ -1253,9 +1262,11 @@ let _geoMigrating=false; // flag para migração one-time dos lugares sem coords
 function initMap(){
   if(leafletMap)return;
   leafletMap=L.map('leaflet-map',{zoomControl:false,attributionControl:false});
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18}).addTo(leafletMap);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(leafletMap);
   L.control.zoom({position:'topright'}).addTo(leafletMap);
-  leafletMap.setView([-15.77,-47.92],4);
+  leafletMap.setView([-30.0346,-51.2177],11); // Porto Alegre como centro inicial
+  // Recalcula o tamanho após o container estar visível (corrige mapa em branco)
+  setTimeout(()=>leafletMap.invalidateSize(),200);
 }
 
 function makeIcon(cat,status,pet){
