@@ -399,10 +399,10 @@ async function fbLoad(){
         let lista=data.lista||[];
         // MIGRAÇÃO v7: na primeira carga, remove coords antigas erradas
         // direto da fonte (Firebase), forçando recálculo com o geocoder novo
-        if(pv&&!localStorage.getItem('garfinho_geocoder_v8')){
+        if(pv&&!localStorage.getItem('garfinho_geocoder_v9')){
           let tinha=false;
           lista.forEach(p=>{if(p.lat||p.lng)tinha=true;delete p.lat;delete p.lng;});
-          localStorage.setItem('garfinho_geocoder_v8','1');
+          localStorage.setItem('garfinho_geocoder_v9','1');
           if(tinha){
             // Salva a limpeza de volta no Firebase (uma vez)
             window.places=lista;
@@ -1250,15 +1250,12 @@ async function viaCep(cep){
 }
 
 // Busca ESTRUTURADA no Nominatim (cidade/estado/país travados)
-async function nominatimStruct({street,city,state,postalcode,bairro}){
+async function nominatimStruct({street,city,state}){
   try{
     const qp=new URLSearchParams({format:'json',limit:'1',countrycodes:'br',country:'Brasil'});
     if(street)qp.set('street',street);
-    // bairro entra no county para ajudar a desambiguar (Nominatim aceita)
-    if(bairro)qp.set('county',bairro);
     if(city)qp.set('city',city);
     if(state)qp.set('state',state);
-    if(postalcode)qp.set('postalcode',postalcode);
     const ctrl=new AbortController();
     const t=setTimeout(()=>ctrl.abort(),8000);
     const r=await fetch(`https://nominatim.openstreetmap.org/search?${qp}`,{headers:{'Accept-Language':'pt-BR'},signal:ctrl.signal});
@@ -1280,14 +1277,13 @@ async function geocodePlace(p){
   const cep=extrairCep(addr);
   const num=extrairNumero(addr);
   let rua=extrairRua(addr);
-  let bairro='',cidade='',uf='';
+  let cidade='',uf='';
 
-  // 1) CEP resolve rua/bairro/cidade/UF com precisão via ViaCEP
+  // 1) CEP resolve rua/cidade/UF com precisão via ViaCEP
   if(cep){
     const info=await viaCep(cep);
     if(info){
       if(info.logradouro)rua=normalizarRua(info.logradouro);
-      bairro=info.bairro||'';
       cidade=info.localidade||'';
       uf=info.uf||'';
     }
@@ -1299,41 +1295,16 @@ async function geocodePlace(p){
   }
   // Sem cidade não dá para garantir precisão — aborta (não chuta)
   if(!cidade)return null;
+  // Sem rua, não plota (evita cair todo mundo no centro da cidade)
+  if(!rua)return null;
 
-  // 3) CEP direto no Nominatim (postalcode) — costuma ser o ponto mais exato
-  //    e desambígua ruas de mesmo nome, pois o CEP é único
-  if(cep){
-    const cepFmt=cep.slice(0,5)+'-'+cep.slice(5);
-    const c=await nominatimStruct({postalcode:cepFmt,city:cidade,state:uf});
-    if(c)return c;
-  }
-  // 4) rua + número + bairro, cidade/UF travados (bairro desambígua ruas homônimas)
-  if(rua&&num&&bairro){
-    const c=await nominatimStruct({street:`${num} ${rua}`,city:cidade,state:uf,bairro:bairro});
-    if(c)return c;
-  }
-  // 5) rua + número, cidade/UF travados
-  if(rua&&num){
+  // 3) rua + número, cidade/UF travados (ponto exato — diferencia cada lugar)
+  if(num){
     const c=await nominatimStruct({street:`${num} ${rua}`,city:cidade,state:uf});
     if(c)return c;
   }
-  // 6) rua + bairro (sem número)
-  if(rua&&bairro){
-    const c=await nominatimStruct({street:rua,city:cidade,state:uf,bairro:bairro});
-    if(c)return c;
-  }
-  // 7) rua sem número
-  if(rua){
-    const c=await nominatimStruct({street:rua,city:cidade,state:uf});
-    if(c)return c;
-  }
-  // 8) bairro + cidade
-  if(bairro){
-    const c=await nominatimStruct({city:cidade,state:uf,bairro:bairro});
-    if(c)return c;
-  }
-  // 9) só cidade/UF (centro — nunca erra de cidade)
-  const c=await nominatimStruct({city:cidade,state:uf});
+  // 4) rua sem número (meio da rua certa)
+  const c=await nominatimStruct({street:rua,city:cidade,state:uf});
   if(c)return c;
 
   return null;
