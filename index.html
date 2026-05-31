@@ -399,10 +399,10 @@ async function fbLoad(){
         let lista=data.lista||[];
         // MIGRAÇÃO v7: na primeira carga, remove coords antigas erradas
         // direto da fonte (Firebase), forçando recálculo com o geocoder novo
-        if(pv&&!localStorage.getItem('garfinho_geocoder_v7')){
+        if(pv&&!localStorage.getItem('garfinho_geocoder_v8')){
           let tinha=false;
           lista.forEach(p=>{if(p.lat||p.lng)tinha=true;delete p.lat;delete p.lng;});
-          localStorage.setItem('garfinho_geocoder_v7','1');
+          localStorage.setItem('garfinho_geocoder_v8','1');
           if(tinha){
             // Salva a limpeza de volta no Firebase (uma vez)
             window.places=lista;
@@ -1250,12 +1250,15 @@ async function viaCep(cep){
 }
 
 // Busca ESTRUTURADA no Nominatim (cidade/estado/país travados)
-async function nominatimStruct({street,city,state}){
+async function nominatimStruct({street,city,state,postalcode,bairro}){
   try{
     const qp=new URLSearchParams({format:'json',limit:'1',countrycodes:'br',country:'Brasil'});
     if(street)qp.set('street',street);
+    // bairro entra no county para ajudar a desambiguar (Nominatim aceita)
+    if(bairro)qp.set('county',bairro);
     if(city)qp.set('city',city);
     if(state)qp.set('state',state);
+    if(postalcode)qp.set('postalcode',postalcode);
     const ctrl=new AbortController();
     const t=setTimeout(()=>ctrl.abort(),8000);
     const r=await fetch(`https://nominatim.openstreetmap.org/search?${qp}`,{headers:{'Accept-Language':'pt-BR'},signal:ctrl.signal});
@@ -1277,13 +1280,14 @@ async function geocodePlace(p){
   const cep=extrairCep(addr);
   const num=extrairNumero(addr);
   let rua=extrairRua(addr);
-  let cidade='',uf='';
+  let bairro='',cidade='',uf='';
 
-  // 1) CEP resolve cidade/rua/UF com precisão via ViaCEP
+  // 1) CEP resolve rua/bairro/cidade/UF com precisão via ViaCEP
   if(cep){
     const info=await viaCep(cep);
     if(info){
       if(info.logradouro)rua=normalizarRua(info.logradouro);
+      bairro=info.bairro||'';
       cidade=info.localidade||'';
       uf=info.uf||'';
     }
@@ -1296,17 +1300,39 @@ async function geocodePlace(p){
   // Sem cidade não dá para garantir precisão — aborta (não chuta)
   if(!cidade)return null;
 
-  // 3) rua + número, cidade/UF travados (ponto exato)
+  // 3) CEP direto no Nominatim (postalcode) — costuma ser o ponto mais exato
+  //    e desambígua ruas de mesmo nome, pois o CEP é único
+  if(cep){
+    const cepFmt=cep.slice(0,5)+'-'+cep.slice(5);
+    const c=await nominatimStruct({postalcode:cepFmt,city:cidade,state:uf});
+    if(c)return c;
+  }
+  // 4) rua + número + bairro, cidade/UF travados (bairro desambígua ruas homônimas)
+  if(rua&&num&&bairro){
+    const c=await nominatimStruct({street:`${num} ${rua}`,city:cidade,state:uf,bairro:bairro});
+    if(c)return c;
+  }
+  // 5) rua + número, cidade/UF travados
   if(rua&&num){
     const c=await nominatimStruct({street:`${num} ${rua}`,city:cidade,state:uf});
     if(c)return c;
   }
-  // 4) rua sem número (meio da rua)
+  // 6) rua + bairro (sem número)
+  if(rua&&bairro){
+    const c=await nominatimStruct({street:rua,city:cidade,state:uf,bairro:bairro});
+    if(c)return c;
+  }
+  // 7) rua sem número
   if(rua){
     const c=await nominatimStruct({street:rua,city:cidade,state:uf});
     if(c)return c;
   }
-  // 5) só cidade/UF (centro — nunca erra de cidade)
+  // 8) bairro + cidade
+  if(bairro){
+    const c=await nominatimStruct({city:cidade,state:uf,bairro:bairro});
+    if(c)return c;
+  }
+  // 9) só cidade/UF (centro — nunca erra de cidade)
   const c=await nominatimStruct({city:cidade,state:uf});
   if(c)return c;
 
@@ -1378,6 +1404,8 @@ function addMarker(p){
   if(!p.lat||!p.lng)return;
   const coords=[p.lat,p.lng];
   const statusLabel=p.status==='visitado'?'✅ Já fui':'🔖 Quero ir';
+  // Link de rota: usa as COORDENADAS exatas do pin (mais confiável que texto)
+  const rotaUrl=`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`;
   const marker=L.marker(coords,{icon:makeIcon(p.cat,p.status,p.pet)})
     .addTo(leafletMap)
     .bindPopup(`<div class="map-popup">
@@ -1385,7 +1413,7 @@ function addMarker(p){
       <div class="map-popup-meta">${p.cat}${(p.address||p.city)?' · '+(p.address||p.city).split(',').slice(-2).join(',').trim():''}</div>
       <div style="font-size:.72rem;font-weight:700;margin-bottom:8px;color:${p.status==='visitado'?'#50a773':'#f5a623'}">${statusLabel}</div>
       ${p.rating?`<div style="color:#f5a623;margin-bottom:8px">${'★'.repeat(Math.floor(p.rating))}</div>`:''}
-      <button class="map-popup-btn" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent((p.address||p.name||''))}','_blank')">🗺️ Abrir rota</button>
+      <a class="map-popup-btn" href="${rotaUrl}" target="_blank" rel="noopener" style="text-decoration:none">🗺️ Abrir rota</a>
     </div>`,{maxWidth:220,minWidth:180});
   mapMarkers.push(marker);
 }
