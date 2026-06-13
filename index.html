@@ -907,6 +907,8 @@ async function savePlace(){
       // Preservar coords existentes para não perder geocodificação
       lat:existing?.lat||null,
       lng:existing?.lng||null,
+      geoV:existing?.geoV||null,
+      pinned:existing?.pinned||false,
     };
     if(editId){window.places[window.places.findIndex(x=>x.id===editId)]=p;toast('✏️','Lugar atualizado!');}
     else{window.places.unshift(p);toast('✅','Lugar adicionado!');}
@@ -1248,7 +1250,7 @@ function toast(icon,msg){document.getElementById('ti').textContent=icon;document
 /* ===== Estado do mapa ===== */
 let leafletMap=null,mapMarkers=[],userMarker=null,mapFilter='all',userCoords=null;
 let _geoMigrating=false;
-const GEO_VERSION=3; // suba este número se mudar a lógica de geocodificação (força recalcular tudo)
+const GEO_VERSION=4; // suba este número se mudar a lógica de geocodificação (força recalcular tudo)
 
 /* UF -> nome completo (Nominatim responde os estados em português) */
 const UF_FULL={AC:'Acre',AL:'Alagoas',AP:'Amapá',AM:'Amazonas',BA:'Bahia',CE:'Ceará',DF:'Distrito Federal',ES:'Espírito Santo',GO:'Goiás',MA:'Maranhão',MT:'Mato Grosso',MS:'Mato Grosso do Sul',MG:'Minas Gerais',PA:'Pará',PB:'Paraíba',PR:'Paraná',PE:'Pernambuco',PI:'Piauí',RJ:'Rio de Janeiro',RN:'Rio Grande do Norte',RS:'Rio Grande do Sul',RO:'Rondônia',RR:'Roraima',SC:'Santa Catarina',SP:'São Paulo',SE:'Sergipe',TO:'Tocantins'};
@@ -1365,6 +1367,39 @@ function _stateOK(res,uf){
 }
 function _pick(res){return res?[parseFloat(res.lat),parseFloat(res.lon)]:null;}
 
+/* Considera "preciso" só quando o ponto é casa/edifício — não o centro de uma rua */
+function _isPrecise(res){
+  const cls=(res.class||res.category||'').toLowerCase();
+  const at=(res.addresstype||'').toLowerCase();
+  const ty=(res.type||'').toLowerCase();
+  if(cls==='highway'||at==='road')return false;
+  if(at==='house'||at==='building')return true;
+  if(cls==='place'&&(ty==='house'||ty==='house_number'))return true;
+  if(cls==='building')return true;
+  if(res.address&&res.address.house_number)return true;
+  return false;
+}
+
+/* CEP -> coordenadas (nível de quadra). APIs grátis brasileiras, sem chave.
+   Tenta AwesomeAPI (boa cobertura de lat/lng) e BrasilAPI como reserva. */
+async function geocodeCEP(cep,expectUF){
+  const d=(cep||'').replace(/\D/g,'');
+  if(d.length!==8)return null;
+  const okUF=uf=>!expectUF||!uf||String(uf).toUpperCase()===String(expectUF).toUpperCase();
+  try{
+    const r=await fetch(`https://cep.awesomeapi.com.br/json/${d}`);
+    if(r.ok){const j=await r.json();const la=parseFloat(j.lat),lo=parseFloat(j.lng);
+      if(isFinite(la)&&isFinite(lo)&&(la!==0||lo!==0)&&okUF(j.state))return[la,lo];}
+  }catch(e){}
+  try{
+    const r=await fetch(`https://brasilapi.com.br/api/cep/v2/${d}`);
+    if(r.ok){const j=await r.json();const c=j.location&&j.location.coordinates;
+      const la=parseFloat(c&&c.latitude),lo=parseFloat(c&&c.longitude);
+      if(isFinite(la)&&isFinite(lo)&&(la!==0||lo!==0)&&okUF(j.state))return[la,lo];}
+  }catch(e){}
+  return null;
+}
+
 async function geocodePlace(p,force){
   if(!force&&p.lat&&p.lng)return[p.lat,p.lng];
   const a=splitAddr(p.address||p.city||'');
@@ -1372,37 +1407,46 @@ async function geocodePlace(p,force){
   const country='Brasil';
   let res;
 
-  // 1) estruturada com número (mais precisa)
+  // 1) Nominatim com número — aceita SÓ se for ponto preciso (casa/edifício),
+  //    nunca o centro de uma rua longa (era esse o problema da Av. Sertório).
   if(a.street&&a.number&&a.city){
     res=await nominatim({street:a.number+' '+a.street,city:a.city,state:stateFull,country});
+    if(res&&_stateOK(res,a.uf)&&_isPrecise(res))return _pick(res);
+  }
+
+  // 2) CEP -> coordenadas (nível de quadra). Melhor sinal grátis p/ rua longa.
+  if(a.cep){
+    const c=await geocodeCEP(a.cep,a.uf);
+    if(c)return c;
+  }
+
+  // 3) texto livre rua + número + bairro + cidade + UF (aceita só se preciso)
+  if(a.street&&a.city){
+    res=await nominatim({q:[a.street+(a.number?' '+a.number:''),a.hood,a.city,a.uf,country].filter(Boolean).join(', ')});
+    if(res&&_stateOK(res,a.uf)&&_isPrecise(res))return _pick(res);
+  }
+
+  // 4) rua + bairro -> centro do trecho (o bairro estreita a rua longa)
+  if(a.street&&a.city){
+    res=await nominatim({q:[a.street,a.hood,a.city,stateFull,country].filter(Boolean).join(', ')});
     if(res&&_stateOK(res,a.uf))return _pick(res);
   }
-  // 2) estruturada sem número (rua certa)
+  // 5) estruturada só rua + cidade + estado (centro da rua)
   if(a.street&&a.city){
     res=await nominatim({street:a.street,city:a.city,state:stateFull,country});
     if(res&&_stateOK(res,a.uf))return _pick(res);
   }
-  // 3) texto livre completo
-  if(a.street&&a.city){
-    res=await nominatim({q:[a.street+(a.number?' '+a.number:''),a.hood,a.city,a.uf,country].filter(Boolean).join(', ')});
-    if(res&&_stateOK(res,a.uf))return _pick(res);
-  }
-  // 4) rua + cidade + estado
-  if(a.street&&a.city){
-    res=await nominatim({q:[a.street,a.city,stateFull,country].filter(Boolean).join(', ')});
-    if(res&&_stateOK(res,a.uf))return _pick(res);
-  }
-  // 5) bairro + cidade + estado
+  // 6) bairro + cidade + estado
   if(a.hood&&a.city){
     res=await nominatim({q:[a.hood,a.city,stateFull,country].filter(Boolean).join(', ')});
     if(res&&_stateOK(res,a.uf))return _pick(res);
   }
-  // 6) último recurso: cidade + estado (ao menos a cidade certa)
+  // 7) último recurso: cidade + estado
   if(a.city){
     res=await nominatim({q:[a.city,stateFull,country].filter(Boolean).join(', ')});
     if(res)return _pick(res);
   }
-  // 7) endereço bruto
+  // 8) endereço bruto
   if((p.address||'').trim()){
     res=await nominatim({q:p.address.trim()});
     if(res)return _pick(res);
@@ -1419,6 +1463,8 @@ async function geocodeAndSave(p){
 }
 
 function isGeoReady(p){return p.lat&&p.lng&&p.geoV===GEO_VERSION;}
+/* Pode plotar: já geocodificado na versão atual OU ajustado manualmente (pino fixo) */
+function canPlot(p){return !!(p.lat&&p.lng&&(p.geoV===GEO_VERSION||p.pinned));}
 function passesFilter(p){
   if(mapFilter==='quero')return p.status==='quero';
   if(mapFilter==='visitado')return p.status==='visitado';
@@ -1430,7 +1476,7 @@ function passesFilter(p){
    Roda em background e plota cada pin assim que encontra. */
 async function migrateCoords(){
   if(_geoMigrating)return;
-  const pend=window.places.filter(p=>!isGeoReady(p));
+  const pend=window.places.filter(p=>!canPlot(p));
   if(!pend.length)return;
   _geoMigrating=true;
   const sb=document.getElementById('map-status');
@@ -1457,16 +1503,46 @@ function addMarker(p){
   if(!p.lat||!p.lng)return;
   const statusLabel=p.status==='visitado'?'✅ Já fui':'🔖 Quero ir';
   const dest=encodeURIComponent(p.address||p.name||'');
-  const marker=L.marker([p.lat,p.lng],{icon:makeIcon(p.cat,p.status,p.pet)})
+  const marker=L.marker([p.lat,p.lng],{icon:makeIcon(p.cat,p.status,p.pet),draggable:false})
     .addTo(leafletMap)
     .bindPopup(`<div class="map-popup">
-      <div class="map-popup-name">${p.name}${p.pet?' 🐶':''}</div>
+      <div class="map-popup-name">${p.name}${p.pet?' 🐶':''}${p.pinned?' 📌':''}</div>
       <div class="map-popup-meta">${p.cat}${(p.address||p.city)?' · '+(p.address||p.city).split(',').slice(-2).join(',').trim():''}</div>
       <div style="font-size:.72rem;font-weight:700;margin-bottom:8px;color:${p.status==='visitado'?'#50a773':'#f5a623'}">${statusLabel}</div>
       ${p.rating?`<div style="color:#f5a623;margin-bottom:8px">${'★'.repeat(Math.floor(p.rating))}</div>`:''}
       <button class="map-popup-btn" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${dest}','_blank')">🗺️ Abrir rota</button>
+      <button class="map-popup-btn" style="margin-top:6px;background:var(--bg3);color:var(--gray1)" onclick="startPinAdjust('${p.id}')">📌 Ajustar local no mapa</button>
     </div>`,{maxWidth:220,minWidth:180});
+  marker._pid=p.id;
+  marker.on('dragend',()=>{
+    const ll=marker.getLatLng();
+    const idx=window.places.findIndex(x=>x.id===marker._pid);
+    if(idx>=0){
+      window.places[idx].lat=ll.lat;
+      window.places[idx].lng=ll.lng;
+      window.places[idx].pinned=true;   // marcado como ajustado: nunca mais re-geocodifica
+      window.places[idx].geoV=GEO_VERSION;
+      if(window._fbSave)window._fbSave();
+    }
+    marker.dragging.disable();
+    if(marker._icon)marker._icon.style.filter='';
+    if(typeof toast==='function')toast('📌','Local ajustado e salvo!');
+    const sb=document.getElementById('map-status');
+    if(sb){const t=mapMarkers.length;sb.textContent=t?`📍 ${t} ${t>1?'lugares':'lugar'} no mapa`:'';}
+  });
   mapMarkers.push(marker);
+}
+
+/* Ajuste manual: habilita arrastar aquele pino; ao soltar, salva a posição exata */
+function startPinAdjust(id){
+  const m=mapMarkers.find(x=>x._pid===id);
+  if(!m)return;
+  m.closePopup();
+  if(m.dragging)m.dragging.enable();
+  if(m._icon)m._icon.style.filter='drop-shadow(0 0 7px #ea1d2c)';
+  leafletMap.panTo(m.getLatLng(),{animate:true});
+  const sb=document.getElementById('map-status');
+  if(sb)sb.textContent='✋ Arraste o pino até o ponto certo e solte para salvar';
 }
 
 async function renderMap(){
@@ -1478,7 +1554,7 @@ async function renderMap(){
   const list=window.places.filter(passesFilter);
   if(!list.length){if(sb)sb.textContent='📭 Nenhum lugar para mostrar';return;}
 
-  const ready=list.filter(isGeoReady);
+  const ready=list.filter(canPlot);
   ready.forEach(addMarker);
 
   if(ready.length){
@@ -1489,7 +1565,7 @@ async function renderMap(){
     if(sb)sb.textContent='📡 Localizando endereços…';
   }
 
-  if(list.some(p=>!isGeoReady(p))&&!_geoMigrating)migrateCoords();
+  if(list.some(p=>!canPlot(p))&&!_geoMigrating)migrateCoords();
 }
 
 function centerOnMe(){if(!leafletMap)return;if(userCoords){leafletMap.setView(userCoords,13,{animate:true});return;}if(!navigator.geolocation){showCitySearch();return;}document.getElementById('map-status').textContent='📡 Obtendo localização…';navigator.geolocation.getCurrentPosition(pos=>{userCoords=[pos.coords.latitude,pos.coords.longitude];if(userMarker)leafletMap.removeLayer(userMarker);userMarker=L.circleMarker(userCoords,{radius:8,fillColor:'#ea1d2c',fillOpacity:1,color:'#fff',weight:3}).addTo(leafletMap).bindPopup('<div class="map-popup"><div class="map-popup-name">Você está aqui</div></div>');leafletMap.setView(userCoords,13,{animate:true});fetch(`https://nominatim.openstreetmap.org/reverse?lat=${userCoords[0]}&lon=${userCoords[1]}&format=json`,{headers:{'Accept-Language':'pt-BR'}}).then(r=>r.json()).then(d=>{const city=d.address?.city||d.address?.town||d.address?.state||'sua região';document.getElementById('map-status').textContent=`📍 Você está em ${city}`;});},()=>{showCitySearch();},{timeout:8000});}
