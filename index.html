@@ -1050,11 +1050,14 @@ function openDetail(id){
   }
   heroEmoji.style.display='none';
 
-  // Badge status
+  // Badge status (+ botão pequeno "Já fui" só nos lugares "Quero ir")
   const badge=document.getElementById('detail-status-badge');
-  badge.innerHTML=p.status==='visitado'
+  const _jfBtn=p.status==='quero'
+    ?` <button onclick="marcarVisitado('${p.id}')" style="margin-left:6px;padding:4px 12px;border-radius:99px;border:1.5px solid var(--green);background:transparent;color:var(--green);font-family:'Nunito',sans-serif;font-weight:800;font-size:.72rem;cursor:pointer;vertical-align:middle">Já fui</button>`
+    :'';
+  badge.innerHTML=(p.status==='visitado'
     ?`<span class="detail-badge-visitado">✅ Visitado${p.date?' · '+formatDate(p.date):''}</span>`
-    :`<span class="detail-badge-quero">🔖 Quero conhecer</span>`;
+    :`<span class="detail-badge-quero">🔖 Quero conhecer</span>`)+_jfBtn;
 
   document.getElementById('detail-name').textContent=p.name+(p.pet?' 🐶':'');
   document.getElementById('detail-meta').textContent=p.cat+(p.address?' · '+p.address.split(',').slice(-2).join(',').trim():'');
@@ -1101,13 +1104,7 @@ function openDetail(id){
   // Ações
   const actionsEl=document.getElementById('detail-actions');
   const mapsUrl=`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(p.address||p.name||'')}`;
-  // Botão "Já fui" só aparece nos lugares marcados como "Quero ir"
-  const jaFuiBtn=p.status==='quero'
-    ?`<button class="detail-btn" style="flex:1 1 100%;background:var(--green);border-color:var(--green);color:#fff;box-shadow:0 4px 14px rgba(80,167,115,.3)" onclick="marcarVisitado('${p.id}')">✅ Já fui aqui!</button>`
-    :'';
-  actionsEl.style.flexWrap='wrap';
   actionsEl.innerHTML=`
-    ${jaFuiBtn}
     <button class="detail-btn" onclick="window.open('${mapsUrl}','_blank')">🗺️ Ver rota</button>
     <button class="detail-btn" onclick="closeDetail();openModal('${p.id}')">✏️ Editar</button>
     <button class="detail-btn primary" onclick="closeDetail()">Fechar</button>
@@ -1126,15 +1123,14 @@ function formatDate(d){
 function closeDetail(){document.getElementById('detail-overlay').classList.remove('open');}
 function onDetailOvClick(e){if(e.target===document.getElementById('detail-overlay'))closeDetail();}
 
-/* Botão "Já fui aqui!": abre o modal já no modo visitado, SEM preencher nenhum dado de visita.
-   Mantém os dados do lugar (nome, categoria, endereço, Instagram, logo, pet); o usuário
-   preenche avaliação, relato, data e fotos do zero. Ao salvar, vira "Já fui". */
+/* Botão "Já fui": abre o modal de edição já no modo "Já fui" (visitado), com os campos
+   de visita em branco. O usuário preenche avaliação, relato, data e fotos. */
 function marcarVisitado(id){
   closeDetail();
-  openModal(id);                 // carrega os dados básicos do lugar (modo edição)
+  openModal(id);                 // carrega os dados do lugar (modo edição)
   curStatus='visitado';          // força modo "Já fui"
   showStep2('visitado');         // exibe avaliação, relato, data e fotos
-  // Zera TODOS os campos de visita (inclusive a data que o passo acima preenche com hoje)
+  // Deixa os campos de visita em branco (inclusive a data que o passo acima preenche)
   setRating(0);
   ['f-note','f-date','f-caption0','f-caption1'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
   photoFiles[0]=null;photoFiles[1]=null;
@@ -1533,4 +1529,7 @@ function addMarker(p){
       <div style="font-size:.72rem;font-weight:700;margin-bottom:8px;color:${p.status==='visitado'?'#50a773':'#f5a623'}">${statusLabel}</div>
       ${p.rating?`<div style="color:#f5a623;margin-bottom:8px">${'★'.repeat(Math.floor(p.rating))}</div>`:''}
       <button class="map-popup-btn" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${dest}','_blank')">🗺️ Abrir rota</button>
-      <button class="map-popup-btn" style="margin-top:6px;background:var(--bg3);color:var(--gray1)" onclick="startPinAdjust('${p.id}')">📌 Ajustar local n
+      <button class="map-popup-btn" style="margin-top:6px;background:var(--bg3);color:var(--gray1)" onclick="startPinAdjust('${p.id}')">📌 Ajustar local no mapa</button>
+    </div>`,{maxWidth:220,minWidth:180});
+  marker._pid=p.id;
+  marker
