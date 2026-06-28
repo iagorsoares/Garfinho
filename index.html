@@ -1050,14 +1050,11 @@ function openDetail(id){
   }
   heroEmoji.style.display='none';
 
-  // Badge status (+ botão pequeno "Já fui" só nos lugares "Quero ir")
+  // Badge status
   const badge=document.getElementById('detail-status-badge');
-  const _jfBtn=p.status==='quero'
-    ?` <button onclick="marcarVisitado('${p.id}')" style="margin-left:6px;padding:4px 12px;border-radius:99px;border:1.5px solid var(--green);background:transparent;color:var(--green);font-family:'Nunito',sans-serif;font-weight:800;font-size:.72rem;cursor:pointer;vertical-align:middle">Já fui</button>`
-    :'';
-  badge.innerHTML=(p.status==='visitado'
+  badge.innerHTML=p.status==='visitado'
     ?`<span class="detail-badge-visitado">✅ Visitado${p.date?' · '+formatDate(p.date):''}</span>`
-    :`<span class="detail-badge-quero">🔖 Quero conhecer</span>`)+_jfBtn;
+    :`<span class="detail-badge-quero">🔖 Quero conhecer</span>`;
 
   document.getElementById('detail-name').textContent=p.name+(p.pet?' 🐶':'');
   document.getElementById('detail-meta').textContent=p.cat+(p.address?' · '+p.address.split(',').slice(-2).join(',').trim():'');
@@ -1122,21 +1119,6 @@ function formatDate(d){
 
 function closeDetail(){document.getElementById('detail-overlay').classList.remove('open');}
 function onDetailOvClick(e){if(e.target===document.getElementById('detail-overlay'))closeDetail();}
-
-/* Botão "Já fui": abre o modal de edição já no modo "Já fui" (visitado), com os campos
-   de visita em branco. O usuário preenche avaliação, relato, data e fotos. */
-function marcarVisitado(id){
-  closeDetail();
-  openModal(id);                 // carrega os dados do lugar (modo edição)
-  curStatus='visitado';          // força modo "Já fui"
-  showStep2('visitado');         // exibe avaliação, relato, data e fotos
-  // Deixa os campos de visita em branco (inclusive a data que o passo acima preenche)
-  setRating(0);
-  ['f-note','f-date','f-caption0','f-caption1'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
-  photoFiles[0]=null;photoFiles[1]=null;
-  renderSlot(0,null);renderSlot(1,null);
-  document.getElementById('modal-title').textContent='Registrar visita ✅';
-}
 
 
 
@@ -1532,4 +1514,34 @@ function addMarker(p){
       <button class="map-popup-btn" style="margin-top:6px;background:var(--bg3);color:var(--gray1)" onclick="startPinAdjust('${p.id}')">📌 Ajustar local no mapa</button>
     </div>`,{maxWidth:220,minWidth:180});
   marker._pid=p.id;
-  marker
+  marker.on('dragend',()=>{
+    const ll=marker.getLatLng();
+    const idx=window.places.findIndex(x=>x.id===marker._pid);
+    if(idx>=0){
+      window.places[idx].lat=ll.lat;
+      window.places[idx].lng=ll.lng;
+      window.places[idx].pinned=true;   // marcado como ajustado: nunca mais re-geocodifica
+      window.places[idx].geoV=GEO_VERSION;
+      if(window._fbSave)window._fbSave();
+    }
+    marker.dragging.disable();
+    if(marker._icon)marker._icon.style.filter='';
+    if(typeof toast==='function')toast('📌','Local ajustado e salvo!');
+    const sb=document.getElementById('map-status');
+    if(sb){const t=mapMarkers.length;sb.textContent=t?`📍 ${t} ${t>1?'lugares':'lugar'} no mapa`:'';}
+  });
+  mapMarkers.push(marker);
+}
+
+/* Ajuste manual: habilita arrastar aquele pino; ao soltar, salva a posição exata */
+function startPinAdjust(id){
+  const m=mapMarkers.find(x=>x._pid===id);
+  if(!m)return;
+  m.closePopup();
+  if(m.dragging)m.dragging.enable();
+  if(m._icon)m._icon.style.filter='drop-shadow(0 0 7px #ea1d2c)';
+  leafletMap.panTo(m.getLatLng(),{animate:true});
+  const sb=document.getElementById('map-status');
+  if(sb)sb.textContent='✋ Arraste o pino até o ponto certo e solte para salvar';
+}
+
