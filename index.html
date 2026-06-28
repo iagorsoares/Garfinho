@@ -1101,7 +1101,13 @@ function openDetail(id){
   // Ações
   const actionsEl=document.getElementById('detail-actions');
   const mapsUrl=`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(p.address||p.name||'')}`;
+  // Botão "Já fui" só aparece nos lugares marcados como "Quero ir"
+  const jaFuiBtn=p.status==='quero'
+    ?`<button class="detail-btn" style="flex:1 1 100%;background:var(--green);border-color:var(--green);color:#fff;box-shadow:0 4px 14px rgba(80,167,115,.3)" onclick="marcarVisitado('${p.id}')">✅ Já fui aqui!</button>`
+    :'';
+  actionsEl.style.flexWrap='wrap';
   actionsEl.innerHTML=`
+    ${jaFuiBtn}
     <button class="detail-btn" onclick="window.open('${mapsUrl}','_blank')">🗺️ Ver rota</button>
     <button class="detail-btn" onclick="closeDetail();openModal('${p.id}')">✏️ Editar</button>
     <button class="detail-btn primary" onclick="closeDetail()">Fechar</button>
@@ -1119,6 +1125,22 @@ function formatDate(d){
 
 function closeDetail(){document.getElementById('detail-overlay').classList.remove('open');}
 function onDetailOvClick(e){if(e.target===document.getElementById('detail-overlay'))closeDetail();}
+
+/* Botão "Já fui aqui!": abre o modal já no modo visitado, SEM preencher nenhum dado de visita.
+   Mantém os dados do lugar (nome, categoria, endereço, Instagram, logo, pet); o usuário
+   preenche avaliação, relato, data e fotos do zero. Ao salvar, vira "Já fui". */
+function marcarVisitado(id){
+  closeDetail();
+  openModal(id);                 // carrega os dados básicos do lugar (modo edição)
+  curStatus='visitado';          // força modo "Já fui"
+  showStep2('visitado');         // exibe avaliação, relato, data e fotos
+  // Zera TODOS os campos de visita (inclusive a data que o passo acima preenche com hoje)
+  setRating(0);
+  ['f-note','f-date','f-caption0','f-caption1'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
+  photoFiles[0]=null;photoFiles[1]=null;
+  renderSlot(0,null);renderSlot(1,null);
+  document.getElementById('modal-title').textContent='Registrar visita ✅';
+}
 
 
 
@@ -1511,80 +1533,4 @@ function addMarker(p){
       <div style="font-size:.72rem;font-weight:700;margin-bottom:8px;color:${p.status==='visitado'?'#50a773':'#f5a623'}">${statusLabel}</div>
       ${p.rating?`<div style="color:#f5a623;margin-bottom:8px">${'★'.repeat(Math.floor(p.rating))}</div>`:''}
       <button class="map-popup-btn" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${dest}','_blank')">🗺️ Abrir rota</button>
-      <button class="map-popup-btn" style="margin-top:6px;background:var(--bg3);color:var(--gray1)" onclick="startPinAdjust('${p.id}')">📌 Ajustar local no mapa</button>
-    </div>`,{maxWidth:220,minWidth:180});
-  marker._pid=p.id;
-  marker.on('dragend',()=>{
-    const ll=marker.getLatLng();
-    const idx=window.places.findIndex(x=>x.id===marker._pid);
-    if(idx>=0){
-      window.places[idx].lat=ll.lat;
-      window.places[idx].lng=ll.lng;
-      window.places[idx].pinned=true;   // marcado como ajustado: nunca mais re-geocodifica
-      window.places[idx].geoV=GEO_VERSION;
-      if(window._fbSave)window._fbSave();
-    }
-    marker.dragging.disable();
-    if(marker._icon)marker._icon.style.filter='';
-    if(typeof toast==='function')toast('📌','Local ajustado e salvo!');
-    const sb=document.getElementById('map-status');
-    if(sb){const t=mapMarkers.length;sb.textContent=t?`📍 ${t} ${t>1?'lugares':'lugar'} no mapa`:'';}
-  });
-  mapMarkers.push(marker);
-}
-
-/* Ajuste manual: habilita arrastar aquele pino; ao soltar, salva a posição exata */
-function startPinAdjust(id){
-  const m=mapMarkers.find(x=>x._pid===id);
-  if(!m)return;
-  m.closePopup();
-  if(m.dragging)m.dragging.enable();
-  if(m._icon)m._icon.style.filter='drop-shadow(0 0 7px #ea1d2c)';
-  leafletMap.panTo(m.getLatLng(),{animate:true});
-  const sb=document.getElementById('map-status');
-  if(sb)sb.textContent='✋ Arraste o pino até o ponto certo e solte para salvar';
-}
-
-async function renderMap(){
-  if(!leafletMap)return;
-  const sb=document.getElementById('map-status');
-  mapMarkers.forEach(m=>leafletMap.removeLayer(m));
-  mapMarkers=[];
-
-  const list=window.places.filter(passesFilter);
-  if(!list.length){if(sb)sb.textContent='📭 Nenhum lugar para mostrar';return;}
-
-  const ready=list.filter(canPlot);
-  ready.forEach(addMarker);
-
-  if(ready.length){
-    if(sb)sb.textContent=`📍 ${ready.length} ${ready.length>1?'lugares':'lugar'}${ready.length<list.length?' · localizando mais…':''}`;
-    if(ready.length===1)leafletMap.setView([ready[0].lat,ready[0].lng],14);
-    else leafletMap.fitBounds(ready.map(p=>[p.lat,p.lng]),{padding:[48,48]});
-  }else{
-    if(sb)sb.textContent='📡 Localizando endereços…';
-  }
-
-  if(list.some(p=>!canPlot(p))&&!_geoMigrating)migrateCoords();
-}
-
-function centerOnMe(){if(!leafletMap)return;if(userCoords){leafletMap.setView(userCoords,13,{animate:true});return;}if(!navigator.geolocation){showCitySearch();return;}document.getElementById('map-status').textContent='📡 Obtendo localização…';navigator.geolocation.getCurrentPosition(pos=>{userCoords=[pos.coords.latitude,pos.coords.longitude];if(userMarker)leafletMap.removeLayer(userMarker);userMarker=L.circleMarker(userCoords,{radius:8,fillColor:'#ea1d2c',fillOpacity:1,color:'#fff',weight:3}).addTo(leafletMap).bindPopup('<div class="map-popup"><div class="map-popup-name">Você está aqui</div></div>');leafletMap.setView(userCoords,13,{animate:true});fetch(`https://nominatim.openstreetmap.org/reverse?lat=${userCoords[0]}&lon=${userCoords[1]}&format=json`,{headers:{'Accept-Language':'pt-BR'}}).then(r=>r.json()).then(d=>{const city=d.address?.city||d.address?.town||d.address?.state||'sua região';document.getElementById('map-status').textContent=`📍 Você está em ${city}`;});},()=>{showCitySearch();},{timeout:8000});}
-function showCitySearch(){document.getElementById('map-status').style.display='none';document.getElementById('map-city-search').classList.add('show');setTimeout(()=>document.getElementById('map-city-input').focus(),100);}
-async function searchCity(){const val=document.getElementById('map-city-input').value.trim();if(!val)return;try{const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(val)}&format=json&limit=1`,{headers:{'Accept-Language':'pt-BR','User-Agent':'GarfinhoApp/1.0'}});const d=await r.json();if(d[0]){leafletMap.setView([parseFloat(d[0].lat),parseFloat(d[0].lon)],12,{animate:true});document.getElementById('map-city-search').classList.remove('show');document.getElementById('map-status').style.display='';document.getElementById('map-status').textContent=`📍 Mostrando: ${val}`;}else{document.getElementById('map-city-input').placeholder='Cidade não encontrada…';}}catch(e){}}
-let addrTimer=null;
-document.addEventListener('DOMContentLoaded',()=>setupAddrAutocomplete());
-if(document.readyState!=='loading')setTimeout(setupAddrAutocomplete,100);
-function setupAddrAutocomplete(){const input=document.getElementById('f-address');const box=document.getElementById('addr-suggestions');if(!input||!box)return;input.addEventListener('input',()=>{clearTimeout(addrTimer);const val=input.value.trim();if(val.length<4){box.style.display='none';return;}addrTimer=setTimeout(async()=>{try{const q=val+', Brasil';const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&countrycodes=br&addressdetails=1`,{headers:{'Accept-Language':'pt-BR','User-Agent':'GarfinhoApp/1.0'}});const d=await r.json();if(!d.length){box.style.display='none';return;}box.innerHTML=d.map(item=>{const label=item.display_name.split(',').slice(0,4).join(',');return`<div class="addr-sug-item" data-display="${item.display_name}" style="padding:10px 14px;font-size:.82rem;cursor:pointer;border-bottom:1px solid var(--border);color:var(--black);transition:background .15s" onmousedown="pickAddr(this)">${label}</div>`;}).join('');box.style.display='block';}catch(e){box.style.display='none';}},400);});input.addEventListener('blur',()=>setTimeout(()=>{box.style.display='none';},200));}
-function pickAddr(el){const full=el.dataset.display;const parts=full.split(',').map(s=>s.trim());const meaningful=parts.slice(0,Math.min(4,parts.length));document.getElementById('f-address').value=meaningful.join(', ');document.getElementById('addr-suggestions').style.display='none';}
-function setMapFilter(el,f){document.querySelectorAll('.map-chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');mapFilter=f;renderMap();}
-</script>
-<script>
-function gerarIconeGarfinho(s){const cv=document.createElement('canvas');cv.width=s;cv.height=s;const x=cv.getContext('2d'),r=s*.22;const g=x.createLinearGradient(0,0,s,s);g.addColorStop(0,'#ea1d2c');g.addColorStop(1,'#c0111e');x.beginPath();x.moveTo(r,0);x.lineTo(s-r,0);x.quadraticCurveTo(s,0,s,r);x.lineTo(s,s-r);x.quadraticCurveTo(s,s,s-r,s);x.lineTo(r,s);x.quadraticCurveTo(0,s,0,s-r);x.lineTo(0,r);x.quadraticCurveTo(0,0,r,0);x.closePath();x.fillStyle=g;x.fill();x.font=s*.52+'px serif';x.textAlign='center';x.textBaseline='middle';x.fillText('🍽️',s/2,s/2+s*.02);if(s>=96){x.font='bold '+s*.1+'px -apple-system,sans-serif';x.fillStyle='rgba(255,255,255,.8)';x.fillText('GARFINHO',s/2,s*.84);}return cv.toDataURL('image/png');}
-(function(){const icon=gerarIconeGarfinho(180);document.getElementById('appleTouchIcon').href=icon;let fav=document.querySelector("link[rel='icon']")||document.createElement('link');fav.rel='icon';fav.href=gerarIconeGarfinho(64);document.head.appendChild(fav);const i192=gerarIconeGarfinho(192),i512=gerarIconeGarfinho(512);const m={name:'Garfinho 🍽️',short_name:'Garfinho',start_url:location.href,display:'standalone',background_color:'#f2f2f2',theme_color:'#ea1d2c',orientation:'portrait',icons:[{src:i192,sizes:'192x192',type:'image/png',purpose:'any maskable'},{src:i512,sizes:'512x512',type:'image/png',purpose:'any maskable'}]};document.getElementById('pwaManifest').href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/json'}));})();
-let _dp=null;
-window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();_dp=e;document.getElementById('ib').classList.add('show');});
-document.getElementById('ibBtn').addEventListener('click',async()=>{if(!_dp)return;_dp.prompt();await _dp.userChoice;_dp=null;document.getElementById('ib').classList.remove('show');});
-window.addEventListener('appinstalled',()=>document.getElementById('ib').classList.remove('show'));
-</script>
-</body>
-</html>
+      <button class="map-popup-btn" style="margin-top:6px;background:var(--bg3);color:var(--gray1)" onclick="startPinAdjust('${p.id}')">📌 Ajustar local n
