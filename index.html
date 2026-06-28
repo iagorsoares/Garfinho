@@ -221,6 +221,12 @@ body.dark select{background:var(--card);color:var(--black);border-color:var(--bo
 .pt-switch::after{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;top:3px;left:3px;transition:transform .25s cubic-bezier(.34,1.56,.64,1);box-shadow:0 1px 4px rgba(0,0,0,.2)}
 .pet-toggle.on .pt-switch{background:var(--pet)}
 .pet-toggle.on .pt-switch::after{transform:translateX(18px)}
+.visited-toggle{display:flex;align-items:center;gap:12px;background:var(--bg3);border:1.5px solid var(--border);border-radius:12px;padding:13px 14px;cursor:pointer;transition:all var(--tr);user-select:none;margin-bottom:15px}
+.visited-toggle:hover{border-color:var(--gray3)}
+.visited-toggle.on{border-color:var(--green);background:rgba(80,167,115,.08)}
+.visited-toggle .vt-title{flex:1;font-size:.88rem;font-weight:700;color:var(--gray1)}
+.visited-toggle.on .pt-switch{background:var(--green)}
+.visited-toggle.on .pt-switch::after{transform:translateX(18px)}
 .logo-slot-circle-wrap{display:flex;flex-direction:column;align-items:center;gap:8px}
 .logo-slot-circle{width:96px;height:96px;border-radius:50%;border:3px dashed var(--border);background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all var(--tr);position:relative;overflow:hidden}
 .logo-slot-circle:hover{border-color:var(--red);background:var(--red-soft)}
@@ -562,6 +568,7 @@ fbLoad();
 
     <!-- STEP 2: formulário -->
     <div class="modal-step" id="modal-step2">
+      <div class="form-field" id="visited-toggle-wrap" style="display:none"><div class="visited-toggle" id="visited-toggle" onclick="toggleVisited()"><div class="pt-icon">✅</div><div class="vt-title">Já visitado</div><div class="pt-switch"></div></div></div>
       <div class="form-field"><label class="form-label">Nome do Lugar</label><input class="form-input" id="f-name" placeholder="Ex: Cantina"></div>
       <div class="form-field"><label class="form-label">Categoria</label><select class="form-input" id="f-cat"><option>Bar</option><option>Restaurante</option><option>Pizzaria</option><option>Hamburgueria</option><option>Café</option><option>Sorveteria</option><option>Lanches</option><option>Delivery</option><option>Outros</option></select></div>
       <div class="form-field" style="position:relative">
@@ -768,6 +775,8 @@ function closeSidebar(){document.getElementById('sidebar').classList.remove('ope
 function openModal(id=null){
   editId=id;rating=0;curPet=false;photoFiles={logo:null,0:null,1:null};
   isEditMode=!!id;
+  const vWrap=document.getElementById('visited-toggle-wrap'),vBtn=document.getElementById('visited-toggle');
+  if(vWrap)vWrap.style.display='none';if(vBtn)vBtn.classList.remove('on');
   document.getElementById('upload-progress').classList.remove('show');
   document.getElementById('up-bar').style.width='0%';
 
@@ -795,6 +804,7 @@ function openModal(id=null){
       setRating(p.rating||0);
     }
     showStep2(curStatus);
+    if(curStatus==='quero'&&vWrap)vWrap.style.display='block';
     document.getElementById('btn-back').textContent='Cancelar';
     document.getElementById('btn-back').setAttribute('onclick','closeModal()');
   }else{
@@ -871,6 +881,14 @@ function setRating(v){
   if(lbl)lbl.textContent=v>0?v+'★':'';
 }
 function togglePet(){curPet=!curPet;document.getElementById('pet-toggle').classList.toggle('on',curPet);}
+function toggleVisited(){
+  const on=curStatus!=='visitado';
+  curStatus=on?'visitado':'quero';
+  const t=document.getElementById('visited-toggle');if(t)t.classList.toggle('on',on);
+  document.getElementById('fields-visitado').style.display=on?'block':'none';
+  document.getElementById('fields-quero-note').style.display=on?'none':'block';
+  if(on&&!document.getElementById('f-date').value)document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
+}
 function triggerPhoto(key){const id=key==='logo'?'photo-input-logo':'photo-input-'+key;document.getElementById(id).click();}
 function loadPhoto(e,key){
   const f=e.target.files[0];if(!f)return;
