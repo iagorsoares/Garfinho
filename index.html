@@ -386,8 +386,16 @@ window._fbSave=function(){
     try{
       saving=true;
       _lastSaveTs=Date.now();
-      await setDoc(REF,{lista:window.places,_ts:_lastSaveTs});
-      localStorage.setItem('garfinho_bkp',JSON.stringify(window.places));
+      // Blindagem extra: nunca deixa um File/Blob (não serializável) ir pro Firestore,
+      // mesmo que escape da tela de cadastro por algum outro caminho.
+      const listaSegura=window.places.map(p=>{
+        const limpo={...p};
+        if(limpo.logo instanceof File||limpo.logo instanceof Blob)limpo.logo=null;
+        if(Array.isArray(limpo.photos))limpo.photos=limpo.photos.map(f=>(f instanceof File||f instanceof Blob)?null:f);
+        return limpo;
+      });
+      await setDoc(REF,{lista:listaSegura,_ts:_lastSaveTs});
+      localStorage.setItem('garfinho_bkp',JSON.stringify(listaSegura));
       syncBar('✅ Salvo','ok');
       // Libera saving após 2s para dar tempo do onSnapshot retornar
       setTimeout(()=>{saving=false;},2000);
@@ -718,7 +726,15 @@ async function uploadAllPhotos(){
   let done=0;
   for(const k of toUpload){
     lbl.textContent=`Enviando foto ${done+1} de ${toUpload.length}…`;
-    try{results[k]=await uploadToCloudinary(photoFiles[k],pct=>{const ov=Math.round(((done+pct/100)/toUpload.length)*100);bar.style.width=ov+'%';});}catch(e){console.error('Erro upload',k,e);}
+    try{
+      results[k]=await uploadToCloudinary(photoFiles[k],pct=>{const ov=Math.round(((done+pct/100)/toUpload.length)*100);bar.style.width=ov+'%';});
+    }catch(e){
+      console.error('Erro upload',k,e);
+      prog.classList.remove('show');
+      // Nunca deixa o arquivo bruto (File) seguir adiante — Firestore não aceita esse tipo
+      // e isso travava TODOS os salvamentos seguintes (76 lugares num documento só).
+      throw new Error('Não consegui enviar uma das fotos. Verifique sua internet e tente salvar de novo.');
+    }
     done++;bar.style.width=Math.round((done/toUpload.length)*100)+'%';
   }
   lbl.textContent='✅ Fotos enviadas!';
