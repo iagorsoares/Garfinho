@@ -1710,10 +1710,25 @@ function processarCompartilhamento(){
   showStep2('quero');
   document.getElementById('f-ig').value='https://instagram.com/'+r.handle;
   document.getElementById('ig-open-wrap').style.display='block';
+  // Sugestão de nome a partir do @ (o Instagram não libera o nome real sem login)
+  const nomeEl=document.getElementById('f-name');
+  nomeEl.value=sugerirNome(r.handle);
   toast('📸','@'+r.handle+' preenchido');
 
   if(typeof window.preencherPorInstagram==='function')window.preencherPorInstagram(r.handle);
-  setTimeout(()=>document.getElementById('f-name').focus(),350);
+  // Foco com o texto selecionado: se a sugestão estiver errada, é só digitar por cima
+  setTimeout(()=>{nomeEl.focus();nomeEl.select();},350);
+}
+
+// "leiteria639" -> "Leiteria 639" · "cantina.do.ze" -> "Cantina do Ze" · "bar_ocidente_poa" -> "Bar Ocidente Poa"
+function sugerirNome(handle){
+  const minusculas=['de','da','do','das','dos','e','di','du','la','le','el','the','of'];
+  return handle
+    .replace(/[._]+/g,' ')
+    .replace(/([a-z])(\d)/gi,'$1 $2').replace(/(\d)([a-z])/gi,'$1 $2')
+    .trim().split(/\s+/)
+    .map((p,i)=>(i>0&&minusculas.includes(p))?p:p.charAt(0).toUpperCase()+p.slice(1))
+    .join(' ');
 }
 
 // Espera os lugares carregarem do Firebase (para checar duplicado) e processa
