@@ -369,6 +369,11 @@ body.dark select{background:var(--card);color:var(--black);border-color:var(--bo
 .fb-sync-bar.ok{background:#50a773;color:#fff}
 .fb-sync-bar.saving{background:#f5a623;color:#fff}
 .fb-sync-bar.err{background:#ea1d2c;color:#fff}
+.ig-busca{display:none;align-items:center;gap:9px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:10px 13px;margin-bottom:15px;font-size:.8rem;font-weight:700;color:var(--gray1)}
+.ig-busca.ok{border-color:var(--green);color:var(--green);background:rgba(80,167,115,.08)}
+.ig-busca.erro{border-color:var(--red-mid);color:var(--red);background:var(--red-soft)}
+.ig-spin{width:14px;height:14px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--red);animation:igspin .8s linear infinite;flex-shrink:0}
+@keyframes igspin{to{transform:rotate(360deg)}}
 </style>
 <!-- Firebase SDK -->
 <script type="module">
@@ -1737,6 +1742,77 @@ function sugerirNome(handle){
   if(window._appReady)setTimeout(processarCompartilhamento,450);
   else setTimeout(aguardarApp,200);
 })();
+
+/* ============================================================
+   FASE 2: nome e foto do perfil via Worker da Cloudflare (Apify)
+   A consulta leva de 10 a 30 segundos; o cadastro já fica utilizável enquanto isso.
+   ============================================================ */
+const WORKER_URL='https://garfinho.iagorsoaress.workers.dev';
+
+// Linha de status dentro do cadastro, acima do campo Nome
+function avisoBuscaIG(msg,tipo){
+  let el=document.getElementById('ig-busca');
+  if(!el){
+    el=document.createElement('div');el.id='ig-busca';el.className='ig-busca';
+    const campoNome=document.getElementById('f-name').closest('.form-field');
+    campoNome.parentNode.insertBefore(el,campoNome);
+  }
+  clearTimeout(el._t);
+  if(!msg){el.style.display='none';return;}
+  el.className='ig-busca'+(tipo?' '+tipo:'');
+  el.innerHTML=(tipo?'':'<span class="ig-spin"></span>')+msg;
+  el.style.display='flex';
+  if(tipo)el._t=setTimeout(()=>{el.style.display='none';},4500);
+}
+
+// Garante que o usuário ainda está no mesmo cadastro (não fechou nem trocou de lugar)
+function aindaNoCadastro(handle){
+  if(!document.getElementById('overlay').classList.contains('open')||editId)return false;
+  const x=extrairInstagram(document.getElementById('f-ig').value);
+  return !!(x&&x.handle===handle);
+}
+
+window.preencherPorInstagram=async function(handle){
+  const nomeEl=document.getElementById('f-name');
+  const sugestao=nomeEl.value;
+  const ctrl=new AbortController();
+  const limite=setTimeout(()=>ctrl.abort(),75000);
+  avisoBuscaIG('Buscando nome e foto no Instagram…');
+  try{
+    const r=await fetch(WORKER_URL+'/?u='+encodeURIComponent(handle),{signal:ctrl.signal});
+    const d=await r.json();
+    if(!aindaNoCadastro(handle))return;
+    if(!d.ok){avisoBuscaIG('Não encontrei os dados desse perfil. Preencha manualmente.','erro');return;}
+
+    // Só troca o nome se você ainda não mexeu na sugestão
+    if(d.name&&(nomeEl.value.trim()===sugestao||!nomeEl.value.trim()))nomeEl.value=d.name;
+
+    // Foto: baixa pelo Worker e abre no editor de recorte (se você ainda não escolheu uma logo)
+    if(d.image&&!photoFiles.logo){
+      avisoBuscaIG('Carregando a foto…');
+      const ri=await fetch(WORKER_URL+'/img?url='+encodeURIComponent(d.image),{signal:ctrl.signal});
+      if(ri.ok){
+        const blob=await ri.blob();
+        if(aindaNoCadastro(handle)&&!photoFiles.logo){
+          openCrop(new File([blob],'logo-instagram.jpg',{type:blob.type||'image/jpeg'}));
+          avisoBuscaIG('Ajuste a foto no círculo e toque em "Usar foto"','ok');
+          return;
+        }
+      }else{
+        avisoBuscaIG(d.name?'Nome preenchido. A foto não carregou, escolha manualmente.':'A foto não carregou.','erro');
+        return;
+      }
+    }
+    avisoBuscaIG(d.name?'Nome do Instagram preenchido':'Dados preenchidos','ok');
+  }catch(e){
+    if(!aindaNoCadastro(handle))return;
+    avisoBuscaIG(e.name==='AbortError'?'O Instagram demorou demais. Preencha manualmente.':'Sem conexão com o buscador. Preencha manualmente.','erro');
+  }finally{
+    clearTimeout(limite);
+  }
+};
+// Fechar o cadastro some com o aviso (inclusive se a busca ainda estiver rodando)
+(function(){const orig=closeModal;closeModal=function(){avisoBuscaIG('');orig();};})();
 </script>
 </body>
 </html>
