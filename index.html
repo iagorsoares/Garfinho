@@ -7,8 +7,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Garfinho">
-<link rel="apple-touch-icon" id="appleTouchIcon">
-<link rel="manifest" id="pwaManifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
 <title>Garfinho 🍽️</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -1650,12 +1651,77 @@ function pickAddr(el){const full=el.dataset.display;const parts=full.split(',').
 function setMapFilter(el,f){document.querySelectorAll('.map-chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');mapFilter=f;renderMap();}
 </script>
 <script>
-function gerarIconeGarfinho(s){const cv=document.createElement('canvas');cv.width=s;cv.height=s;const x=cv.getContext('2d'),r=s*.22;const g=x.createLinearGradient(0,0,s,s);g.addColorStop(0,'#ea1d2c');g.addColorStop(1,'#c0111e');x.beginPath();x.moveTo(r,0);x.lineTo(s-r,0);x.quadraticCurveTo(s,0,s,r);x.lineTo(s,s-r);x.quadraticCurveTo(s,s,s-r,s);x.lineTo(r,s);x.quadraticCurveTo(0,s,0,s-r);x.lineTo(0,r);x.quadraticCurveTo(0,0,r,0);x.closePath();x.fillStyle=g;x.fill();x.font=s*.52+'px serif';x.textAlign='center';x.textBaseline='middle';x.fillText('🍽️',s/2,s/2+s*.02);if(s>=96){x.font='bold '+s*.1+'px -apple-system,sans-serif';x.fillStyle='rgba(255,255,255,.8)';x.fillText('GARFINHO',s/2,s*.84);}return cv.toDataURL('image/png');}
-(function(){const icon=gerarIconeGarfinho(180);document.getElementById('appleTouchIcon').href=icon;let fav=document.querySelector("link[rel='icon']")||document.createElement('link');fav.rel='icon';fav.href=gerarIconeGarfinho(64);document.head.appendChild(fav);const i192=gerarIconeGarfinho(192),i512=gerarIconeGarfinho(512);const m={name:'Garfinho 🍽️',short_name:'Garfinho',start_url:location.href,display:'standalone',background_color:'#f2f2f2',theme_color:'#ea1d2c',orientation:'portrait',icons:[{src:i192,sizes:'192x192',type:'image/png',purpose:'any maskable'},{src:i512,sizes:'512x512',type:'image/png',purpose:'any maskable'}]};document.getElementById('pwaManifest').href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/json'}));})();
+/* ===== PWA: manifest.json e ícones agora são arquivos reais no repositório.
+   O service worker (sw.js) é necessário para o Android instalar o app
+   e colocar o Garfinho na lista de "Compartilhar". ===== */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(e=>console.warn('SW não registrado',e)));
+}
 let _dp=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();_dp=e;document.getElementById('ib').classList.add('show');});
 document.getElementById('ibBtn').addEventListener('click',async()=>{if(!_dp)return;_dp.prompt();await _dp.userChoice;_dp=null;document.getElementById('ib').classList.remove('show');});
 window.addEventListener('appinstalled',()=>document.getElementById('ib').classList.remove('show'));
+</script>
+<script>
+/* ============================================================
+   RECEBER COMPARTILHAMENTO DO INSTAGRAM (Fase 1)
+   Android: Instagram > perfil > Compartilhar > Garfinho.
+   O Android abre o app com ?text=...&url=... na URL; aqui lemos isso,
+   extraímos o @ e abrimos o cadastro já em "Quero ir".
+   Fase 2: se existir window.preencherPorInstagram(handle), ela é chamada
+   para buscar nome e foto.
+   ============================================================ */
+const IG_RESERVADOS=['p','reel','reels','tv','explore','accounts','direct','about','developer','legal','s','share','_u'];
+
+function extrairInstagram(texto){
+  if(!texto)return null;
+  const m=String(texto).match(/instagram\.com\/([^\s?#]+)/i);
+  if(!m)return null;
+  const partes=m[1].split('/').filter(Boolean);
+  let h=(partes[0]||'').toLowerCase();
+  if((h==='stories'||h==='_u')&&partes[1])h=partes[1].toLowerCase();
+  else if(IG_RESERVADOS.includes(h))return{naoPerfil:true};
+  if(!/^[a-z0-9._]{1,30}$/.test(h))return null;
+  return{handle:h};
+}
+
+// Lê os parâmetros o quanto antes e limpa a URL (para um F5 não repetir o cadastro)
+const _shareBruto=(function(){
+  const qs=new URLSearchParams(location.search);
+  if(!qs.has('text')&&!qs.has('url')&&!qs.has('title'))return null;
+  const bruto=[qs.get('url'),qs.get('text'),qs.get('title')].filter(Boolean).join(' ');
+  history.replaceState(null,'',location.pathname+location.hash);
+  return bruto;
+})();
+
+function processarCompartilhamento(){
+  if(!_shareBruto)return;
+  const r=extrairInstagram(_shareBruto);
+  if(!r){toast('⚠️','Não achei um perfil do Instagram nesse link');return;}
+  if(r.naoPerfil){toast('⚠️','Isso não é um perfil. Compartilhe o perfil do lugar.');return;}
+
+  // Já cadastrado? Abre o lugar em vez de duplicar
+  const ja=window.places.find(p=>{const x=extrairInstagram(p.ig);return x&&x.handle===r.handle;});
+  if(ja){openDetail(ja.id);toast('📌',ja.name+' já está no Garfinho');return;}
+
+  openModal();
+  curStatus='quero';
+  document.getElementById('step-card-quero').className='step-card sel-quero';
+  showStep2('quero');
+  document.getElementById('f-ig').value='https://instagram.com/'+r.handle;
+  document.getElementById('ig-open-wrap').style.display='block';
+  toast('📸','@'+r.handle+' preenchido');
+
+  if(typeof window.preencherPorInstagram==='function')window.preencherPorInstagram(r.handle);
+  setTimeout(()=>document.getElementById('f-name').focus(),350);
+}
+
+// Espera os lugares carregarem do Firebase (para checar duplicado) e processa
+(function aguardarApp(){
+  if(!_shareBruto)return;
+  if(window._appReady)setTimeout(processarCompartilhamento,450);
+  else setTimeout(aguardarApp,200);
+})();
 </script>
 </body>
 </html>
