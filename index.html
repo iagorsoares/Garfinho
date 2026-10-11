@@ -10,6 +10,8 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://www.instagram.com">
+<link rel="dns-prefetch" href="https://scontent.cdninstagram.com">
 <title>Garfinho</title>
 <link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -381,6 +383,14 @@ body.dark select{background:var(--card);color:var(--black);border-color:var(--bo
 .ig-slide{flex:0 0 100%;scroll-snap-align:center;min-width:0}
 .ig-slide .instagram-media{margin:0!important;min-width:0!important;width:100%!important}
 .ig-dots{display:flex;justify-content:center;gap:6px;margin-top:10px}
+.ig-stage{position:relative;overflow:hidden;border-radius:12px}
+.ig-stage:not(.ok){min-height:var(--est,520px)}
+.ig-sk{position:absolute;inset:0;border-radius:12px;background:linear-gradient(100deg,var(--bg3) 30%,var(--bg) 50%,var(--bg3) 70%) 0 0/300% 100%;animation:igSk 1.2s linear infinite}
+.ig-stage.ok .ig-sk{display:none}
+@keyframes igSk{to{background-position:-100% 0}}
+.ig-v{position:absolute;left:0;top:0;width:100%;visibility:hidden;pointer-events:none}
+.ig-v.on{position:relative;visibility:visible;pointer-events:auto;opacity:0;transition:opacity .25s ease}
+.ig-v.on.ok{opacity:1}
 .ig-leg-btn{display:block;margin:8px auto 0;padding:7px 16px;border:1.5px solid var(--line,#ddd);border-radius:99px;background:none;color:var(--gray1,#555);font:700 .8rem var(--font-b,inherit);cursor:pointer}
 .ig-dot{width:6px;height:6px;border-radius:99px;background:var(--bg3);transition:all var(--tr)}
 .ig-dot.on{width:18px;background:var(--red)}
@@ -1834,14 +1844,51 @@ window.igEmbed=window.igEmbed||function(url,leg){
   return`<blockquote class="instagram-media" data-instgrm-permalink="${link}?utm_source=ig_embed" data-instgrm-version="14"${leg?' data-instgrm-captioned':''}><a href="${link}" target="_blank">Ver no Instagram</a></blockquote>`;
 };
 // Legenda escondida por padrão; o botão abaixo do post mostra ou esconde
+/* Posts no detalhe: cada post carrega escondido e aparece de uma vez, já no tamanho final.
+   A versão com legenda é preparada por trás logo depois, então mostrar ou esconder a legenda
+   só troca uma pela outra, sem recarregar. */
+function igSlideHTML(u){return`<div class="ig-slide" data-u="${esc(u)}"><div class="ig-stage"><div class="ig-sk"></div><div class="ig-v ig-v0 on">${window.igEmbed(u,false)}</div></div><button type="button" class="ig-leg-btn" onclick="igLegenda(this)">Ver legenda</button></div>`;}
+function igPronto(v){
+  if(!v||v.classList.contains('ok'))return;v.classList.add('ok');clearTimeout(v._t);
+  const sl=v.closest('.ig-slide');if(!sl)return;
+  if(v.classList.contains('on')){sl.querySelector('.ig-stage').classList.add('ok');igPrepLegenda(sl);}
+  if(v.classList.contains('ig-v1')&&sl.dataset.quer==='1')igMostra(sl,true);
+}
+function igVigia(v){ // marca pronto quando o Instagram termina de montar o post (ou depois de 6 s, de qualquer jeito)
+  if(!v||v._vig)return;v._vig=1;
+  v._t=setTimeout(()=>igPronto(v),6000);
+  const ligar=fr=>{if(fr._l)return;fr._l=1;fr.addEventListener('load',()=>setTimeout(()=>igPronto(v),800));};
+  const f=v.querySelector('iframe');if(f)ligar(f);
+  new MutationObserver(()=>{const fr=v.querySelector('iframe');if(fr)ligar(fr);}).observe(v,{childList:true,subtree:true});
+}
+// o post do Instagram avisa quando terminou de montar (mensagem MEASURE): é a hora de mostrar
+window.addEventListener('message',e=>{
+  if(!/instagram\.com$/.test(String(e.origin||'')))return;
+  let d=e.data;try{if(typeof d==='string')d=JSON.parse(d);}catch(x){return;}
+  if(!d||d.type!=='MEASURE')return;
+  document.querySelectorAll('.ig-v iframe').forEach(fr=>{if(fr.contentWindow===e.source){const v=fr.closest('.ig-v');setTimeout(()=>igPronto(v),150);}});
+});
+function igPrepLegenda(sl){
+  if(sl.querySelector('.ig-v1'))return;
+  sl.querySelector('.ig-stage').insertAdjacentHTML('beforeend',`<div class="ig-v ig-v1">${window.igEmbed(sl.dataset.u,true)}</div>`);
+  igVigia(sl.querySelector('.ig-v1'));loadIgScript();
+}
+function igMostra(sl,leg){
+  const v0=sl.querySelector('.ig-v0'),v1=sl.querySelector('.ig-v1');
+  (leg?v1:v0).classList.add('on');(leg?v0:v1).classList.remove('on');
+  sl.dataset.leg=leg?'1':'';sl.dataset.quer='';
+  sl.querySelector('.ig-leg-btn').textContent=leg?'Esconder legenda':'Ver legenda';
+}
 function igLegenda(btn){
   const sl=btn.closest('.ig-slide');if(!sl)return;
-  const on=sl.dataset.leg!=='1';sl.dataset.leg=on?'1':'';
-  const box=sl.querySelector('.ig-emb');box.innerHTML=window.igEmbed(sl.dataset.u,on);
-  btn.textContent=on?'Esconder legenda':'Ver legenda';
-  loadIgScript();
+  if(sl.dataset.leg==='1'){igMostra(sl,false);return;}
+  igPrepLegenda(sl);
+  if(sl.querySelector('.ig-v1').classList.contains('ok'))igMostra(sl,true);
+  else{sl.dataset.quer='1';btn.textContent='Carregando legenda…';}
 }
 let _igScript=null;
+// o script do Instagram já fica pronto pouco depois da abertura (abrir um lugar não espera por ele)
+window.addEventListener('load',()=>setTimeout(()=>{if(!window.instgrm&&!_igScript){_igScript=document.createElement('script');_igScript.src='https://www.instagram.com/embed.js';_igScript.async=true;_igScript.onload=()=>{const t=document.getElementById('detail-ig-track');if(t&&t.querySelector('blockquote.instagram-media'))window.instgrm.Embeds.process();};document.body.appendChild(_igScript);}},2500));
 function loadIgScript(){
   if(window.instgrm){window.instgrm.Embeds.process();return;}
   if(_igScript)return;
@@ -1857,7 +1904,15 @@ function renderIgPosts(p){
   sec.style.display='';
   const track=document.getElementById('detail-ig-track'),dots=document.getElementById('detail-ig-dots');
   document.getElementById('detail-ig-count').textContent=posts.length>1?`· 1 de ${posts.length}`:'';
-  track.innerHTML=posts.map(u=>`<div class="ig-slide" data-u="${esc(u)}"><div class="ig-emb">${window.igEmbed(u,false)}</div><button type="button" class="ig-leg-btn" onclick="igLegenda(this)">Ver legenda</button></div>`).join('');
+  // o mesmo lugar aberto de novo: os posts já carregados ficam como estão (abre na hora)
+  const chave=posts.join('|');
+  if(track.dataset.chave!==chave){
+    track.dataset.chave=chave;
+    track.innerHTML=posts.map(igSlideHTML).join('');
+    const est=Math.round((track.clientWidth||340)+170)+'px';
+    track.querySelectorAll('.ig-stage').forEach(st=>st.style.setProperty('--est',est));
+    track.querySelectorAll('.ig-v0').forEach(igVigia);
+  }
   dots.innerHTML=posts.length>1?posts.map((_,i)=>`<span class="ig-dot${i?'':' on'}"></span>`).join(''):'';
   track.scrollLeft=0;
   track.onscroll=()=>{
