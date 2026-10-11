@@ -918,6 +918,8 @@ body.dark img.is-logo{background:transparent}
 .map-loc-btn{bottom:20px!important}
 body[data-view=mapa] .fab{display:none!important}
 .rk-img:has(img.is-logo),.vi-img:has(img.is-logo){border-radius:50%}.vi-img img.is-logo,.rk-img img.is-logo{border-radius:50%}
+/* mapa sem a barra de filtros no topo */
+.view-map .map-header{display:none!important}
 
 </style>
 </head>
@@ -2396,8 +2398,8 @@ document.getElementById('view-inicio').innerHTML=`
   <div class="home-stats">
     <div class="hs" onclick="navigateFiltered('quero')"><b id="stat-want">0</b><span>Quero ir</span></div>
     <div class="hs" onclick="navigateFiltered('visitado')"><b id="stat-visited">0</b><span>Visitados</span></div>
-    <div class="hs" onclick="navigate('ranking')"><b id="stat-avg">—</b><span>Nota média</span></div>
-    <span id="stat-total" hidden></span>
+    <div class="hs" onclick="__clear&&__clear();navigate('lugares')"><b id="stat-total">0</b><span>Cadastrados</span></div>
+    <span id="stat-avg" hidden></span>
   </div>
   <section class="home-sec"><div class="sec-h"><h3>Que tal hoje?</h3><a onclick="navigateFiltered('quero')">Ver todos</a></div><div class="pick-row" id="pick-row"></div></section>
   <section class="home-sec"><div class="sec-h"><h3>Últimas visitas</h3><a onclick="navigate('timeline')">Diário</a></div><div class="visit-list" id="recent-list"></div></section>
@@ -2456,7 +2458,7 @@ window.renderTimeline=function(){
   const vs=[...places].filter(p=>p.date).sort((a,b)=>b.date.localeCompare(a.date));
   let mes='';
   tl.innerHTML=vs.map(p=>{const[y,m,d]=p.date.split('-');const k=MESES[m-1]+' '+y;const h=k!==mes?`<div class="tl-month">${k}</div>`:'';mes=k;
-    const fotos=[];
+    const fotos=(p.photos||[]).filter(Boolean);
     return h+`<div class="timeline-item tl" onclick="openDetail('${p.id}')"><div class="tl-day"><b>${parseInt(d)}</b><span>${MES3[m-1]}</span></div><div class="timeline-card tl-card">${fotos.length?`<div class="tl-photos">${fotos.map(f=>`<img src="${f}" alt="">`).join('')}</div>`:''}<div class="tl-body"><div class="tl-name">${p.name}</div><div class="tl-meta">${meta(p)}${p.rating?`<span class="tl-rate">${IC.star}${String(p.rating).replace('.',',')}</span>`:''}</div>${p.note?`<div class="tl-note">${p.note}</div>`:''}</div></div></div>`;}).join('');
 };
 
@@ -2745,6 +2747,8 @@ const MOON='<svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0
 const setDk=()=>{const b=document.getElementById('dark-btn');if(b)b.innerHTML=document.body.classList.contains('dark')?MOON:X.sun;};
 const _td=window.toggleDark;if(_td)window.toggleDark=function(){_td();setDk();};
 setDk();
+/* mapa sem filtros: mostra todos os lugares */
+window.passesFilter=function(){return true;};
 /* excluir passa para a tela de edição */
 window.excluirAtual=function(){const id=editId;if(!id)return;deletePlace(id);if(!window.places.find(p=>p.id===id))closeModal();};
 const _om=window.openModal;
