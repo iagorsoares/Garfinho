@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#ea1d2c">
+<meta name="theme-color" content="#EEEBE7">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Garfinho">
@@ -11,7 +11,7 @@
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
 <title>Garfinho 🍽️</title>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -374,6 +374,31 @@ body.dark select{background:var(--card);color:var(--black);border-color:var(--bo
 .ig-busca.erro{border-color:var(--red-mid);color:var(--red);background:var(--red-soft)}
 .ig-spin{width:14px;height:14px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--red);animation:igspin .8s linear infinite;flex-shrink:0}
 @keyframes igspin{to{transform:rotate(360deg)}}
+
+/* ── Foto de capa no card ── */
+.place-thumb.has-cover{height:150px;background-size:cover;background-position:center;margin-bottom:30px}
+.place-thumb.has-cover::before{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0) 55%,rgba(0,0,0,.28))}
+.place-thumb.has-cover .place-avatar-wrap{position:absolute;left:50%;bottom:-30px;transform:translateX(-50%);width:64px;height:64px;font-size:1.8rem;border:3px solid var(--card)}
+.posts-pill{position:absolute;left:10px;bottom:10px;z-index:2;background:rgba(0,0,0,.6);color:#fff;border-radius:99px;padding:3px 9px;font-size:.68rem;font-weight:700;display:flex;align-items:center;gap:4px}
+/* ── Posts do Instagram no detalhe ── */
+.ig-track{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.ig-track::-webkit-scrollbar{display:none}
+.ig-slide{flex:0 0 100%;scroll-snap-align:center;min-width:0}
+.ig-slide .instagram-media{margin:0!important;min-width:0!important;width:100%!important}
+.ig-dots{display:flex;justify-content:center;gap:6px;margin-top:10px}
+.ig-dot{width:6px;height:6px;border-radius:99px;background:var(--bg3);transition:all var(--tr)}
+.ig-dot.on{width:18px;background:var(--red)}
+.ig-count{font-weight:600;color:var(--gray3);text-transform:none;letter-spacing:0}
+/* ── Campo de posts no formulário ── */
+.posts-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.post-chip{position:relative;flex:0 0 76px;height:96px;border-radius:12px;background:var(--bg);border:1.5px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:.66rem;font-weight:700;color:var(--gray2);overflow:hidden}
+.post-chip .pc-ic{font-size:1.3rem}
+.post-chip .pc-cover{position:absolute;top:5px;left:5px;background:var(--red);color:#fff;border-radius:99px;padding:1px 6px;font-size:.6rem}
+.post-chip .slot-remove{display:flex;position:absolute;top:5px;right:5px;width:20px;height:20px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:#fff;font-size:.6rem;align-items:center;justify-content:center;padding:0;cursor:pointer}
+.post-chip .pc-ic{margin-top:10px}
+.post-add{display:flex;gap:8px;margin-top:8px}
+.post-add .form-input{flex:1}
+.post-add-btn{padding:0 16px;border-radius:10px;border:none;background:var(--red);color:#fff;font-family:'Nunito',sans-serif;font-weight:800;font-size:.85rem;cursor:pointer}
 </style>
 <!-- Firebase SDK -->
 <script type="module">
@@ -465,11 +490,424 @@ async function fbLoad(){
 }
 fbLoad();
 </script>
+<style id="garfinho-v3">
+/* ===== REDESIGN v3 (Garfinho+) ===== */
+/* Base comum do redesign — componentes novos, usando as variáveis de cada tema */
+:root{--font-d:'Nunito',sans-serif;--font-b:'Nunito Sans',sans-serif;--on-accent:#fff;--pin-quero:#f5a623;--pin-visit:#ea1d2c;
+  --pq-bg:var(--red-soft);--pq-fg:var(--red);--pv-bg:#e8f5e0;--pv-fg:#2f7a3f;--star:var(--yellow);--chip-bg:var(--card)}
+body{font-family:var(--font-b)}
+svg{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+svg.fill{fill:currentColor;stroke:none}
+
+/* Barra superior */
+.menu-btn{display:none!important}
+.topbar{background:var(--bg);border-bottom:none;box-shadow:none;height:58px;padding:0 18px}
+.topbar-title{font-family:var(--font-d);font-size:1.45rem;letter-spacing:-.02em}
+#topbar-date{display:none}
+.view{padding:6px 16px 120px}
+
+/* Navegação inferior */
+.mobile-nav{padding:8px 4px calc(10px + env(safe-area-inset-bottom,0px));background:var(--card);border-top:1px solid var(--border);box-shadow:none}
+.mob-nav-item{flex:1;gap:4px;padding:4px 0;font-size:.66rem;font-weight:700;letter-spacing:0;text-transform:none;color:var(--gray2);font-family:var(--font-b)}
+.mob-nav-item .mn-ic{font-size:1.45rem!important;display:flex}
+.mob-nav-item.active{color:var(--red)}
+.fab{position:fixed;right:18px;bottom:92px;z-index:60;width:58px;height:58px;border-radius:50%;border:none;background:var(--red);color:var(--on-accent);font-size:1.7rem;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 22px rgba(0,0,0,.22);cursor:pointer}
+.fab svg{stroke-width:2.4}
+
+/* Início */
+.home-hello{margin:4px 2px 16px}
+.hh-sub{font-size:.8rem;font-weight:600;color:var(--gray2);margin-bottom:2px}
+.home-hello h2{font-family:var(--font-d);font-size:1.7rem;font-weight:800;color:var(--black);letter-spacing:-.02em;line-height:1.1}
+.home-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px}
+.hs{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;cursor:pointer}
+.hs b{display:block;font-family:var(--font-d);font-size:1.5rem;font-weight:800;color:var(--black);line-height:1.1}
+.hs span{font-size:.72rem;font-weight:600;color:var(--gray2)}
+.home-sec{margin-bottom:26px}
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;margin:0 2px 12px}
+.sec-h h3{font-family:var(--font-d);font-size:1.15rem;font-weight:800;color:var(--black);letter-spacing:-.01em}
+.sec-h a{font-size:.8rem;font-weight:700;color:var(--red);cursor:pointer}
+.pick-row{display:flex;gap:12px;overflow-x:auto;margin:0 -16px;padding:0 16px 4px;scroll-snap-type:x mandatory;scrollbar-width:none}
+.pick-row::-webkit-scrollbar{display:none}
+.pick{flex:0 0 72%;height:230px;border-radius:var(--r);background:var(--bg3) center/cover;position:relative;overflow:hidden;scroll-snap-align:start;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.pick::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0) 45%,rgba(0,0,0,.72))}
+.pick-emoji{font-size:4rem;margin-bottom:40px}
+.pick-txt{position:absolute;left:14px;right:14px;bottom:12px;z-index:2;color:#fff}
+.pick-name{font-family:var(--font-d);font-size:1.15rem;font-weight:800;line-height:1.15}
+.pick-meta{font-size:.76rem;opacity:.9;margin-top:2px}
+.pick .pc-posts{top:12px;left:12px;bottom:auto}
+.visit-list{display:flex;flex-direction:column;gap:8px}
+.vi{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:8px 12px 8px 8px;cursor:pointer}
+.vi-img{width:54px;height:54px;border-radius:calc(var(--r) - 4px);overflow:hidden;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0}
+.vi-img img{width:100%;height:100%;object-fit:cover}
+.vi-txt{flex:1;min-width:0}
+.vi-name{font-weight:700;font-size:.95rem;color:var(--black);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vi-meta{font-size:.76rem;color:var(--gray2);margin-top:2px}
+.vi-rate,.pc-rate,.rk-score{display:flex;align-items:center;gap:3px;font-weight:800;color:var(--black);font-size:.9rem}
+.vi-rate svg,.pc-rate svg,.rk-score svg,.tl-rate svg{color:var(--star)}
+.cat-grid{display:flex;flex-wrap:wrap;gap:8px}
+.cg{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:99px;padding:8px 14px 8px 10px;cursor:pointer;font-size:.86rem;font-weight:600;color:var(--gray1)}
+.cg-e{font-size:1.1rem}
+.cg b{color:var(--red);font-weight:800}
+
+/* Lugares: busca e filtros */
+.search-wrap{margin:2px 0 12px!important}
+.search-box{background:var(--card)!important;border:1px solid var(--border)!important;border-radius:var(--r)!important;padding:12px 14px!important}
+.search-box span{display:flex;font-size:1.1rem;color:var(--gray2)!important}
+.search-box input{font-size:.95rem!important}
+.filter-bar{flex-wrap:nowrap;overflow-x:auto;margin:0 -16px 16px;padding:0 16px 2px;border-bottom:none;scrollbar-width:none}
+.filter-bar::-webkit-scrollbar{display:none}
+.filter-chip{white-space:nowrap;flex-shrink:0;background:var(--chip-bg);border:1px solid var(--border);padding:8px 14px;font-size:.84rem}
+.filter-chip.active{background:var(--black);border-color:var(--black);color:var(--bg);box-shadow:none}
+
+/* Card */
+.places-grid{display:grid;gap:14px}
+.pc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);cursor:pointer;display:flex;flex-direction:column;transform:none!important}
+.pc-media{position:relative;aspect-ratio:16/10;background:var(--bg3);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.pc-media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pc-emoji{font-size:3rem}
+.pc-status{position:absolute;top:10px;left:10px;z-index:2;font-size:.7rem;font-weight:800;padding:4px 10px;border-radius:99px;letter-spacing:.01em}
+.st-quero{background:var(--pq-bg);color:var(--pq-fg)}
+.st-visitado{background:var(--pv-bg);color:var(--pv-fg)}
+.pc-pet{position:absolute;top:8px;right:10px;z-index:2;background:rgba(255,255,255,.92);border-radius:99px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:.95rem}
+.pc-posts{position:absolute;left:10px;bottom:10px;z-index:2;display:flex;align-items:center;gap:4px;background:rgba(0,0,0,.6);color:#fff;font-size:.72rem;font-weight:800;padding:4px 9px;border-radius:99px}
+.pc-posts svg{font-size:.8rem}
+.pc-body{display:flex;align-items:center;gap:10px;padding:12px 14px 4px}
+.pc-logo{width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid var(--border)}
+.pc-txt{flex:1;min-width:0}
+.pc-name{font-family:var(--font-d);font-weight:800;font-size:1.02rem;color:var(--black);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pc-meta{font-size:.76rem;color:var(--gray2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pc-note{font-size:.8rem;color:var(--gray1);padding:4px 14px 0;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pc::after{content:'';display:block;height:12px}
+
+/* Detalhe */
+.detail-modal{background:var(--card)}
+.detail-hero.has-cover{height:230px;padding-top:0;background-size:cover;background-position:center;border-radius:0;align-items:flex-end;margin:0}
+.detail-hero.has-cover .detail-hero-logo{width:86px;height:86px;transform:translateY(43px);font-size:2.2rem}
+.detail-hero.has-cover + .detail-body{padding-top:56px}
+.detail-modal:has(.detail-hero.has-cover) .detail-handle{position:absolute;left:50%;transform:translateX(-50%);margin-top:10px;z-index:3;background:rgba(255,255,255,.7)}
+.detail-modal{position:relative}
+.detail-name{font-family:var(--font-d);letter-spacing:-.02em}
+.detail-section-title{font-family:var(--font-b);text-align:left}
+.detail-note{text-align:left;font-style:normal;border-left:none;border-radius:var(--r)}
+.detail-btn{border-radius:var(--r);font-family:var(--font-b)}
+.detail-btn.primary{box-shadow:none}
+
+/* Ranking */
+.rk-head{font-size:.8rem;font-weight:600;color:var(--gray2);margin:0 2px 4px}
+.rk{display:flex;align-items:center;gap:12px;padding:10px 14px 10px 10px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:none;cursor:pointer;transform:none!important}
+.rk-pos{font-family:var(--font-d);font-size:1.05rem;font-weight:800;width:26px;text-align:center;color:var(--gray2)}
+.rk-img{width:52px;height:52px;border-radius:calc(var(--r) - 4px);overflow:hidden;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0}
+.rk-img img{width:100%;height:100%;object-fit:cover}
+.rk-txt{flex:1;min-width:0}
+.rk-name{font-weight:700;font-size:.95rem;color:var(--black)}
+.rk-meta{font-size:.75rem;color:var(--gray2);margin-top:2px}
+.rk-score{font-family:var(--font-d);font-size:1.15rem}
+.rk.top .rk-pos{color:var(--on-accent);background:var(--red);border-radius:50%;height:26px;line-height:26px;font-size:.85rem}
+
+/* Diário */
+.timeline::before{display:none}
+.tl-month{font-family:var(--font-d);font-size:1.05rem;font-weight:800;color:var(--black);margin:8px 2px 10px}
+.tl{display:flex;gap:12px;padding:0 0 14px 0;cursor:pointer}
+.tl-day{width:40px;flex-shrink:0;text-align:center;padding-top:4px}
+.tl-day b{display:block;font-family:var(--font-d);font-size:1.35rem;font-weight:800;color:var(--black);line-height:1}
+.tl-day span{font-size:.7rem;font-weight:700;color:var(--gray2);text-transform:uppercase}
+.tl-card{flex:1;padding:0;overflow:hidden;border-radius:var(--r);box-shadow:none}
+.tl-photos{display:flex;gap:2px;height:120px}
+.tl-photos img{flex:1;min-width:0;object-fit:cover}
+.tl-body{padding:12px 14px}
+.tl-name{font-family:var(--font-d);font-weight:800;font-size:1rem;color:var(--black)}
+.tl-meta{display:flex;align-items:center;gap:8px;font-size:.76rem;color:var(--gray2);margin-top:2px}
+.tl-rate{display:flex;align-items:center;gap:2px;font-weight:800;color:var(--black);margin-left:auto}
+.tl-note{font-size:.82rem;color:var(--gray1);margin-top:8px;line-height:1.45}
+
+/* Mapa */
+.map-header{background:var(--bg);border-bottom:none;padding:4px 16px 12px}
+.map-chip{background:var(--chip-bg);border:1px solid var(--border);padding:8px 14px;font-size:.82rem}
+.map-chip.active{background:var(--black);border-color:var(--black);color:var(--bg)}
+.map-status-bar{background:var(--card);border:1px solid var(--border);font-family:var(--font-b)}
+.map-loc-btn{bottom:100px;background:var(--card);border:1px solid var(--border)}
+.pin{width:38px;height:38px;border-radius:50% 50% 50% 6px;transform:rotate(-45deg);background:var(--c);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(0,0,0,.3);border:3px solid var(--ring)}
+.pin span{transform:rotate(45deg);font-size:16px}
+.view-map .map-container{margin-bottom:76px}
+
+/* Cadastro */
+.modal{background:var(--card)}
+.modal-title{font-family:var(--font-d);letter-spacing:-.02em}
+.form-label{font-family:var(--font-b)}
+.form-input{border-radius:calc(var(--r) - 4px);background:var(--bg);border:1px solid var(--border);font-family:var(--font-b);font-size:.95rem;padding:12px 14px}
+.btn-save,.btn-cancel{border-radius:var(--r);font-family:var(--font-b)}
+.btn-save{box-shadow:none}
+.step-card{border-radius:var(--r)}
+.step-card-title{font-family:var(--font-d)}
+.pet-toggle,.visited-toggle{border-radius:var(--r);border-width:1px}
+
+/* Base moderna (D, E, F) */
+.city-btn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border-radius:99px;border:1px solid var(--border);background:var(--card);color:var(--black);font:700 .84rem var(--font-b);cursor:pointer;white-space:nowrap}
+.city-btn svg{font-size:1rem}
+.city-btn svg:last-child{font-size:.9rem;color:var(--gray2)}
+#dark-btn.icon-only{display:flex;align-items:center;justify-content:center;width:36px;height:36px;font-size:1.25rem!important;color:var(--gray1);padding:0!important}
+.city-sheet{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;opacity:0;visibility:hidden;transition:opacity .25s}
+.city-sheet.open{opacity:1;visibility:visible}
+.cs-box{width:100%;background:var(--card);border-radius:24px 24px 0 0;padding:10px 16px 28px}
+.cs-handle{width:36px;height:4px;border-radius:99px;background:var(--border);margin:0 auto 14px}
+.cs-title{font:800 1.15rem var(--font-d);color:var(--black);margin:0 4px 10px}
+.cs-list{display:flex;flex-direction:column;gap:4px}
+.cs-item{display:flex;align-items:center;gap:12px;min-height:56px;padding:0 12px;border-radius:14px;border:none;background:transparent;color:var(--black);font:600 .95rem var(--font-b);text-align:left;cursor:pointer}
+.cs-item.on{background:var(--red-soft)}
+.cs-ic{width:36px;height:36px;border-radius:10px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:var(--gray1)}
+.cs-name{flex:1}
+.cs-n{font-size:.8rem;font-weight:600;color:var(--gray2)}
+.cs-ck{color:var(--red);font-size:1.2rem;display:flex}
+.pc-emoji svg,.pick-emoji svg{font-size:2.6rem;color:var(--gray2);stroke-width:1.4}
+.pc-pet svg{font-size:.9rem;color:#3a3a3a}
+.cg-e{display:flex;font-size:1.15rem;color:var(--red)}
+.detail-badge-visitado,.detail-badge-quero,.detail-badge-pet{display:inline-flex;align-items:center;gap:5px;margin:0 3px 14px}
+.detail-badge-pet{background:var(--bg);color:var(--gray1);padding:4px 12px;border-radius:99px;font-size:.72rem;font-weight:700}
+.detail-hero-logo.ic{font-size:2.4rem;color:var(--gray2);background:var(--bg)!important}
+.detail-hero-logo.ic svg{stroke-width:1.5}
+.detail-info-icon{display:flex;font-size:1.1rem;color:var(--gray2)}
+.detail-btn svg{font-size:1.05rem}
+.star-pick{color:var(--star);font-size:1.6rem}
+.star-half{color:var(--star)}
+.step-card-icon{font-size:2rem;color:var(--red);display:flex;justify-content:center}
+.pt-icon{display:flex;font-size:1.3rem;color:var(--gray1)}
+.slot-icon{display:flex;justify-content:center;font-size:1.6rem;color:var(--gray2)}
+.ig-btn{background:var(--black);color:var(--bg)}
+.ig-btn span{display:flex;font-size:1.1rem}
+.map-loc-btn{font-size:1.25rem;color:var(--black)}
+.pin2{width:34px;height:34px;border-radius:50% 50% 50% 4px;transform:rotate(-45deg);background:var(--c);border:2.5px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;color:#fff}
+.pin2 svg{transform:rotate(45deg);font-size:16px;stroke-width:2}
+.map-status-bar{font-weight:700}
+
+/* Direção B — Garfinho+: evolução da identidade atual (vermelho, Nunito) */
+:root{
+  --bg:#F4F4F6;--bg2:#FFFFFF;--bg3:#E9E9EE;--card:#FFFFFF;--border:#EAEAEE;
+  --red:#EA1D2C;--red-dark:#C0111E;--red-soft:#FFEAEC;--red-mid:#FFD0D3;
+  --black:#17171A;--gray1:#3A3A40;--gray2:#7A7A82;--gray3:#B0B0B8;
+  --yellow:#F5A623;--star:#F5A623;
+  --shadow:0 2px 10px rgba(0,0,0,.05);--r:16px;
+  --font-d:'Nunito',sans-serif;--font-b:'Nunito Sans',sans-serif;
+  --pin-quero:#F5A623;--pin-visit:#EA1D2C;--pq-bg:#FFFFFF;--pq-fg:#EA1D2C;--pv-bg:#FFFFFF;--pv-fg:#2F8A4A;
+}
+.topbar-title,.home-hello h2,.sec-h h3,.pc-name,.pick-name,.hs b{font-weight:900}
+.places-grid{grid-template-columns:1fr 1fr!important;gap:12px}
+.pc-media{aspect-ratio:1/1}
+.pc-body{padding:10px 12px 2px}
+.pc-logo{display:none}
+.pc-name{font-size:.95rem}
+.pc-note{display:none}
+.pc-rate{font-size:.82rem}
+.pc::after{height:10px}
+.pc-status{box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.hs:first-child{background:var(--red);border-color:var(--red)}
+.hs:first-child b,.hs:first-child span{color:#fff}
+.mobile-nav{left:12px;right:12px;bottom:12px;border-radius:26px;border:none;box-shadow:0 8px 28px rgba(0,0,0,.14);padding:8px 6px}
+.mob-nav-item .mn-ic{width:46px;height:30px;border-radius:15px;align-items:center;justify-content:center;font-size:1.3rem!important}
+.mob-nav-item.active .mn-ic{background:var(--red-soft)}
+.fab{bottom:100px;box-shadow:0 8px 20px rgba(234,29,44,.38)}
+.filter-chip.active,.map-chip.active{background:var(--red);border-color:var(--red);color:#fff}
+.view-map .map-container{margin-bottom:0}
+.map-loc-btn{bottom:110px}
+.rk.top1 .rk-pos{background:#F5A623}.rk.top2 .rk-pos{background:#A0A4AD}.rk.top3 .rk-pos{background:#C27B45}
+
+/* Garfinho+ refinado — comum às variações B1, B2 e B3 */
+:root{--line:#D9D9E0;--line-strong:#C4C4CE}
+/* tipografia mais contida */
+.topbar-title{font-size:1.2rem;font-weight:800}
+.home-hello h2{font-size:1.15rem;font-weight:800}
+.hh-sub{font-size:.75rem}
+.sec-h{margin-bottom:10px}
+.sec-h h3{font-size:1rem;font-weight:800}
+.sec-h a{font-size:.78rem}
+.home-sec{margin-bottom:22px}
+.pick{flex-basis:58%;height:180px;border-radius:14px}
+.pick-name{font-size:.92rem;font-weight:800}
+.pick-meta{font-size:.72rem}
+.vi{padding:6px 10px 6px 6px;border:1.5px solid var(--border)}
+.vi-img{width:46px;height:46px}
+.vi-name{font-size:.88rem}
+.vi-meta{font-size:.72rem}
+.vi-rate{font-size:.82rem}
+.pc-name{font-size:.9rem;font-weight:800}
+.pc-meta{font-size:.72rem}
+.rk-name,.tl-name{font-size:.9rem}
+.detail-name{font-size:1.3rem}
+/* botões com contorno */
+.fc{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:99px;border:1.5px solid var(--line);background:transparent;color:var(--gray1);font:700 .8rem var(--font-b);white-space:nowrap;flex-shrink:0;cursor:pointer}
+.fc svg{font-size:.95rem;stroke-width:2.2}
+.fc.on{border-color:var(--red);color:var(--red);background:var(--red-soft)}
+.fc em{font-style:normal;font-weight:600;color:var(--gray2);font-size:.72rem}
+.fc.on em{color:var(--red)}
+.fc.clear{border-style:dashed;color:var(--gray2)}
+.fx{margin:0 -16px 6px}
+.fx-row{display:flex;gap:8px;overflow-x:auto;padding:0 16px 4px;scrollbar-width:none;align-items:center}
+.fx-row::-webkit-scrollbar{display:none}
+.fx-count{font-size:.75rem;font-weight:700;color:var(--gray2);margin:6px 2px 10px}
+.fx-link{border:none;background:none;color:var(--red);font:700 .8rem var(--font-b);padding:0 6px;white-space:nowrap;cursor:pointer;flex-shrink:0;min-height:36px}
+.fx-btn{display:inline-flex;align-items:center;gap:6px;height:46px;padding:0 14px;border-radius:var(--r);border:1.5px solid var(--line-strong);background:transparent;color:var(--black);font:700 .85rem var(--font-b);cursor:pointer;flex-shrink:0}
+.fx-btn.sm{height:36px;border-radius:99px;font-size:.8rem}
+.fx-btn svg{font-size:1.1rem}
+.fx-badge{display:none;min-width:20px;height:20px;border-radius:99px;background:var(--red);color:#fff;font-size:.7rem;align-items:center;justify-content:center;padding:0 5px}
+.fx-badge.show{display:inline-flex}
+.fc.rm svg{font-size:.85rem}
+.search-wrap{display:flex;gap:8px;align-items:center}
+.search-wrap .search-box{flex:1;background:transparent!important;border:1.5px solid var(--line)!important}
+.map-header{padding:6px 0 10px;background:var(--bg)}
+.map-header .fx-row{padding:0 16px}
+.detail-btn{background:transparent;border:1.5px solid var(--line-strong);color:var(--gray1)}
+.detail-btn.primary{background:transparent;border-color:var(--red);color:var(--red)}
+.btn-cancel{background:transparent;border:1.5px solid var(--line-strong)}
+.hs{background:transparent;border:1.5px solid var(--line)}
+.hs:first-child{background:transparent;border-color:var(--line)}
+.hs:first-child b{color:var(--red)}.hs:first-child span{color:var(--gray2)}
+.hs b{font-size:1.15rem}
+.hs span{font-size:.68rem}
+.cg{background:transparent;border:1.5px solid var(--line);padding:6px 12px 6px 9px;font-size:.8rem}
+.cg-e{font-size:1rem}
+.map-loc-btn{background:var(--card);border:1.5px solid var(--line-strong)}
+.pc{border:1.5px solid var(--border);box-shadow:none}
+.rk,.tl-card{border:1.5px solid var(--border)}
+.form-input{background:transparent;border:1.5px solid var(--line)}
+.pet-toggle,.visited-toggle,.step-card{background:transparent;border:1.5px solid var(--line)}
+.ig-btn{background:transparent;color:var(--black);border:1.5px solid var(--line-strong)}
+/* folha de filtros */
+.fx-sheet{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;opacity:0;visibility:hidden;transition:opacity .25s}
+.fx-sheet.open{opacity:1;visibility:visible}
+.fx-box{width:100%;max-height:86vh;overflow-y:auto;background:var(--card);border-radius:24px 24px 0 0;padding:10px 18px 18px}
+.fx-head{display:flex;align-items:center;justify-content:space-between;margin:2px 0 12px}
+.fx-head b{font:900 1.1rem var(--font-d);color:var(--black)}
+.fx-sec{margin-bottom:16px}
+.fx-sec h4{font:800 .78rem var(--font-b);color:var(--gray2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.fx-wrap{display:flex;flex-wrap:wrap;gap:8px}
+.fx-list{display:flex;flex-direction:column}
+.fx-li{display:flex;align-items:center;gap:12px;min-height:52px;border:none;border-bottom:1px solid var(--border);background:none;font:600 .92rem var(--font-b);color:var(--black);text-align:left;cursor:pointer;padding:0 2px}
+.ck{width:22px;height:22px;border-radius:7px;border:1.5px solid var(--line-strong);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.9rem;flex-shrink:0}
+.ck.on{background:var(--red);border-color:var(--red)}
+.ck svg{stroke-width:3}
+.li-n{flex:1}.li-c{font-size:.8rem;color:var(--gray2);font-weight:600}
+.fx-foot{position:sticky;bottom:-18px;background:var(--card);padding:12px 0 6px;margin-top:6px}
+.fx-go{width:100%;height:50px;border-radius:14px;border:none;background:var(--red);color:#fff;font:800 .95rem var(--font-d);cursor:pointer}
+/* Início B2 */
+.h2-search{width:100%;display:flex;align-items:center;gap:10px;height:48px;border-radius:99px;border:1.5px solid var(--line);background:transparent;color:var(--gray2);font:600 .9rem var(--font-b);padding:0 16px;margin:4px 0 12px;cursor:pointer}
+.h2-search svg{font-size:1.15rem;color:var(--gray1)}
+.h2-line{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:.8rem;color:var(--gray2);margin:0 4px 20px}
+.h2-line b{color:var(--black);font-weight:800}
+.h2-line i{width:3px;height:3px;border-radius:50%;background:var(--gray3);margin:0 3px}
+.h2-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 12px}
+.h2-grid>*{min-width:0}
+.h2-tile{cursor:pointer}
+.h2-img{aspect-ratio:4/3;border-radius:12px;background:var(--bg3) center/cover;position:relative;display:flex;align-items:center;justify-content:center;font-size:2rem;color:var(--gray2)}
+.h2-tile b{display:block;font:800 .88rem var(--font-d);color:var(--black);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.h2-tile span{display:block;font-size:.72rem;color:var(--gray2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Início B3 */
+.h3-sort{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;height:46px;border-radius:14px;border:1.5px solid var(--red);background:transparent;color:var(--red);font:800 .88rem var(--font-d);margin:-8px 0 22px;cursor:pointer}
+.h3-sort svg{font-size:1.1rem;stroke-width:2.2}
+.h3-list{display:flex;flex-direction:column;gap:8px}
+.h3-feat{height:170px;border-radius:14px;background:var(--bg3) center/cover;position:relative;overflow:hidden;display:flex;align-items:flex-end;cursor:pointer;margin-bottom:4px}
+.h3-feat::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,transparent 45%,rgba(0,0,0,.7))}
+.h3-feat>div{position:relative;z-index:1;padding:12px 14px;color:#fff}
+.h3-feat b{display:block;font:800 .98rem var(--font-d)}
+.h3-feat span{font-size:.74rem;opacity:.9}
+.h3-feat .pc-posts{top:10px;left:10px;bottom:auto}
+.vi .go{color:var(--gray3);font-size:1.1rem;transform:rotate(-90deg)}
+.fx-seg{display:flex;margin:0 16px 10px;border:1.5px solid var(--line);border-radius:12px;padding:3px;gap:3px}
+.fx-seg button{flex:1;height:36px;border:none;border-radius:9px;background:transparent;color:var(--gray1);font:700 .82rem var(--font-b);cursor:pointer}
+.fx-seg button.on{background:var(--red-soft);color:var(--red);box-shadow:inset 0 0 0 1.5px var(--red)}
+.map-header .fx{margin:0}
+.h2-search.ic-only svg{font-size:1.2rem}
+.h4-sort{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:99px;border:1px solid var(--line);background:transparent;color:var(--gray2);font:700 .74rem var(--font-b);margin:-14px 0 22px;cursor:pointer}
+.h4-sort svg{font-size:.9rem}
+.fx-seg.in{margin:0 0 16px}
+.fx-sec .fx-list .fx-li:last-child{border-bottom:none}
+
+/* Final: Início B2+B3, Lugares B2, filtros B3 */
+.home-hello{display:none}
+#cat-chart{display:none}
+#cat-chart+*{display:none}
+body[data-view=inicio] #topbar-date{display:block!important;font-size:.76rem!important;font-weight:600!important;color:var(--gray2)!important}
+.tb-ini{display:none;align-items:center}
+body[data-view=inicio] .tb-ini{display:flex}
+.tb-ini span{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--line-strong);background:var(--bg);color:var(--gray1);font:800 .72rem var(--font-d);display:flex;align-items:center;justify-content:center}
+.tb-ini span+span{margin-left:-7px}
+/* fundo mais sombreado e acabamento mais sofisticado */
+:root{--bg:#EEEBE7;--bg2:#FFFFFF;--bg3:#E3DFDA;--card:#FFFFFF;--border:#E6E2DD;--line:#D6D1CB;--line-strong:#C3BDB6;
+  --red:#D7262F;--red-dark:#B51D25;--red-soft:#FBEAEA;--red-mid:#F3C9CB;
+  --black:#161412;--gray1:#3B3733;--gray2:#7A746D;--gray3:#ADA69E;
+  --shadow:0 1px 2px rgba(40,30,20,.05),0 8px 24px rgba(40,30,20,.07);--pin-visit:#D7262F}
+body{background:var(--bg)}
+.topbar{background:var(--bg)}
+.pc,.vi,.rk,.tl-card{border:none;box-shadow:var(--shadow)}
+.hs{background:var(--card);border:1.5px solid var(--border)}
+.hs:first-child{background:var(--card)}
+.h2-search,.search-wrap .search-box{background:var(--card)!important;border-color:var(--border)!important}
+.fc{background:var(--card)}
+.fc.on{background:var(--red-soft)}
+.fx-btn{background:var(--card)}
+.h4-sort{background:transparent}
+.mobile-nav{box-shadow:0 12px 32px rgba(40,30,20,.16)}
+.fab{box-shadow:0 10px 24px rgba(215,38,47,.35)}
+.detail-modal,.modal{background:#FBFAF8}
+.logo-nav{width:1em;height:1em}
+#splash{background:#FFFFFF}
+.sp-logo{width:96px;height:96px;color:var(--red)}
+.sp-logo svg{width:100%;height:100%}
+#splash .splash-title{color:var(--red);font-weight:900;font-size:2.4rem;letter-spacing:-.02em}
+#splash .splash-sub{color:var(--gray2)}
+/* vermelho alinhado ao símbolo */
+:root{--red:#BA1011;--red-dark:#960C0D;--red-soft:#F8E7E7;--red-mid:#EFC4C4;--pin-visit:#BA1011}
+.fab{box-shadow:0 10px 24px rgba(186,16,17,.32)}
+/* abertura animada */
+#splash{background:#FFFFFF}
+#splash .sp-wrap{display:flex;flex-direction:column;align-items:center;transform:translateY(46px);animation:spWrap .7s cubic-bezier(.5,0,.15,1) .8s forwards}
+#splash .sp-sym{width:84px;height:120px;color:var(--red);transform:scale(1.9);animation:spShrink .7s cubic-bezier(.5,0,.15,1) .8s forwards}
+#splash .sp-sym svg{width:100%;height:100%;display:block}
+#splash .sp-name{font:400 2.6rem 'Bagel Fat One',sans-serif;color:var(--red);margin-top:14px;opacity:0;transform:translateY(8px);animation:spIn .45s ease 1.35s forwards}
+#splash .sp-sub{font:700 .72rem 'Nunito Sans',sans-serif;color:var(--gray2);letter-spacing:.14em;text-transform:uppercase;margin-top:4px;opacity:0;transform:translateY(6px);animation:spIn .45s ease 1.65s forwards}
+@keyframes spShrink{to{transform:scale(1)}}
+@keyframes spWrap{to{transform:translateY(0)}}
+@keyframes spIn{to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){#splash .sp-wrap,#splash .sp-sym,#splash .sp-name,#splash .sp-sub{animation-duration:.01s;animation-delay:0s}}
+.logo-nav{width:1em;height:1.1em}
+
+/* miniaturas com logo (sem capa nem foto) */
+img.is-logo{object-fit:contain!important;padding:16%;background:#fff}
+.pc-media.logo-only{background:#fff}
+.pick.is-logo,.h2-img.is-logo{background-color:#fff!important;background-size:44%!important;background-repeat:no-repeat}
+/* sem ícone nos avisos */
+#ti{display:none}
+/* estado vazio, menu lateral e aviso de instalar */
+.empty-icon{width:44px;height:56px;margin:0 auto 12px;color:var(--red)}
+.empty-icon svg{width:100%;height:100%}
+.empty-cta{border-radius:99px}
+.nav-icon{display:flex;font-size:1.15rem}
+.nav-icon svg{width:1em;height:1.1em}
+.logo-icon{background:#fff;box-shadow:none;border:1px solid var(--border);color:var(--red)}
+.logo-icon svg{width:62%;height:78%}
+.logo-text{font-family:'Bagel Fat One',sans-serif;font-weight:400;color:var(--red)}
+#ib{background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow)}
+#ib>div:first-child{width:28px;height:34px;color:var(--red);flex-shrink:0}
+#ib>div:first-child svg{width:100%;height:100%}
+.ibt{color:var(--black)}.ibs{color:var(--gray2)}
+#ibBtn{background:var(--red);border:none;color:#fff}
+#ibX{color:var(--gray2)}
+/* excluir na tela de edição */
+.btn-del{flex:0 0 auto;padding:13px 16px;border-radius:var(--r);border:1.5px solid var(--red-mid);background:transparent;color:var(--red);font:700 .9rem var(--font-b);cursor:pointer;display:none}
+.btn-del.show{display:block}
+/* foto de capa no cadastro */
+.cover-slot{aspect-ratio:16/9!important}
+/* modo escuro */
+body.dark{--bg:#14110F;--bg2:#1D1A17;--bg3:#2A2622;--card:#1D1A17;--border:#2E2925;--line:#3B3530;--line-strong:#4A433D;
+  --black:#F3EFEA;--gray1:#D6D0C8;--gray2:#9A928A;--gray3:#5E5852;--red:#E04345;--red-dark:#C83235;--red-soft:#34191A;--red-mid:#5A2627;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35)}
+body.dark .detail-modal,body.dark .modal{background:var(--card)}
+body.dark img.is-logo,body.dark .pc-media.logo-only{background:#fff}
+
+</style>
 </head>
 <body>
 <div id="ib"><div style="font-size:24px">🍽️</div><div><div class="ibt">Instalar na tela inicial</div><div class="ibs">Acesso rápido sem o navegador</div></div><button id="ibBtn">Instalar</button><button id="ibX" onclick="document.getElementById('ib').classList.remove('show')">×</button></div>
 <div id="fb-sync" class="fb-sync-bar"></div>
-<div id="splash"><div class="splash-icon">🍽️</div><div class="splash-title">Garfinho</div><div class="splash-sub">Nosso Mapa gastronômico</div><div class="splash-bar"><div class="splash-fill"></div></div></div>
+<div id="splash"><div class="sp-wrap"><div class="sp-sym"><svg viewBox="705 466 1662 2249" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M 1526.500 506.635 C 1523.750 506.810, 1511.375 507.433, 1499 508.017 C 1436.425 510.975, 1374.719 520.857, 1327.730 535.446 C 1319.676 537.946, 1307.329 541.557, 1300.293 543.470 C 1277.753 549.598, 1241.394 563.133, 1215.035 575.208 C 1205.391 579.625, 1194.197 584.750, 1190.160 586.596 C 1186.123 588.443, 1177.348 593.070, 1170.660 596.879 C 1163.972 600.688, 1152.529 606.983, 1145.231 610.867 C 1137.934 614.752, 1130.005 619.276, 1127.613 620.922 C 1125.221 622.568, 1116.567 628.117, 1108.382 633.254 C 1065.740 660.017, 1019.604 697.748, 972.966 744 C 931.077 785.543, 873.266 861.768, 852.742 902.518 C 850.808 906.358, 846.199 914.675, 842.498 921 C 831.756 939.364, 824.710 953.987, 807.328 994 C 779.087 1059.006, 756.452 1148.991, 749.472 1224 C 748.628 1233.075, 747.431 1244.550, 746.811 1249.500 C 744.421 1268.615, 745.329 1331.767, 748.357 1357 C 754.711 1409.950, 760.161 1440.410, 767.949 1466.500 C 770.084 1473.650, 774.143 1488.050, 776.970 1498.500 C 787.650 1537.981, 796.839 1564.624, 811.975 1600 C 815.387 1607.975, 821.457 1622.375, 825.465 1632 C 829.472 1641.625, 835.760 1656.475, 839.438 1665 C 848.263 1685.456, 899.142 1785.541, 910.100 1804 C 914.834 1811.975, 922.667 1825.700, 927.507 1834.500 C 959.969 1893.521, 973.282 1913.806, 981.092 1916.146 C 989.268 1918.595, 992.038 1916.520, 1030 1879.506 C 1038.525 1871.194, 1047.975 1862.191, 1051 1859.499 C 1054.025 1856.808, 1071.575 1840.167, 1090 1822.521 C 1108.425 1804.874, 1128.675 1785.765, 1135 1780.056 C 1141.325 1774.347, 1153.700 1762.608, 1162.500 1753.971 C 1171.300 1745.333, 1185.475 1731.825, 1194 1723.954 C 1348.495 1581.297, 1357.663 1563.986, 1352.591 1424.500 C 1348.883 1322.501, 1397.308 1241.308, 1521.500 1141.292 C 1529.750 1134.648, 1543.250 1123.279, 1551.500 1116.028 C 1559.750 1108.778, 1573.250 1097.310, 1581.500 1090.544 C 1589.750 1083.779, 1600.550 1074.760, 1605.500 1070.503 C 1610.450 1066.245, 1621.025 1057.541, 1629 1051.160 C 1636.975 1044.780, 1647.364 1036.171, 1652.087 1032.030 C 1660.419 1024.725, 1666.526 1019.730, 1712 983.040 C 1723.825 973.500, 1740.700 959.525, 1749.500 951.985 C 1775.840 929.419, 1788.515 918.817, 1808.500 902.637 C 1818.950 894.176, 1831.550 883.970, 1836.500 879.956 C 1864.736 857.058, 1885.436 852.429, 1892.112 867.520 C 1896.549 877.551, 1890.875 887.122, 1864.556 914 C 1851.791 927.037, 1837.409 942.509, 1825.053 956.500 C 1822.624 959.250, 1807.322 975.450, 1791.048 992.500 C 1774.774 1009.550, 1754.448 1031.375, 1745.878 1041 C 1737.308 1050.625, 1724.940 1064.125, 1718.392 1071 C 1711.845 1077.875, 1700.875 1089.575, 1694.015 1097 C 1687.155 1104.425, 1676.583 1115.678, 1670.521 1122.007 C 1664.460 1128.336, 1654.105 1139.586, 1647.511 1147.007 C 1640.917 1154.428, 1629.193 1167.025, 1621.458 1175 C 1613.722 1182.975, 1602.474 1195.125, 1596.462 1202 C 1590.450 1208.875, 1579.196 1221.063, 1571.453 1229.084 C 1537.511 1264.245, 1532.176 1293.875, 1556.100 1314.354 C 1577.037 1332.275, 1596.611 1327.042, 1632.629 1293.894 C 1641.358 1285.861, 1652.392 1275.961, 1657.149 1271.894 C 1661.906 1267.827, 1674.639 1256.625, 1685.445 1247 C 1696.251 1237.375, 1713.589 1222.075, 1723.975 1213 C 1734.361 1203.925, 1756.258 1184.350, 1772.636 1169.500 C 1789.013 1154.650, 1808.283 1137.332, 1815.457 1131.015 C 1822.630 1124.698, 1832.325 1115.907, 1837 1111.480 C 1841.675 1107.053, 1849.775 1099.600, 1855 1094.917 C 1860.225 1090.235, 1874.400 1077.410, 1886.500 1066.417 C 1898.600 1055.424, 1914.575 1041.203, 1922 1034.816 C 1929.425 1028.428, 1941.350 1017.712, 1948.500 1011.002 C 1983.875 977.804, 2004.521 969.684, 2014.005 985.241 C 2019.947 994.986, 2013.823 1007.262, 1987.830 1037.713 C 1968.006 1060.938, 1960.888 1069.417, 1947.750 1085.458 C 1941.013 1093.684, 1929.200 1107.564, 1921.500 1116.301 C 1913.800 1125.038, 1901.491 1139.682, 1894.147 1148.844 C 1886.803 1158.005, 1876.678 1170.221, 1871.647 1175.991 C 1866.616 1181.761, 1858.924 1190.761, 1854.554 1195.991 C 1850.184 1201.221, 1843.850 1208.650, 1840.478 1212.500 C 1837.107 1216.350, 1831.458 1223.111, 1827.924 1227.525 C 1824.391 1231.939, 1814.525 1243.807, 1806 1253.898 C 1797.475 1263.989, 1785.325 1278.655, 1779 1286.489 C 1772.675 1294.323, 1761.585 1307.431, 1754.356 1315.617 C 1747.127 1323.802, 1737.139 1335.542, 1732.160 1341.706 C 1727.181 1347.869, 1717.175 1359.792, 1709.924 1368.201 C 1695.437 1385.004, 1689.989 1392.492, 1686.554 1400.325 C 1667.756 1443.195, 1709.788 1479.884, 1748.354 1454.269 C 1755.153 1449.754, 1915.656 1291.044, 2003.447 1202.027 C 2019.976 1185.267, 2036.634 1168.617, 2040.465 1165.027 C 2044.296 1161.437, 2058.921 1146.990, 2072.965 1132.922 C 2105.736 1100.097, 2114.537 1093.689, 2124.612 1095.324 C 2138.454 1097.571, 2140.631 1112.818, 2129.967 1132.831 C 2125.653 1140.928, 2122.444 1145.283, 2099.894 1173.645 C 2092.961 1182.365, 2083.656 1194.532, 2079.217 1200.682 C 2074.778 1206.831, 2065.787 1218.306, 2059.239 1226.182 C 2052.690 1234.057, 2037.497 1253.325, 2025.477 1269 C 1984.999 1321.784, 1948.358 1368.937, 1918.629 1406.500 C 1910.793 1416.400, 1901.495 1428.325, 1897.965 1433 C 1876.272 1461.735, 1834.172 1513.274, 1806.476 1545 C 1764.054 1593.595, 1709.028 1633.171, 1667 1645.314 C 1631.232 1655.649, 1604.601 1657.973, 1560.598 1654.601 C 1476.868 1648.186, 1419.132 1672.609, 1362.080 1738.577 C 1356.811 1744.670, 1341.669 1761.995, 1328.431 1777.077 C 1315.194 1792.160, 1299.026 1810.800, 1292.503 1818.500 C 1285.981 1826.200, 1276.756 1836.775, 1272.003 1842 C 1267.251 1847.225, 1258.125 1857.575, 1251.723 1865 C 1245.322 1872.425, 1235.280 1883.900, 1229.407 1890.500 C 1223.534 1897.100, 1214.423 1907.675, 1209.159 1914 C 1203.896 1920.325, 1195.490 1929.775, 1190.479 1935 C 1185.469 1940.225, 1176.899 1949.903, 1171.435 1956.507 C 1165.971 1963.110, 1155.802 1975.035, 1148.838 1983.007 C 1141.874 1990.978, 1130.624 2004.082, 1123.838 2012.127 C 1117.052 2020.171, 1106.374 2032.546, 1100.108 2039.627 C 1074.057 2069.067, 1074.130 2071.256, 1102.458 2110.500 C 1110.398 2121.500, 1122.754 2139.050, 1129.916 2149.500 C 1137.078 2159.950, 1146.073 2172.775, 1149.904 2178 C 1153.734 2183.225, 1162.836 2195.825, 1170.129 2206 C 1177.422 2216.175, 1187.285 2229.675, 1192.047 2236 C 1196.809 2242.325, 1208.759 2258.523, 1218.602 2271.995 C 1228.446 2285.468, 1242.575 2304.197, 1250 2313.617 C 1257.425 2323.036, 1268.744 2337.888, 1275.154 2346.621 C 1281.564 2355.355, 1291.753 2368.437, 1297.797 2375.693 C 1303.841 2382.950, 1312.215 2393.647, 1316.405 2399.466 C 1320.596 2405.284, 1334.032 2422.459, 1346.263 2437.633 C 1365.130 2461.040, 1385.232 2486.570, 1416.235 2526.500 C 1419.651 2530.900, 1426.733 2540.128, 1431.973 2547.007 C 1437.213 2553.886, 1447.211 2566.711, 1454.191 2575.507 C 1461.172 2584.303, 1476.157 2603.650, 1487.492 2618.500 C 1538.205 2684.938, 1535.452 2683.968, 1564.282 2645.552 C 1569.257 2638.923, 1576.490 2629.712, 1580.356 2625.081 C 1584.221 2620.451, 1592.819 2609.426, 1599.462 2600.581 C 1614.856 2580.086, 1642.357 2544.302, 1653.155 2530.719 C 1657.745 2524.945, 1669.825 2509.514, 1680 2496.428 C 1690.175 2483.342, 1704.603 2464.955, 1712.063 2455.568 C 1719.523 2446.180, 1736.642 2424.325, 1750.104 2407 C 1763.567 2389.675, 1777.744 2371.450, 1781.607 2366.500 C 1812.827 2326.503, 1861.439 2262.191, 1882.518 2233 C 1886.290 2227.775, 1894.562 2216.300, 1900.898 2207.500 C 1907.235 2198.700, 1916.185 2186.667, 1920.788 2180.760 C 1925.391 2174.853, 1933.768 2163.153, 1939.402 2154.760 C 1945.037 2146.367, 1954.380 2132.750, 1960.165 2124.500 C 2018.652 2041.091, 2092.604 1926.804, 2121.047 1875.868 C 2126.688 1865.766, 2138.604 1845.350, 2147.527 1830.500 C 2156.450 1815.650, 2166.340 1798.325, 2169.504 1792 C 2172.668 1785.675, 2177.164 1777.125, 2179.496 1773 C 2184.100 1764.854, 2212.561 1708.384, 2223.847 1685 C 2239.517 1652.534, 2258.645 1607.958, 2266.409 1585.813 C 2269.361 1577.391, 2274.021 1564.650, 2276.763 1557.500 C 2287.627 1529.174, 2306.519 1464.220, 2311.376 1438.500 C 2333.418 1321.755, 2331.243 1218.766, 2304.545 1115 C 2299.720 1096.246, 2299.835 1096.655, 2289.204 1060.500 C 2277.389 1020.315, 2251.245 958.679, 2229.819 920.500 C 2224.264 910.600, 2217.468 898.450, 2214.719 893.500 C 2167.752 808.947, 2084.694 719.081, 1990 650.361 C 1974.880 639.388, 1969.356 635.745, 1944 620.017 C 1896.868 590.782, 1829.557 560.063, 1779.693 545.033 C 1735.937 531.844, 1687.510 520.543, 1657.321 516.476 C 1650.819 515.601, 1639.650 514.019, 1632.500 512.962 C 1619.017 510.968, 1603.319 509.773, 1567.500 508.012 C 1534.340 506.382, 1531.794 506.296, 1526.500 506.635"/></svg></div><div class="sp-name">Garfinho</div><div class="sp-sub">Nosso mapa gastronômico</div></div></div>
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 <div class="app">
   <nav class="sidebar" id="sidebar">
@@ -592,6 +1030,15 @@ fbLoad();
       </div>
       <input type="hidden" id="f-city" value="">
       <div class="form-field"><label class="form-label">Instagram do Lugar</label><input class="form-input" id="f-ig" placeholder="https://instagram.com/nomedolugar" type="url"></div>
+      <div class="form-field">
+        <label class="form-label">Posts do Instagram <span style="font-size:.68rem;font-weight:600;color:var(--gray2);text-transform:none;letter-spacing:0;font-style:italic">— o 1º vira a capa</span></label>
+        <div class="posts-row" id="posts-row" style="display:none"></div>
+        <div class="post-add"><input class="form-input" id="f-post-url" placeholder="Cole o link do post ou reel" type="url"><button class="post-add-btn" type="button" onclick="addPostDraft()">Adicionar</button></div>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Foto de capa <span style="font-size:.68rem;font-weight:600;color:var(--gray2);text-transform:none;letter-spacing:0;font-style:italic">— aparece na lista e no topo do lugar</span></label>
+        <div class="photo-slot cover-slot" id="slotcover" onclick="triggerPhoto('cover')"><div class="slot-icon">📷</div><div class="slot-txt">Adicionar capa</div><button class="slot-remove" onclick="removePhoto(event,'cover')">✕</button><input type="file" accept="image/*" style="display:none" id="photo-input-cover" onchange="loadPhoto(event,'cover')"></div>
+      </div>
       <!-- Logo circular -->
       <div class="form-field">
         <label class="form-label">Logo do Lugar</label>
@@ -636,6 +1083,7 @@ fbLoad();
       <div class="upload-progress" id="upload-progress"><div class="up-bar-wrap"><div class="up-bar" id="up-bar"></div></div><div class="up-label" id="up-label">Enviando fotos…</div></div>
       <div class="form-field" id="ig-open-wrap" style="display:none"><button class="ig-btn" onclick="openIG()"><span>📸</span> Abrir Instagram do lugar</button></div>
       <div class="modal-actions">
+        <button class="btn-del" id="btn-del" type="button" onclick="excluirAtual()">Excluir</button>
         <button class="btn-cancel" id="btn-back" onclick="backToStep1()">← Voltar</button>
         <button class="btn-save" id="btn-save" onclick="savePlace()">Salvar Lugar</button>
       </div>
@@ -655,6 +1103,11 @@ fbLoad();
       <div class="detail-name" id="detail-name"></div>
       <div class="detail-meta" id="detail-meta"></div>
       <div class="detail-rating" id="detail-rating"></div>
+      <div class="detail-section" id="detail-ig-section" style="display:none">
+        <div class="detail-section-title">📸 Posts do Instagram <span class="ig-count" id="detail-ig-count"></span></div>
+        <div class="ig-track" id="detail-ig-track"></div>
+        <div class="ig-dots" id="detail-ig-dots"></div>
+      </div>
       <div class="detail-section" id="detail-note-section">
         <div class="detail-section-title">💬 Dica</div>
         <div class="detail-note" id="detail-note"></div>
@@ -694,7 +1147,7 @@ const UPLOAD_PRESET='Garfinho';
 const CLOUDINARY_URL=`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
 window.places=window.places||[];
 let editId=null,rating=0,curStatus='quero',curPet=false;
-let photoFiles={logo:null,0:null,1:null};
+let photoFiles={logo:null,cover:null,0:null,1:null};
 let activeFilter='todos',searchQuery='',currentView='inicio';
 let isEditMode=false; // true quando abre modal para editar lugar existente
 const CE={'Bar':'🍺','Restaurante':'🍽️','Pizzaria':'🍕','Hamburgueria':'🍔','Café':'☕','Sorveteria':'🍦','Lanches':'🥪','Delivery':'🛵','Outros':'🍴'};
@@ -705,7 +1158,7 @@ window._onPlacesLoaded=function(){
   if(!localStorage.getItem('garfinho_geocoder_v2')){
     window.places.forEach(p=>{delete p.lat;delete p.lng;});
     localStorage.setItem('garfinho_geocoder_v2','1');
-  }window._appReady=true;renderAll();setTimeout(()=>document.getElementById('splash').classList.add('hidden'),300);};
+  }window._appReady=true;renderAll();setTimeout(()=>document.getElementById('splash').classList.add('hidden'),Math.max(300,2300-performance.now()));};
 window.addEventListener('load',()=>{setTimeout(()=>{if(!window._appReady){window._appReady=true;renderAll();document.getElementById('splash').classList.add('hidden');}},6000);});
 
 /* Comprime/redimensiona a foto no navegador antes de enviar — reduz bastante
@@ -758,14 +1211,14 @@ async function uploadToCloudinary(file,onProgress){
 }
 
 async function uploadAllPhotos(){
-  const keys=['logo',0,1];
+  const keys=['logo','cover',0,1];
   const toUpload=keys.filter(k=>photoFiles[k]instanceof File);
-  if(!toUpload.length)return{logo:photoFiles.logo,0:photoFiles[0],1:photoFiles[1]};
+  if(!toUpload.length)return{logo:photoFiles.logo,cover:photoFiles.cover,0:photoFiles[0],1:photoFiles[1]};
   const prog=document.getElementById('upload-progress');
   const bar=document.getElementById('up-bar');
   const lbl=document.getElementById('up-label');
   prog.classList.add('show');
-  const results={logo:photoFiles.logo,0:photoFiles[0],1:photoFiles[1]};
+  const results={logo:photoFiles.logo,cover:photoFiles.cover,0:photoFiles[0],1:photoFiles[1]};
   let done=0;
   for(const k of toUpload){
     lbl.textContent=`Enviando foto ${done+1} de ${toUpload.length}…`;
@@ -780,7 +1233,7 @@ async function uploadAllPhotos(){
     }
     done++;bar.style.width=Math.round((done/toUpload.length)*100)+'%';
   }
-  lbl.textContent='✅ Fotos enviadas!';
+  lbl.textContent='Fotos enviadas';
   setTimeout(()=>prog.classList.remove('show'),1200);
   return results;
 }
@@ -832,7 +1285,7 @@ function openSidebar(){document.getElementById('sidebar').classList.add('open');
 function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebarOverlay').classList.remove('open');}
 
 function openModal(id=null){
-  editId=id;rating=0;curPet=false;photoFiles={logo:null,0:null,1:null};
+  editId=id;rating=0;curPet=false;photoFiles={logo:null,cover:null,0:null,1:null};
   isEditMode=!!id;
   const vWrap=document.getElementById('visited-toggle-wrap'),vBtn=document.getElementById('visited-toggle');
   if(vWrap)vWrap.style.display='none';if(vBtn)vBtn.classList.remove('on');
@@ -849,6 +1302,7 @@ function openModal(id=null){
       document.getElementById('f-address').value=p.address||p.city||'';
       document.getElementById('f-city').value='';
       document.getElementById('f-ig').value=p.ig||'';
+      postsDraft=[...(p.posts||[])];renderPostsDraft();
       // f-note pode ser de quero ou visitado
       const noteEl=document.getElementById('f-note');
       const noteQEl=document.getElementById('f-note-quero');
@@ -857,7 +1311,7 @@ function openModal(id=null){
       else{if(noteQEl)noteQEl.value=p.note||'';if(noteEl)noteEl.value='';}
       document.getElementById('f-date').value=p.date||'';
       curStatus=p.status||'quero';curPet=!!p.pet;
-      photoFiles.logo=p.logo||null;photoFiles[0]=p.photos?.[0]||null;photoFiles[1]=p.photos?.[1]||null;
+      photoFiles.logo=p.logo||null;photoFiles.cover=p.cover||null;photoFiles[0]=p.photos?.[0]||null;photoFiles[1]=p.photos?.[1]||null;
       const c0=document.getElementById('f-caption0');const c1=document.getElementById('f-caption1');
       if(c0)c0.value=p.captions?.[0]||'';if(c1)c1.value=p.captions?.[1]||'';
       setRating(p.rating||0);
@@ -869,6 +1323,7 @@ function openModal(id=null){
   }else{
     // MODO NOVO: mostra step 1
     document.getElementById('modal-title').textContent='Novo Lugar 🍴';
+    postsDraft=[];renderPostsDraft();
     ['f-name','f-city','f-address','f-ig','f-note','f-note-quero'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
     document.getElementById('f-cat').value='Restaurante';
     document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
@@ -880,7 +1335,7 @@ function openModal(id=null){
     document.getElementById('modal-step2').classList.remove('active');
   }
   document.getElementById('pet-toggle').classList.toggle('on',curPet);
-  renderSlot('logo',photoFiles.logo);renderSlot(0,photoFiles[0]);renderSlot(1,photoFiles[1]);
+  renderSlot('logo',photoFiles.logo);renderSlot('cover',photoFiles.cover);renderSlot(0,photoFiles[0]);renderSlot(1,photoFiles[1]);
   document.getElementById('ig-open-wrap').style.display=document.getElementById('f-ig').value?'block':'none';
   document.getElementById('f-ig').oninput=()=>{document.getElementById('ig-open-wrap').style.display=document.getElementById('f-ig').value?'block':'none';};
   document.getElementById('overlay').classList.add('open');
@@ -960,7 +1415,7 @@ function openIG(){const ig=document.getElementById('f-ig').value.trim();if(ig)wi
 async function savePlace(){
   const name=document.getElementById('f-name').value.trim();
   if(!name){toast('⚠️','Informe o nome do lugar!');return;}
-  const btn=document.getElementById('btn-save');btn.disabled=true;btn.textContent='⏳ Salvando…';
+  const btn=document.getElementById('btn-save');btn.disabled=true;btn.textContent='Salvando…';
   try{
     const up=await uploadAllPhotos();
     const cat=document.getElementById('f-cat').value;
@@ -973,6 +1428,8 @@ async function savePlace(){
       id:editId||Date.now().toString(),name,cat,
       address:document.getElementById('f-address').value.trim(),city:'',
       ig:document.getElementById('f-ig').value.trim(),
+      posts:[...postsDraft],
+      cover:up.cover||null,
       status:curStatus,rating,pet:curPet,
       logo:up.logo||null,
       photos:curStatus==='visitado'?[up[0]||null,up[1]||null]:[null,null],
@@ -1064,7 +1521,8 @@ function card(p){
     ?`<img src="${p.logo}" alt="${p.name}">`
     :`<span>${p.emoji||'🍴'}</span>`;
   return`<div class="place-card" onclick="openDetail('${p.id}')">
-    <div class="place-thumb">
+    <div class="place-thumb${p.cover?' has-cover':''}"${p.cover?` style="background-image:url('${p.cover}')"`:''}>
+      ${p.posts?.length?`<span class="posts-pill" title="${p.posts.length} post(s) salvo(s)">▶ ${p.posts.length}</span>`:''}
       <span class="status-pill sp-${p.status}">${SL[p.status]||p.status}</span>
       ${p.pet?`<span class="pet-badge">🐶 Pet</span>`:''}
       <div class="place-avatar-wrap ${avClass}">${avatarContent}</div>
@@ -1155,6 +1613,7 @@ function openDetail(id){
   }
 
   // Fotos dos pratos (só para visitado)
+  renderIgPosts(p);
   const photosSection=document.getElementById('detail-photos-section');
   const photosEl=document.getElementById('detail-photos');
   const fotos=(p.photos||[]).filter(Boolean);
@@ -1194,6 +1653,59 @@ function formatDate(d){
   return`${parseInt(day)} ${MN[parseInt(m)-1]} ${y}`;
 }
 
+
+/* ── Posts do Instagram (embed oficial) ── */
+function igPermalink(url){
+  const m=String(url||'').match(/instagram\.com\/(?:[^\/]+\/)?(p|reel|tv)\/([A-Za-z0-9_-]+)/);
+  return m?`https://www.instagram.com/${m[1]}/${m[2]}/`:null;
+}
+window.igEmbed=window.igEmbed||function(url){
+  const link=igPermalink(url);
+  return`<blockquote class="instagram-media" data-instgrm-permalink="${link}?utm_source=ig_embed" data-instgrm-version="14" data-instgrm-captioned><a href="${link}" target="_blank">Ver no Instagram</a></blockquote>`;
+};
+let _igScript=null;
+function loadIgScript(){
+  if(window.instgrm){window.instgrm.Embeds.process();return;}
+  if(_igScript)return;
+  _igScript=document.createElement('script');
+  _igScript.src='https://www.instagram.com/embed.js';_igScript.async=true;
+  _igScript.onload=()=>window.instgrm&&window.instgrm.Embeds.process();
+  document.body.appendChild(_igScript);
+}
+function renderIgPosts(p){
+  const sec=document.getElementById('detail-ig-section');
+  const posts=(p.posts||[]).filter(igPermalink);
+  if(!posts.length){sec.style.display='none';return;}
+  sec.style.display='';
+  const track=document.getElementById('detail-ig-track'),dots=document.getElementById('detail-ig-dots');
+  document.getElementById('detail-ig-count').textContent=posts.length>1?`· 1 de ${posts.length}`:'';
+  track.innerHTML=posts.map(u=>`<div class="ig-slide">${window.igEmbed(u)}</div>`).join('');
+  dots.innerHTML=posts.length>1?posts.map((_,i)=>`<span class="ig-dot${i?'':' on'}"></span>`).join(''):'';
+  track.scrollLeft=0;
+  track.onscroll=()=>{
+    const i=Math.round(track.scrollLeft/track.clientWidth);
+    dots.querySelectorAll('.ig-dot').forEach((d,k)=>d.classList.toggle('on',k===i));
+    if(posts.length>1)document.getElementById('detail-ig-count').textContent=`· ${i+1} de ${posts.length}`;
+  };
+  loadIgScript();
+}
+/* ── Campo de posts no formulário ── */
+let postsDraft=[];
+function renderPostsDraft(){
+  const row=document.getElementById('posts-row');if(!row)return;
+  row.innerHTML=postsDraft.map((u,i)=>{
+    const reel=/\/(reel|tv)\//.test(u);
+    return`<div class="post-chip">${i===0?'<span class="pc-cover">Capa</span>':''}<span class="pc-ic">${reel?'🎬':'🖼️'}</span>${reel?'Reel':'Post'}<button class="slot-remove" onclick="removePostDraft(${i})">✕</button></div>`;
+  }).join('');
+  row.style.display=postsDraft.length?'flex':'none';
+}
+function addPostDraft(){
+  const inp=document.getElementById('f-post-url');const link=igPermalink(inp.value);
+  if(!link){toast('⚠️','Cole o link de um post ou reel do Instagram');return;}
+  if(!postsDraft.includes(link))postsDraft.push(link);
+  inp.value='';renderPostsDraft();
+}
+function removePostDraft(i){postsDraft.splice(i,1);renderPostsDraft();}
 function closeDetail(){document.getElementById('detail-overlay').classList.remove('open');}
 function onDetailOvClick(e){if(e.target===document.getElementById('detail-overlay'))closeDetail();}
 
@@ -1813,6 +2325,415 @@ window.preencherPorInstagram=async function(handle){
 };
 // Fechar o cadastro some com o aviso (inclusive se a busca ainda estiver rodando)
 (function(){const orig=closeModal;closeModal=function(){avisoBuscaIG('');orig();};})();
+</script>
+<script>
+/* ===== REDESIGN v3 (Garfinho+): navegação, Início, cards, filtros combinados, sem emojis, logo ===== */
+window.__noCity=true;window.__FV=4;
+/* Mudanças de estrutura comuns às 3 direções (prévia do redesign). */
+(function(){
+const IC={
+  home:'<svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>',
+  list:'<svg viewBox="0 0 24 24"><path d="M7 3v8a2 2 0 0 0 2 2v8M5 3v5M9 3v5M17 21V3c-2 1-3 3.5-3 7h3"/></svg>',
+  pin:'<svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
+  trophy:'<svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3"/></svg>',
+  book:'<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="17" rx="2"/><path d="M4 9h16M9 2v4M15 2v4"/></svg>',
+  plus:'<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+  search:'<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>',
+  play:'<svg viewBox="0 0 24 24" class="fill"><path d="M8 5v14l11-7z"/></svg>',
+  star:'<svg viewBox="0 0 24 24" class="fill"><path d="m12 3 2.8 5.8 6.2.9-4.5 4.4 1 6.3L12 17.5 6.5 20.4l1-6.3L3 9.7l6.2-.9z"/></svg>',
+};
+window.__IC=IC;
+const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const MES3=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+/* endereço: "Rua, número, bairro, cidade" (aceita "- RS", CEP e "Brasil" no fim) */
+const addrParts=p=>{const a=(p.address||'').split(',').map(s=>s.trim()).filter(Boolean).filter(s=>!/^(\d{5}-?\d{3}|brasil|[A-Za-z]{2})$/i.test(s));if(a.length)a[a.length-1]=a[a.length-1].replace(/\s*-\s*[A-Za-z]{2}$/,'').trim();return a;};
+window.__cityOf=p=>{const a=addrParts(p);return (a.length>=2?a[a.length-1]:'')||p.city||'Sem cidade';};
+const bairro=p=>{const a=addrParts(p);if(a.length<3)return '';let b=a[a.length-2];if(b.includes(' - '))b=b.split(' - ').pop().trim();return /^\d/.test(b)?'':b;};
+window.__bairro=bairro;
+const capa=p=>p.cover||(p.photos||[]).find(Boolean)||null;
+/* imagem para miniaturas: capa > 1ª foto > logo */
+const thumb=p=>{const c=capa(p);return c?{src:c,logo:false}:(p.logo?{src:p.logo,logo:true}:null);};
+window.__thumb=thumb;
+const timg=(p,fallback)=>{const t=thumb(p);return t?`<img src="${t.src}" alt=""${t.logo?' class="is-logo"':''}>`:fallback;};
+window.__timg=timg;
+const meta=p=>p.cat+(bairro(p)?' · '+bairro(p):'');
+window.__capa=capa;
+
+/* Navegação inferior: 5 itens com ícones de traço, Diário incluído */
+const nav=document.querySelector('.mobile-nav');
+nav.innerHTML=[['inicio','Início',IC.home],['lugares','Lugares',IC.list],['mapa','Mapa',IC.pin],['ranking','Ranking',IC.trophy],['timeline','Diário',IC.book]]
+  .map(([v,l,i],k)=>`<div class="mob-nav-item${k?'':' active'}" data-nav="${v}" onclick="navigate('${v}')"><span class="mn-ic">${i}</span><span class="mn-lb">${l}</span></div>`).join('');
+
+/* Botão flutuante de adicionar */
+const fab=document.createElement('button');fab.className='fab';fab.setAttribute('aria-label','Adicionar lugar');fab.innerHTML=IC.plus;fab.onclick=()=>openModal();
+document.body.appendChild(fab);
+
+/* Busca acima dos filtros, filtros em uma linha rolável */
+const fb=document.getElementById('filter-bar');const sb=document.getElementById('searchBox');
+sb.parentNode.classList.add('search-wrap');fb.parentNode.insertBefore(sb.parentNode,fb);
+sb.querySelector('span').innerHTML=IC.search;
+
+/* Início */
+document.getElementById('view-inicio').innerHTML=`
+  <div class="home-hello"><div class="hh-sub" id="hh-sub"></div><h2>Olá, Débora &amp; Iago</h2></div>
+  <div class="home-stats">
+    <div class="hs" onclick="navigateFiltered('quero')"><b id="stat-want">0</b><span>Quero ir</span></div>
+    <div class="hs" onclick="navigateFiltered('visitado')"><b id="stat-visited">0</b><span>Visitados</span></div>
+    <div class="hs" onclick="navigate('ranking')"><b id="stat-avg">—</b><span>Nota média</span></div>
+    <span id="stat-total" hidden></span>
+  </div>
+  <section class="home-sec"><div class="sec-h"><h3>Que tal hoje?</h3><a onclick="navigateFiltered('quero')">Ver todos</a></div><div class="pick-row" id="pick-row"></div></section>
+  <section class="home-sec"><div class="sec-h"><h3>Últimas visitas</h3><a onclick="navigate('timeline')">Diário</a></div><div class="visit-list" id="recent-list"></div></section>
+  <section class="home-sec"><div class="sec-h"><h3>Por categoria</h3></div><div class="cat-grid" id="cat-chart"></div></section>
+  <div id="mood-cloud" hidden></div>`;
+window.renderDashboard=function(){
+  updateStats();updateBadges();
+  const D=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];const d=new Date();
+  document.getElementById('hh-sub').textContent=D[d.getDay()]+', '+d.getDate()+' de '+MESES[d.getMonth()].toLowerCase();
+  const q=places.filter(p=>p.status==='quero').sort((a,b)=>(!!capa(b))-(!!capa(a)));
+  document.getElementById('pick-row').innerHTML=q.map(p=>{const t=thumb(p),c=t&&t.src;return`<div class="pick ${c?'':'no-img av-'+p.cat}${t&&t.logo?' is-logo':''}" onclick="openDetail('${p.id}')" ${c?`style="background-image:url('${c}')"`:''}>${c?'':`<span class="pick-emoji">${p.emoji||'🍴'}</span>`}${p.posts?.length?`<span class="pc-posts">${IC.play}${p.posts.length}</span>`:''}<div class="pick-txt"><div class="pick-name">${p.name}</div><div class="pick-meta">${meta(p)}</div></div></div>`;}).join('');
+  const v=places.filter(p=>p.status==='visitado'&&p.date).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
+  document.getElementById('recent-list').innerHTML=v.map(p=>{const c=capa(p);const[y,m,dd]=p.date.split('-');return`<div class="vi" onclick="openDetail('${p.id}')"><div class="vi-img">${timg(p,window.__catIc?__catIc(p.cat):p.emoji)}</div><div class="vi-txt"><div class="vi-name">${p.name}</div><div class="vi-meta">${parseInt(dd)} ${MES3[m-1]} · ${p.cat}</div></div>${p.rating?`<div class="vi-rate">${IC.star}${String(p.rating).replace('.',',')}</div>`:''}</div>`;}).join('');
+  const cats={};places.forEach(p=>{cats[p.cat]=(cats[p.cat]||0)+1;});
+  document.getElementById('cat-chart').innerHTML=Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([c,n])=>`<div class="cg" onclick="navigateFiltered('${c}')"><span class="cg-e">${CE[c]||'🍴'}</span><span class="cg-n">${c}</span><b>${n}</b></div>`).join('');
+};
+
+/* Card da lista */
+window.card=function(p){
+  const t=thumb(p);
+  return`<div class="place-card pc" onclick="openDetail('${p.id}')">
+    <div class="pc-media ${t?'':'no-img av-'+p.cat}${t&&t.logo?' logo-only':''}">${t?timg(p,''):`<span class="pc-emoji">${p.emoji||'🍴'}</span>`}
+      <span class="pc-status st-${p.status}">${p.status==='visitado'?'Visitado':'Quero ir'}</span>
+      ${p.pet?'<span class="pc-pet" title="Pet friendly">🐶</span>':''}
+      ${p.posts?.length?`<span class="pc-posts">${IC.play}${p.posts.length}</span>`:''}
+    </div>
+    <div class="pc-body">
+      ${p.logo?`<img class="pc-logo" src="${p.logo}" alt="">`:''}
+      <div class="pc-txt"><div class="pc-name">${p.name}</div><div class="pc-meta">${meta(p)}</div></div>
+      ${p.rating?`<div class="pc-rate">${IC.star}${String(p.rating).replace('.',',')}</div>`:''}
+    </div>
+    ${p.note?`<div class="pc-note">${p.note}</div>`:''}
+  </div>`;
+};
+
+/* Detalhe: capa no topo, títulos sem emoji */
+const _od=window.openDetail;
+window.openDetail=function(id){
+  _od(id);
+  const p=places.find(x=>x.id===id);const c=capa(p);const hero=document.getElementById('detail-hero');
+  hero.classList.toggle('has-cover',!!c);hero.style.backgroundImage=c?`url('${c}')`:'';
+  document.querySelectorAll('.detail-section-title').forEach(t=>{t.childNodes.forEach(n=>{if(n.nodeType===3)n.textContent=n.textContent.replace(/^[^A-Za-zÀ-ÿ]+/,'');});});
+  document.getElementById('detail-name').textContent=p.name;
+};
+
+/* Ranking */
+window.renderRanking=function(){
+  const rl=document.getElementById('ranking-list');
+  const rk=[...places].filter(p=>p.rating>0).sort((a,b)=>b.rating-a.rating||a.name.localeCompare(b.name));
+  rl.innerHTML=`<div class="rk-head">${rk.length} lugares avaliados</div>`+rk.map((p,i)=>{const c=capa(p);return`<div class="ranking-item rk ${i<3?'top top'+(i+1):''}" onclick="openDetail('${p.id}')"><div class="rk-pos">${i+1}</div><div class="rk-img">${timg(p,window.__catIc?__catIc(p.cat):p.emoji)}</div><div class="rk-txt"><div class="rk-name">${p.name}</div><div class="rk-meta">${meta(p)}</div></div><div class="rk-score">${String(p.rating).replace('.',',')}${IC.star}</div></div>`;}).join('');
+};
+
+/* Diário (timeline) agrupado por mês */
+window.renderTimeline=function(){
+  const tl=document.getElementById('timeline-list');
+  const vs=[...places].filter(p=>p.date).sort((a,b)=>b.date.localeCompare(a.date));
+  let mes='';
+  tl.innerHTML=vs.map(p=>{const[y,m,d]=p.date.split('-');const k=MESES[m-1]+' '+y;const h=k!==mes?`<div class="tl-month">${k}</div>`:'';mes=k;
+    const fotos=(p.photos||[]).filter(Boolean);
+    return h+`<div class="timeline-item tl" onclick="openDetail('${p.id}')"><div class="tl-day"><b>${parseInt(d)}</b><span>${MES3[m-1]}</span></div><div class="timeline-card tl-card">${fotos.length?`<div class="tl-photos">${fotos.map(f=>`<img src="${f}" alt="">`).join('')}</div>`:''}<div class="tl-body"><div class="tl-name">${p.name}</div><div class="tl-meta">${meta(p)}${p.rating?`<span class="tl-rate">${IC.star}${String(p.rating).replace('.',',')}</span>`:''}</div>${p.note?`<div class="tl-note">${p.note}</div>`:''}</div></div></div>`;}).join('');
+};
+
+/* Títulos da barra superior */
+const _nav=window.navigate;
+window.navigate=function(v){_nav(v);const T={mapa:'Mapa',timeline:'Diário'};if(T[v])document.getElementById('topbar-title').textContent=T[v];};
+
+/* Pinos do mapa com as cores do tema */
+window.makeIcon=function(cat,status,pet){
+  const cs=getComputedStyle(document.body);
+  const col=(status==='visitado'?cs.getPropertyValue('--pin-visit'):cs.getPropertyValue('--pin-quero')).trim()||'#ea1d2c';
+  const ring=cs.getPropertyValue('--card').trim()||'#fff';
+  const e=CE[cat]||'📍';
+  return L.divIcon({html:`<div class="pin" style="--c:${col};--ring:${ring}"><span>${e}</span></div>`,className:'',iconSize:[38,46],iconAnchor:[19,46],popupAnchor:[0,-46]});
+};
+})();
+
+/* Base "moderna" das opções D, E e F: sem emojis, ícones de traço, filtro por cidade. Roda depois de enhance.js. */
+(function(){
+const IC=window.__IC;
+const C={
+  Pizzaria:'<svg viewBox="0 0 24 24"><path d="M12 3 3.5 19.5a1 1 0 0 0 1 1.3C7 20 9.5 19.6 12 19.6s5 .4 7.5 1.2a1 1 0 0 0 1-1.3z"/><circle cx="10" cy="12" r="1.3"/><circle cx="13.5" cy="15.5" r="1.3"/><circle cx="12.5" cy="9" r=".9"/></svg>',
+  Hamburgueria:'<svg viewBox="0 0 24 24"><path d="M4 11a8 6 0 0 1 16 0zM3 14.5h18M5 17.5h14a1 1 0 0 1 1 1v.5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-.5a1 1 0 0 1 1-1z"/></svg>',
+  'Café':'<svg viewBox="0 0 24 24"><path d="M4 9h13v5a6 6 0 0 1-6 6h-1a6 6 0 0 1-6-6zM17 11h1.5a2.5 2.5 0 0 1 0 5H17M8 2.5c-.6 1 .6 1.8 0 3M12 2.5c-.6 1 .6 1.8 0 3"/></svg>',
+  Bar:'<svg viewBox="0 0 24 24"><path d="M6 5h10v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2zM16 9h2a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2M9 9v8M13 9v8"/></svg>',
+  Sorveteria:'<svg viewBox="0 0 24 24"><path d="M7.5 11 12 21l4.5-10M7 11a5 5 0 1 1 10 0z"/></svg>',
+  Restaurante:'<svg viewBox="0 0 24 24"><path d="M7 3v8a2 2 0 0 0 2 2v8M5 3v5M9 3v5M17 21V3c-2 1-3 3.5-3 7h3"/></svg>',
+  Lanches:'<svg viewBox="0 0 24 24"><path d="M3 10 12 4l9 6zM4 13h16M5 16h14l-1.5 4h-11z"/></svg>',
+  Delivery:'<svg viewBox="0 0 24 24"><circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><path d="M6 17h6l3-7h3M9 10h4"/></svg>',
+  Outros:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v8M8 12h8"/></svg>',
+};
+const X={
+  paw:'<svg viewBox="0 0 24 24" class="fill"><circle cx="6" cy="10" r="2.2"/><circle cx="10" cy="6" r="2.2"/><circle cx="14" cy="6" r="2.2"/><circle cx="18" cy="10" r="2.2"/><path d="M12 11c3 0 6 4.5 6 7a2.5 2.5 0 0 1-3.2 2.3c-1-.3-1.8-.5-2.8-.5s-1.8.2-2.8.5A2.5 2.5 0 0 1 6 18c0-2.5 3-7 6-7z"/></svg>',
+  chev:'<svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>',
+  check:'<svg viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></svg>',
+  bookmark:'<svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg>',
+  route:'<svg viewBox="0 0 24 24"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h7.5a3.5 3.5 0 0 0 0-7h-7a3.5 3.5 0 0 1 0-7H16"/></svg>',
+  edit:'<svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4"/></svg>',
+  ig:'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".6" class="fill"/></svg>',
+  sun:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+  target:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>',
+  camera:'<svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
+  map:'<svg viewBox="0 0 24 24"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14M15 6v14"/></svg>',
+  shuffle:'<svg viewBox="0 0 24 24"><path d="M3 7h3c4 0 6 10 10 10h4M17 14l3 3-3 3M3 17h3c1.5 0 2.7-1.4 3.7-3.2M14 7h6M17 4l3 3-3 3"/></svg>',
+  heart:'<svg viewBox="0 0 24 24" class="fill"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>',
+  star:IC.star,
+};
+window.__CI=C;window.__X=X;
+const EMO=/[\p{Extended_Pictographic}☀-➿️‍]/gu;
+const strip=el=>{if(!el)return;el.childNodes.forEach(n=>{if(n.nodeType===3)n.textContent=n.textContent.replace(EMO,'').replace(/\s{2,}/g,' ').replace(/^\s+/,'');});};
+const catIc=c=>C[c]||C.Outros;
+window.__catIc=catIc;
+
+if(!window.__noCity){
+/* ---------- cidade ---------- */
+const cityOf=p=>{const a=(p.address||p.city||'').split(',').map(s=>s.trim()).filter(Boolean);return a[a.length-1]||'Sem cidade';};
+window.__city=null;window.__all=null;
+function cities(){const m={};__all.forEach(p=>{const c=cityOf(p);m[c]=(m[c]||0)+1;});return Object.entries(m).sort((a,b)=>b[1]-a[1]);}
+function applyCity(){
+  window.places=__city?__all.filter(p=>cityOf(p)===__city):__all.slice();
+  document.querySelectorAll('.city-btn .cb-name').forEach(e=>e.textContent=__city||'Todas as cidades');
+  renderAll();if(typeof currentView!=='undefined')navigate(currentView);
+}
+window.__setCity=function(c){window.__city=c;closeCity();applyCity();};
+const _loaded=window._onPlacesLoaded;
+window._onPlacesLoaded=function(){window.__all=window.places.slice();window.__city=cities()[0]?.[0]||null;window.places=__all.filter(p=>cityOf(p)===__city);_loaded();document.querySelectorAll('.city-btn .cb-name').forEach(e=>e.textContent=__city);};
+const cityBtn=()=>`<button class="city-btn" type="button" onclick="openCity()" aria-label="Escolher cidade">${IC.pin}<span class="cb-name">Porto Alegre</span>${X.chev}</button>`;
+window.__cityBtn=cityBtn;
+const ta=document.querySelector('.topbar-actions');ta.insertAdjacentHTML('afterbegin',cityBtn());
+document.body.insertAdjacentHTML('beforeend',`<div class="city-sheet" id="city-sheet" onclick="if(event.target===this)closeCity()"><div class="cs-box"><div class="cs-handle"></div><div class="cs-title">Escolher cidade</div><div class="cs-list" id="cs-list"></div></div></div>`);
+window.openCity=function(){
+  const all=__all.length;
+  document.getElementById('cs-list').innerHTML=[[null,'Todas as cidades',all],...cities().map(([c,n])=>[c,c,n])].map(([v,l,n])=>`<button class="cs-item${v===__city?' on':''}" onclick='__setCity(${JSON.stringify(v)})'><span class="cs-ic">${v?IC.pin:X.map}</span><span class="cs-name">${l}</span><span class="cs-n">${n} ${n>1?'lugares':'lugar'}</span>${v===__city?`<span class="cs-ck">${X.check}</span>`:''}</button>`).join('');
+  document.getElementById('city-sheet').classList.add('open');
+};
+window.closeCity=function(){document.getElementById('city-sheet').classList.remove('open');};
+
+}
+/* ---------- navegação: marca a aba atual no body ---------- */
+const _nav=window.navigate;
+window.navigate=function(v){document.body.dataset.view=v;_nav(v);};
+document.body.dataset.view='inicio';
+
+/* ---------- sem emojis ---------- */
+document.querySelectorAll('#filter-bar .filter-chip,.map-chip').forEach(strip);
+const dk=document.getElementById('dark-btn');if(dk){dk.innerHTML=X.sun;dk.classList.add('icon-only');}
+const lb=document.querySelector('.map-loc-btn');if(lb)lb.innerHTML=X.target;
+const ms=document.getElementById('map-status');
+if(ms)new MutationObserver(()=>{const t=ms.textContent.replace(EMO,'').trim();if(t!==ms.textContent)ms.textContent=t;}).observe(ms,{childList:true,characterData:true,subtree:true});
+
+const _card=window.card;
+window.card=function(p){return _card(p).replace(/<span class="pc-emoji">[\s\S]*?<\/span>/,`<span class="pc-emoji">${catIc(p.cat)}</span>`).replace('🐶',X.paw);};
+const _rd=window.renderDashboard;
+window.renderDashboard=function(){
+  _rd();
+  const sa=document.getElementById('stat-avg');sa.textContent=sa.textContent.replace('★','').replace('.',',');
+  document.querySelectorAll('#cat-chart .cg').forEach(el=>{const n=el.querySelector('.cg-n').textContent;el.querySelector('.cg-e').innerHTML=catIc(n);});
+  document.querySelectorAll('.pick-emoji').forEach(el=>{const p=places.find(x=>el.closest('.pick').getAttribute('onclick').includes("'"+x.id+"'"));if(p)el.innerHTML=catIc(p.cat);});
+};
+const _od=window.openDetail;
+window.openDetail=function(id){
+  _od(id);const p=places.find(x=>x.id===id)||(window.__all||[]).find(x=>x.id===id);
+  const b=document.getElementById('detail-status-badge');
+  b.innerHTML=p.status==='visitado'?`<span class="detail-badge-visitado">${X.check}Visitado${p.date?' · '+formatDate(p.date):''}</span>`:`<span class="detail-badge-quero">${X.bookmark}Quero conhecer</span>`;
+  if(p.pet)b.insertAdjacentHTML('beforeend',`<span class="detail-badge-pet">${X.paw}Pet friendly</span>`);
+  const hl=document.getElementById('detail-hero-logo');if(!p.logo){hl.innerHTML=catIc(p.cat);hl.style.background='';hl.classList.add('ic');}else hl.classList.remove('ic');
+  document.getElementById('detail-meta').textContent=[p.cat,window.__bairro(p),window.__cityOf(p)].filter(x=>x&&x!=='Sem cidade').join(' · ');
+  document.querySelectorAll('#detail-info-section .detail-info-icon').forEach((el,i)=>{el.innerHTML=/📍/.test(el.textContent)?IC.pin:X.ig;});
+  document.querySelectorAll('#detail-actions .detail-btn').forEach(btn=>{const t=btn.textContent.replace(EMO,'').trim();btn.innerHTML=(/rota/i.test(t)?X.route:/editar/i.test(t)?X.edit:'')+t;});
+  document.querySelectorAll('.detail-photo div').forEach(strip);
+};
+const _om=window.openModal;
+window.openModal=function(id){
+  _om(id);
+  const t=document.getElementById('modal-title');t.textContent=t.textContent.replace(EMO,'').trim();
+  document.querySelectorAll('.pt-icon').forEach((el,i)=>{el.innerHTML=el.closest('#visited-toggle')?X.check:X.paw;});
+  const ig=document.querySelector('.ig-btn span');if(ig)ig.innerHTML=X.ig;
+};
+document.querySelectorAll('.step-card-icon').forEach((el,i)=>el.innerHTML=i?X.check:X.bookmark);
+document.querySelectorAll('.star-pick').forEach(el=>el.textContent='★');
+document.querySelectorAll('.slot-icon').forEach(el=>el.innerHTML=X.camera);
+document.querySelectorAll('.form-label').forEach(strip);
+
+/* ---------- pinos sem emoji ---------- */
+window.makeIcon=function(cat,status,pet){
+  const cs=getComputedStyle(document.body);
+  const col=(status==='visitado'?cs.getPropertyValue('--pin-visit'):cs.getPropertyValue('--pin-quero')).trim()||'#ea1d2c';
+  return L.divIcon({html:`<div class="pin2" style="--c:${col}">${catIc(cat)}</div>`,className:'',iconSize:[34,42],iconAnchor:[17,42],popupAnchor:[0,-42]});
+};
+
+/* ---------- sortear um lugar (ideia) ---------- */
+window.sortear=function(){const q=places.filter(p=>p.status==='quero');if(q.length)openDetail(q[Math.floor(Math.random()*q.length)].id);};
+})();
+
+/* Garfinho+ refinado: filtros combináveis (cidade + status + pet + categoria), Início compacto. window.__FV = 1, 2 ou 3. */
+(function(){
+const IC=window.__IC,X=window.__X,V=window.__FV||1;
+const SL='<svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>';
+const XX='<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+const cityOf=window.__cityOf,bairro=window.__bairro;
+const mb=p=>p.cat+(bairro(p)?' · '+bairro(p):'');
+const ST={city:new Set(),status:new Set(),pet:false,cat:new Set()};window.__ST=ST;
+const STL={quero:'Quero ir',visitado:'Já fui'};
+const passes=p=>(!ST.city.size||ST.city.has(cityOf(p)))&&(!ST.status.size||ST.status.has(p.status))&&(!ST.pet||p.pet)&&(!ST.cat.size||ST.cat.has(p.cat));
+window.getFiltered=function(){ensureCity();const q=(typeof searchQuery!=='undefined'?searchQuery:'');return places.filter(p=>passes(p)&&(!q||(p.name+' '+p.cat+' '+cityOf(p)+' '+bairro(p)).toLowerCase().includes(q)));};
+window.passesFilter=passes;
+const nAct=()=>ST.city.size+ST.status.size+(ST.pet?1:0)+ST.cat.size;
+const count=(arr)=>{const m={};arr.forEach(k=>m[k]=(m[k]||0)+1);return Object.entries(m).sort((a,b)=>b[1]-a[1]);};
+const cities=()=>count(places.map(cityOf)),cats=()=>count(places.map(p=>p.cat));
+const q=s=>s.replace(/'/g,"\\'");
+const chip=(label,on,fn,tail='')=>`<button type="button" class="fc${on?' on':''}" onclick="${fn}">${on&&!tail?X.check:''}<span>${label}</span>${tail}</button>`;
+const lab=(set,one,many)=>set.size===0?one:set.size===1?[...set][0]:set.size+' '+many;
+
+function refresh(){renderPlacesGrid();renderUI();if(typeof currentView!=='undefined'&&currentView==='mapa'&&typeof renderMap==='function')renderMap();if(sheet)renderSheet();}
+window.__tog=function(g,v){if(g==='pet')ST.pet=!ST.pet;else{const s=ST[g];s.has(v)?s.delete(v):s.add(v);}refresh();};
+window.__status=function(v){ST.status.clear();if(v)ST.status.add(v);refresh();};
+window.__clear=function(){ST.city.clear();ST.status.clear();ST.pet=false;ST.cat.clear();refresh();};
+
+/* containers */
+document.getElementById('filter-bar').style.display='none';
+const grid=document.getElementById('places-grid');
+grid.insertAdjacentHTML('beforebegin','<div class="fx" id="fx"></div><div class="fx-count" id="fx-count"></div>');
+const mh=document.querySelector('.map-header');mh.innerHTML='<div class="fx" id="fx-map"></div>';
+if(V===2||V===4){const sw=document.querySelector('.search-wrap');sw.insertAdjacentHTML('beforeend',`<button type="button" class="fx-btn" onclick="openSheet('all')">${SL}<span>Filtros</span><b class="fx-badge" id="fx-badge"></b></button>`);}
+
+function ui(){
+  if(V===1){
+    return `<div class="fx-row">${nAct()?`<button type="button" class="fc clear" onclick="__clear()">${XX}<span>Limpar</span></button>`:''}`+
+      chip(lab(ST.city,'Cidade','cidades'),ST.city.size>0,"openSheet('city')",X.chev)+
+      chip('Quero ir',ST.status.has('quero'),"__tog('status','quero')")+chip('Já fui',ST.status.has('visitado'),"__tog('status','visitado')")+
+      chip('Pet friendly',ST.pet,"__tog('pet')")+
+      cats().map(([c])=>chip(c,ST.cat.has(c),`__tog('cat','${q(c)}')`)).join('')+'</div>';
+  }
+  if(V===2){
+    const act=[...[...ST.city].map(c=>['city',c,c]),...[...ST.status].map(s=>['status',s,STL[s]]),...(ST.pet?[['pet','','Pet friendly']]:[]),...[...ST.cat].map(c=>['cat',c,c])];
+    return act.length?`<div class="fx-row">`+act.map(([g,v,l])=>`<button type="button" class="fc on rm" onclick="__tog('${g}','${q(v)}')"><span>${l}</span>${XX}</button>`).join('')+`<button type="button" class="fx-link" onclick="__clear()">Limpar</button></div>`:'';
+  }
+  if(V===4){
+    if(!nAct())return '';
+    return `<div class="fx-row">`+
+      (ST.city.size?chip(lab(ST.city,'Cidade','cidades'),true,"openSheet('city')",X.chev):'')+
+      [...ST.status].map(s=>chip(STL[s],true,`__tog('status','${s}')`)).join('')+
+      (ST.cat.size?chip(lab(ST.cat,'Categoria','categorias'),true,"openSheet('cat')",X.chev):'')+
+      (ST.pet?chip('Pet friendly',true,"__tog('pet')"):'')+
+      `<button type="button" class="fx-link" onclick="__clear()">Limpar</button></div>`;
+  }
+  const seg=[['','Todos'],['quero','Quero ir'],['visitado','Já fui']].map(([v,l])=>{const on=v?ST.status.size===1&&ST.status.has(v):ST.status.size===0;return`<button type="button" class="${on?'on':''}" onclick="__status('${v}')">${l}</button>`;}).join('');
+  return `<div class="fx-seg">${seg}</div><div class="fx-row">`+chip(lab(ST.city,'Cidade','cidades'),ST.city.size>0,"openSheet('city')",X.chev)+chip(lab(ST.cat,'Categoria','categorias'),ST.cat.size>0,"openSheet('cat')",X.chev)+chip('Pet friendly',ST.pet,"__tog('pet')")+(nAct()?`<button type="button" class="fx-link" onclick="__clear()">Limpar</button>`:'')+'</div>';
+}
+function renderUI(){ensureCity();
+  const h=ui();document.getElementById('fx').innerHTML=h;
+  const hm=(V===2||V===4)?`<div class="fx-row"><button type="button" class="fx-btn sm" onclick="openSheet('all')">${SL}<span>Filtros</span>${nAct()?`<b class="fx-badge show">${nAct()}</b>`:''}</button>${h.replace(/^<div class="fx-row">|<\/div>$/g,'')}</div>`:h;
+  document.getElementById('fx-map').innerHTML=hm;
+  const n=getFiltered().length;
+  document.getElementById('fx-count').innerHTML=`${n} ${n===1?'lugar':'lugares'}`;
+  const b=document.getElementById('fx-badge');if(b){b.textContent=nAct()||'';b.classList.toggle('show',nAct()>0);}
+}
+window.__renderFx=renderUI;
+/* cidade padrão: a que tem mais lugares (definida quando os dados chegam) */
+let cityInit=false;
+function ensureCity(){if(cityInit||!places.length)return;cityInit=true;const c=cities()[0];if(c&&cities().length>1)ST.city.add(c[0]);}
+window.__ensureCity=ensureCity;
+
+/* folha de filtros */
+let sheet=null;
+document.body.insertAdjacentHTML('beforeend','<div class="fx-sheet" id="fx-sheet" onclick="if(event.target===this)closeSheet()"><div class="fx-box" id="fx-box"></div></div>');
+const ck=(on)=>`<span class="ck${on?' on':''}">${on?X.check:''}</span>`;
+function list(g,items){return`<div class="fx-list">`+items.map(([v,n])=>`<button type="button" class="fx-li" onclick="__tog('${g}','${q(v)}')">${ck(ST[g].has(v))}<span class="li-n">${v}</span><span class="li-c">${n}</span></button>`).join('')+'</div>';}
+function renderSheet(){
+  const n=getFiltered().length;let body='',title='';
+  if(sheet==='city'){title='Cidade';body=list('city',cities());}
+  else if(sheet==='cat'){title='Categoria';body=list('cat',cats());}
+  else if(V===4){title='Filtros';
+    const seg=[['','Todos'],['quero','Quero ir'],['visitado','Já fui']].map(([v,l])=>{const on=v?ST.status.size===1&&ST.status.has(v):ST.status.size===0;return`<button type="button" class="${on?'on':''}" onclick="__status('${v}')">${l}</button>`;}).join('');
+    body=`<div class="fx-seg in">${seg}</div><div class="fx-sec"><h4>Cidade</h4>${list('city',cities())}</div><div class="fx-sec"><h4>Categoria</h4>${list('cat',cats())}</div><div class="fx-sec"><h4>Outros</h4><div class="fx-list"><button type="button" class="fx-li" onclick="__tog('pet')">${ck(ST.pet)}<span class="li-n">Pet friendly</span><span class="li-c">${places.filter(p=>p.pet).length}</span></button></div></div>`;}
+  else{title='Filtros';
+    body=`<div class="fx-sec"><h4>Cidade</h4><div class="fx-wrap">${cities().map(([c,k])=>chip(c,ST.city.has(c),`__tog('city','${q(c)}')`,`<em>${k}</em>`)).join('')}</div></div>
+    <div class="fx-sec"><h4>Status</h4><div class="fx-wrap">${chip('Quero ir',ST.status.has('quero'),"__tog('status','quero')")}${chip('Já fui',ST.status.has('visitado'),"__tog('status','visitado')")}</div></div>
+    <div class="fx-sec"><h4>Categoria</h4><div class="fx-wrap">${cats().map(([c])=>chip(c,ST.cat.has(c),`__tog('cat','${q(c)}')`)).join('')}</div></div>
+    <div class="fx-sec"><h4>Outros</h4><div class="fx-wrap">${chip('Pet friendly',ST.pet,"__tog('pet')")}</div></div>`;}
+  document.getElementById('fx-box').innerHTML=`<div class="cs-handle"></div><div class="fx-head"><b>${title}</b>${nAct()?`<button type="button" class="fx-link" onclick="__clear()">Limpar tudo</button>`:''}</div>${body}<div class="fx-foot"><button type="button" class="fx-go" onclick="closeSheet()">Ver ${n} ${n===1?'lugar':'lugares'}</button></div>`;
+}
+window.openSheet=function(m){sheet=m;renderSheet();document.getElementById('fx-sheet').classList.add('open');};
+window.closeSheet=function(){sheet=null;document.getElementById('fx-sheet').classList.remove('open');};
+
+/* Início */
+const vi=document.getElementById('view-inicio');
+if(V===2){
+  vi.insertAdjacentHTML('afterbegin',`<button type="button" class="h2-search" onclick="navigate('lugares')">${IC.search}<span>Buscar lugar, bairro ou cidade</span></button><div class="h2-line" id="h2-line"></div>`);
+  document.getElementById('pick-row').closest('.home-sec').querySelector('h3').textContent='Quero ir';
+}
+if(V===4){
+  const D=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'],M=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'],d=new Date();
+  const td=document.getElementById('topbar-date');td.textContent=D[d.getDay()]+', '+d.getDate()+' '+M[d.getMonth()];
+  document.querySelector('.topbar-actions').insertAdjacentHTML('afterbegin','<div class="tb-ini" aria-label="Débora e Iago"><span>D</span><span>I</span></div>');
+  vi.insertAdjacentHTML('afterbegin',`<button type="button" class="h2-search ic-only" aria-label="Buscar" onclick="navigate('lugares');setTimeout(()=>document.getElementById('searchInput').focus(),200)">${IC.search}</button>`);
+  vi.querySelector('.home-stats').insertAdjacentHTML('afterend',`<button type="button" class="h4-sort" onclick="sortear()">${X.shuffle}<span>Sortear um lugar pra hoje</span></button>`);
+  document.getElementById('pick-row').closest('.home-sec').querySelector('h3').textContent='Quero ir';
+}
+if(V===3){
+  vi.querySelector('.home-stats').insertAdjacentHTML('afterend',`<button type="button" class="h3-sort" onclick="sortear()">${X.shuffle}<span>Sortear um lugar para hoje</span></button>`);
+}
+const _rd=window.renderDashboard;
+window.renderDashboard=function(){_rd();
+  const qq=places.filter(p=>p.status==='quero').sort((a,b)=>(!!__capa(b))-(!!__capa(a)));
+  if(V===2||V===4){
+    const v=places.filter(p=>p.status==='visitado').length,av=document.getElementById('stat-avg').textContent;
+    if(V===2)document.getElementById('h2-line').innerHTML=`<b>${qq.length}</b> para conhecer<i></i><b>${v}</b> visitados<i></i>nota média <b>${av}</b>`;
+    const pr=document.getElementById('pick-row');pr.className='h2-grid';
+    pr.innerHTML=qq.slice(0,4).map(p=>{const t=__thumb(p),c=t&&t.src;return`<div class="h2-tile" onclick="openDetail('${p.id}')"><div class="h2-img${c&&!__capa(p)?' is-logo':''}" ${c?`style="background-image:url('${c}')"`:''}>${c?'':__catIc(p.cat)}${p.posts?.length?`<span class="pc-posts">${IC.play}${p.posts.length}</span>`:''}</div><b>${p.name}</b><span>${mb(p)}</span></div>`;}).join('');
+  }
+  if(V===3){
+    const pr=document.getElementById('pick-row');pr.className='h3-list';
+    const [f,...rest]=qq;
+    pr.innerHTML=(f?`<div class="h3-feat" onclick="openDetail('${f.id}')" style="background-image:url('${__capa(f)}')">${f.posts?.length?`<span class="pc-posts">${IC.play}${f.posts.length}</span>`:''}<div><b>${f.name}</b><span>${f.cat} · ${bairro(f)}, ${cityOf(f)}</span></div></div>`:'')+
+      rest.slice(0,3).map(p=>{const c=__capa(p);return`<div class="vi" onclick="openDetail('${p.id}')"><div class="vi-img">${c?`<img src="${c}" alt="">`:__catIc(p.cat)}</div><div class="vi-txt"><div class="vi-name">${p.name}</div><div class="vi-meta">${p.cat} · ${bairro(p)}</div></div>${X.chev.replace('<svg','<svg class="go"')}</div>`;}).join('');
+  }
+};
+const _rpg=window.renderPlacesGrid;
+window.renderPlacesGrid=function(){_rpg();renderUI();};
+window.navigateFiltered=function(f){__clear();if(f==='visitado'||f==='quero')ST.status.add(f);else if(f==='pet')ST.pet=true;else ST.cat.add(f);navigate('lugares');};
+})();
+
+(function(){const VB='705 466 1662 2249',D='M 1526.500 506.635 C 1523.750 506.810, 1511.375 507.433, 1499 508.017 C 1436.425 510.975, 1374.719 520.857, 1327.730 535.446 C 1319.676 537.946, 1307.329 541.557, 1300.293 543.470 C 1277.753 549.598, 1241.394 563.133, 1215.035 575.208 C 1205.391 579.625, 1194.197 584.750, 1190.160 586.596 C 1186.123 588.443, 1177.348 593.070, 1170.660 596.879 C 1163.972 600.688, 1152.529 606.983, 1145.231 610.867 C 1137.934 614.752, 1130.005 619.276, 1127.613 620.922 C 1125.221 622.568, 1116.567 628.117, 1108.382 633.254 C 1065.740 660.017, 1019.604 697.748, 972.966 744 C 931.077 785.543, 873.266 861.768, 852.742 902.518 C 850.808 906.358, 846.199 914.675, 842.498 921 C 831.756 939.364, 824.710 953.987, 807.328 994 C 779.087 1059.006, 756.452 1148.991, 749.472 1224 C 748.628 1233.075, 747.431 1244.550, 746.811 1249.500 C 744.421 1268.615, 745.329 1331.767, 748.357 1357 C 754.711 1409.950, 760.161 1440.410, 767.949 1466.500 C 770.084 1473.650, 774.143 1488.050, 776.970 1498.500 C 787.650 1537.981, 796.839 1564.624, 811.975 1600 C 815.387 1607.975, 821.457 1622.375, 825.465 1632 C 829.472 1641.625, 835.760 1656.475, 839.438 1665 C 848.263 1685.456, 899.142 1785.541, 910.100 1804 C 914.834 1811.975, 922.667 1825.700, 927.507 1834.500 C 959.969 1893.521, 973.282 1913.806, 981.092 1916.146 C 989.268 1918.595, 992.038 1916.520, 1030 1879.506 C 1038.525 1871.194, 1047.975 1862.191, 1051 1859.499 C 1054.025 1856.808, 1071.575 1840.167, 1090 1822.521 C 1108.425 1804.874, 1128.675 1785.765, 1135 1780.056 C 1141.325 1774.347, 1153.700 1762.608, 1162.500 1753.971 C 1171.300 1745.333, 1185.475 1731.825, 1194 1723.954 C 1348.495 1581.297, 1357.663 1563.986, 1352.591 1424.500 C 1348.883 1322.501, 1397.308 1241.308, 1521.500 1141.292 C 1529.750 1134.648, 1543.250 1123.279, 1551.500 1116.028 C 1559.750 1108.778, 1573.250 1097.310, 1581.500 1090.544 C 1589.750 1083.779, 1600.550 1074.760, 1605.500 1070.503 C 1610.450 1066.245, 1621.025 1057.541, 1629 1051.160 C 1636.975 1044.780, 1647.364 1036.171, 1652.087 1032.030 C 1660.419 1024.725, 1666.526 1019.730, 1712 983.040 C 1723.825 973.500, 1740.700 959.525, 1749.500 951.985 C 1775.840 929.419, 1788.515 918.817, 1808.500 902.637 C 1818.950 894.176, 1831.550 883.970, 1836.500 879.956 C 1864.736 857.058, 1885.436 852.429, 1892.112 867.520 C 1896.549 877.551, 1890.875 887.122, 1864.556 914 C 1851.791 927.037, 1837.409 942.509, 1825.053 956.500 C 1822.624 959.250, 1807.322 975.450, 1791.048 992.500 C 1774.774 1009.550, 1754.448 1031.375, 1745.878 1041 C 1737.308 1050.625, 1724.940 1064.125, 1718.392 1071 C 1711.845 1077.875, 1700.875 1089.575, 1694.015 1097 C 1687.155 1104.425, 1676.583 1115.678, 1670.521 1122.007 C 1664.460 1128.336, 1654.105 1139.586, 1647.511 1147.007 C 1640.917 1154.428, 1629.193 1167.025, 1621.458 1175 C 1613.722 1182.975, 1602.474 1195.125, 1596.462 1202 C 1590.450 1208.875, 1579.196 1221.063, 1571.453 1229.084 C 1537.511 1264.245, 1532.176 1293.875, 1556.100 1314.354 C 1577.037 1332.275, 1596.611 1327.042, 1632.629 1293.894 C 1641.358 1285.861, 1652.392 1275.961, 1657.149 1271.894 C 1661.906 1267.827, 1674.639 1256.625, 1685.445 1247 C 1696.251 1237.375, 1713.589 1222.075, 1723.975 1213 C 1734.361 1203.925, 1756.258 1184.350, 1772.636 1169.500 C 1789.013 1154.650, 1808.283 1137.332, 1815.457 1131.015 C 1822.630 1124.698, 1832.325 1115.907, 1837 1111.480 C 1841.675 1107.053, 1849.775 1099.600, 1855 1094.917 C 1860.225 1090.235, 1874.400 1077.410, 1886.500 1066.417 C 1898.600 1055.424, 1914.575 1041.203, 1922 1034.816 C 1929.425 1028.428, 1941.350 1017.712, 1948.500 1011.002 C 1983.875 977.804, 2004.521 969.684, 2014.005 985.241 C 2019.947 994.986, 2013.823 1007.262, 1987.830 1037.713 C 1968.006 1060.938, 1960.888 1069.417, 1947.750 1085.458 C 1941.013 1093.684, 1929.200 1107.564, 1921.500 1116.301 C 1913.800 1125.038, 1901.491 1139.682, 1894.147 1148.844 C 1886.803 1158.005, 1876.678 1170.221, 1871.647 1175.991 C 1866.616 1181.761, 1858.924 1190.761, 1854.554 1195.991 C 1850.184 1201.221, 1843.850 1208.650, 1840.478 1212.500 C 1837.107 1216.350, 1831.458 1223.111, 1827.924 1227.525 C 1824.391 1231.939, 1814.525 1243.807, 1806 1253.898 C 1797.475 1263.989, 1785.325 1278.655, 1779 1286.489 C 1772.675 1294.323, 1761.585 1307.431, 1754.356 1315.617 C 1747.127 1323.802, 1737.139 1335.542, 1732.160 1341.706 C 1727.181 1347.869, 1717.175 1359.792, 1709.924 1368.201 C 1695.437 1385.004, 1689.989 1392.492, 1686.554 1400.325 C 1667.756 1443.195, 1709.788 1479.884, 1748.354 1454.269 C 1755.153 1449.754, 1915.656 1291.044, 2003.447 1202.027 C 2019.976 1185.267, 2036.634 1168.617, 2040.465 1165.027 C 2044.296 1161.437, 2058.921 1146.990, 2072.965 1132.922 C 2105.736 1100.097, 2114.537 1093.689, 2124.612 1095.324 C 2138.454 1097.571, 2140.631 1112.818, 2129.967 1132.831 C 2125.653 1140.928, 2122.444 1145.283, 2099.894 1173.645 C 2092.961 1182.365, 2083.656 1194.532, 2079.217 1200.682 C 2074.778 1206.831, 2065.787 1218.306, 2059.239 1226.182 C 2052.690 1234.057, 2037.497 1253.325, 2025.477 1269 C 1984.999 1321.784, 1948.358 1368.937, 1918.629 1406.500 C 1910.793 1416.400, 1901.495 1428.325, 1897.965 1433 C 1876.272 1461.735, 1834.172 1513.274, 1806.476 1545 C 1764.054 1593.595, 1709.028 1633.171, 1667 1645.314 C 1631.232 1655.649, 1604.601 1657.973, 1560.598 1654.601 C 1476.868 1648.186, 1419.132 1672.609, 1362.080 1738.577 C 1356.811 1744.670, 1341.669 1761.995, 1328.431 1777.077 C 1315.194 1792.160, 1299.026 1810.800, 1292.503 1818.500 C 1285.981 1826.200, 1276.756 1836.775, 1272.003 1842 C 1267.251 1847.225, 1258.125 1857.575, 1251.723 1865 C 1245.322 1872.425, 1235.280 1883.900, 1229.407 1890.500 C 1223.534 1897.100, 1214.423 1907.675, 1209.159 1914 C 1203.896 1920.325, 1195.490 1929.775, 1190.479 1935 C 1185.469 1940.225, 1176.899 1949.903, 1171.435 1956.507 C 1165.971 1963.110, 1155.802 1975.035, 1148.838 1983.007 C 1141.874 1990.978, 1130.624 2004.082, 1123.838 2012.127 C 1117.052 2020.171, 1106.374 2032.546, 1100.108 2039.627 C 1074.057 2069.067, 1074.130 2071.256, 1102.458 2110.500 C 1110.398 2121.500, 1122.754 2139.050, 1129.916 2149.500 C 1137.078 2159.950, 1146.073 2172.775, 1149.904 2178 C 1153.734 2183.225, 1162.836 2195.825, 1170.129 2206 C 1177.422 2216.175, 1187.285 2229.675, 1192.047 2236 C 1196.809 2242.325, 1208.759 2258.523, 1218.602 2271.995 C 1228.446 2285.468, 1242.575 2304.197, 1250 2313.617 C 1257.425 2323.036, 1268.744 2337.888, 1275.154 2346.621 C 1281.564 2355.355, 1291.753 2368.437, 1297.797 2375.693 C 1303.841 2382.950, 1312.215 2393.647, 1316.405 2399.466 C 1320.596 2405.284, 1334.032 2422.459, 1346.263 2437.633 C 1365.130 2461.040, 1385.232 2486.570, 1416.235 2526.500 C 1419.651 2530.900, 1426.733 2540.128, 1431.973 2547.007 C 1437.213 2553.886, 1447.211 2566.711, 1454.191 2575.507 C 1461.172 2584.303, 1476.157 2603.650, 1487.492 2618.500 C 1538.205 2684.938, 1535.452 2683.968, 1564.282 2645.552 C 1569.257 2638.923, 1576.490 2629.712, 1580.356 2625.081 C 1584.221 2620.451, 1592.819 2609.426, 1599.462 2600.581 C 1614.856 2580.086, 1642.357 2544.302, 1653.155 2530.719 C 1657.745 2524.945, 1669.825 2509.514, 1680 2496.428 C 1690.175 2483.342, 1704.603 2464.955, 1712.063 2455.568 C 1719.523 2446.180, 1736.642 2424.325, 1750.104 2407 C 1763.567 2389.675, 1777.744 2371.450, 1781.607 2366.500 C 1812.827 2326.503, 1861.439 2262.191, 1882.518 2233 C 1886.290 2227.775, 1894.562 2216.300, 1900.898 2207.500 C 1907.235 2198.700, 1916.185 2186.667, 1920.788 2180.760 C 1925.391 2174.853, 1933.768 2163.153, 1939.402 2154.760 C 1945.037 2146.367, 1954.380 2132.750, 1960.165 2124.500 C 2018.652 2041.091, 2092.604 1926.804, 2121.047 1875.868 C 2126.688 1865.766, 2138.604 1845.350, 2147.527 1830.500 C 2156.450 1815.650, 2166.340 1798.325, 2169.504 1792 C 2172.668 1785.675, 2177.164 1777.125, 2179.496 1773 C 2184.100 1764.854, 2212.561 1708.384, 2223.847 1685 C 2239.517 1652.534, 2258.645 1607.958, 2266.409 1585.813 C 2269.361 1577.391, 2274.021 1564.650, 2276.763 1557.500 C 2287.627 1529.174, 2306.519 1464.220, 2311.376 1438.500 C 2333.418 1321.755, 2331.243 1218.766, 2304.545 1115 C 2299.720 1096.246, 2299.835 1096.655, 2289.204 1060.500 C 2277.389 1020.315, 2251.245 958.679, 2229.819 920.500 C 2224.264 910.600, 2217.468 898.450, 2214.719 893.500 C 2167.752 808.947, 2084.694 719.081, 1990 650.361 C 1974.880 639.388, 1969.356 635.745, 1944 620.017 C 1896.868 590.782, 1829.557 560.063, 1779.693 545.033 C 1735.937 531.844, 1687.510 520.543, 1657.321 516.476 C 1650.819 515.601, 1639.650 514.019, 1632.500 512.962 C 1619.017 510.968, 1603.319 509.773, 1567.500 508.012 C 1534.340 506.382, 1531.794 506.296, 1526.500 506.635';window.__sym=function(c){return`<svg class="${c||''}" viewBox="${VB}" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="${D}"/></svg>`;};const it=document.querySelector('.mob-nav-item[data-nav="inicio"] .mn-ic');if(it)it.innerHTML=__sym('logo-nav');})();
+/* Acabamentos finais: sem emojis restantes, estado vazio, popups do mapa, menu lateral */
+(function(){
+const IC=window.__IC,X=window.__X;
+const EMO=/[\p{Extended_Pictographic}☀-➿️‍]/gu;
+const clean=el=>{if(!el)return;const w=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);let n;while((n=w.nextNode())){const t=n.textContent.replace(EMO,'').replace(/^\s+/,'');if(t!==n.textContent)n.textContent=t;}};
+/* barra de sincronização */
+const fb=document.getElementById('fb-sync');
+if(fb)new MutationObserver(()=>{const t=fb.textContent.replace(EMO,'').trim();if(t!==fb.textContent)fb.textContent=t;}).observe(fb,{childList:true,characterData:true,subtree:true});
+/* popups do mapa */
+const _nav=window.navigate;
+window.navigate=function(v){_nav(v);if(v==='mapa')setTimeout(()=>{if(typeof leafletMap!=='undefined'&&leafletMap&&!leafletMap.__clean){leafletMap.__clean=true;leafletMap.on('popupopen',e=>clean(e.popup.getElement()));}},400);};
+/* estado vazio */
+window.empty=function(t,s,cta=true){return`<div class="empty"><div class="empty-icon">${window.__sym?__sym():''}</div><div class="empty-title">${t}</div><div class="empty-sub">${s}</div>${cta?`<div class="empty-cta" onclick="openModal()">Adicionar lugar</div>`:''}</div>`;};
+/* menu lateral (telas largas) e aviso de instalar */
+const NI={inicio:window.__sym?__sym('logo-nav'):IC.home,lugares:IC.list,mapa:IC.pin,ranking:IC.trophy,timeline:IC.book};
+document.querySelectorAll('.nav-item').forEach(n=>{const m=(n.getAttribute('onclick')||'').match(/'(\w+)'/);const ic=n.querySelector('.nav-icon');if(m&&ic&&NI[m[1]])ic.innerHTML=NI[m[1]];});
+const li=document.querySelector('.logo-icon');if(li&&window.__sym)li.innerHTML=__sym();
+const ibi=document.querySelector('#ib>div:first-child');if(ibi&&window.__sym)ibi.innerHTML=__sym();
+const ua=document.querySelector('.user-sub');if(ua)clean(ua);
+/* botão de tema claro/escuro com ícone de traço */
+const MOON='<svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>';
+const setDk=()=>{const b=document.getElementById('dark-btn');if(b)b.innerHTML=document.body.classList.contains('dark')?MOON:X.sun;};
+const _td=window.toggleDark;if(_td)window.toggleDark=function(){_td();setDk();};
+setDk();
+/* excluir passa para a tela de edição */
+window.excluirAtual=function(){const id=editId;if(!id)return;deletePlace(id);if(!window.places.find(p=>p.id===id))closeModal();};
+const _om=window.openModal;
+window.openModal=function(id){_om(id);const b=document.getElementById('btn-del');if(b)b.classList.toggle('show',!!id);};
+})();
+
 </script>
 </body>
 </html>
