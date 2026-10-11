@@ -590,9 +590,12 @@ svg.fill{fill:currentColor;stroke:none}
 .detail-hero.has-cover{height:230px;padding-top:0;background-size:cover;background-position:center;border-radius:0;align-items:flex-end;margin:0}
 .detail-hero.has-cover .detail-hero-logo{width:86px;height:86px;transform:translateY(43px);font-size:2.2rem}
 .detail-hero.has-cover + .detail-body{padding-top:56px}
-.detail-hero.ig-cover{background:var(--bg3)}
-.hero-ig{position:absolute;inset:0;overflow:hidden;z-index:0;pointer-events:none}
-.hero-ig iframe{position:absolute;left:0;width:100%;border:0;background:var(--bg3)}
+.ig-bg{position:absolute;inset:0;overflow:hidden;z-index:0;pointer-events:none;border-radius:inherit}
+.ig-bg iframe{position:absolute;left:0;top:0;width:400px;height:1000px;border:0;transform-origin:0 0;visibility:hidden}
+.ig-bg.fit iframe{visibility:visible}
+.pc-media>:not(.ig-bg),.h2-img>:not(.ig-bg){position:relative;z-index:1}
+.pc-media>img.is-logo,.h2-img>img.is-logo{position:relative!important;z-index:1}
+.pc-media>.pc-status,.pc-media>.pc-pet,.pc-media>.pc-posts,.h2-img>.pc-posts{position:absolute;z-index:2}
 .detail-modal:has(.detail-hero.has-cover) .detail-handle{position:absolute;left:50%;transform:translateX(-50%);margin-top:10px;z-index:3;background:rgba(255,255,255,.7)}
 .detail-modal{position:relative}
 .detail-name{font-family:var(--font-d);letter-spacing:-.02em}
@@ -1175,7 +1178,7 @@ body[data-view=mapa] .fab{display:none!important}
       <input type="hidden" id="f-city" value="">
       <div class="form-field"><label class="form-label">Instagram do Lugar</label><input class="form-input" id="f-ig" placeholder="https://instagram.com/nomedolugar" type="url"></div>
       <div class="form-field">
-        <label class="form-label">Posts do Instagram <span style="font-size:.68rem;font-weight:600;color:var(--gray2);text-transform:none;letter-spacing:0;font-style:italic">— o 1º aparece no topo do lugar se não houver foto de capa</span></label>
+        <label class="form-label">Posts do Instagram <span style="font-size:.68rem;font-weight:600;color:var(--gray2);text-transform:none;letter-spacing:0;font-style:italic">— o 1º vira o fundo do card se não houver foto de capa</span></label>
         <div class="posts-row" id="posts-row" style="display:none"></div>
         <div class="post-add"><input class="form-input" id="f-post-url" placeholder="Cole o link do post ou reel" type="url"><button class="post-add-btn" type="button" onclick="addPostDraft()">Adicionar</button></div>
       </div>
@@ -2719,6 +2722,15 @@ const timg=(p,fallback)=>{const t=thumb(p);return t?`<img src="${t.src}" alt=""$
 window.__timg=timg;
 const meta=p=>p.cat+(bairro(p)?' · '+bairro(p):'');
 window.__capa=capa;
+/* sem foto de capa: o 1º post do Instagram fica atrás do logo nos cards (recortado só na imagem) */
+const igBg=p=>{if(p.cover)return '';const m=String((p.posts||[])[0]||'').match(/instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/);
+  return m?`<span class="ig-bg"><iframe src="https://www.instagram.com/p/${m[1]}/embed/" loading="lazy" scrolling="no" tabindex="-1" title=""></iframe></span>`:'';};
+window.__igBg=igBg;
+const _igRO='ResizeObserver' in window?new ResizeObserver(es=>es.forEach(e=>fitIg(e.target))):null;
+function fitIg(b){const w=b.clientWidth,h=b.clientHeight;if(!w)return;const f=b.firstElementChild;if(!f)return;const k=w/400;
+  f.style.transform=`translate(0,${-Math.round(60*k+Math.max(0,(w-h)/2))}px) scale(${k})`;b.classList.add('fit');}
+window.__fitIgBg=function(){document.querySelectorAll('.ig-bg:not([data-o])').forEach(b=>{b.dataset.o=1;fitIg(b);if(_igRO)_igRO.observe(b);});};
+new MutationObserver(()=>{if(document.querySelector('.ig-bg:not([data-o])'))window.__fitIgBg();}).observe(document.body||document.documentElement,{childList:true,subtree:true});
 
 /* Navegação inferior: 5 itens com ícones de traço, Diário incluído */
 const nav=document.querySelector('.mobile-nav');
@@ -2763,7 +2775,7 @@ window.renderDashboard=function(){
 window.card=function(p){
   const t=thumb(p);
   return`<div class="place-card pc" onclick="openDetail('${p.id}')">
-    <div class="pc-media ${t?'':'no-img av-'+p.cat}${t&&t.logo?' logo-only':''}">${t?timg(p,''):`<span class="pc-emoji">${p.emoji||'🍴'}</span>`}
+    <div class="pc-media ${t?'':'no-img av-'+p.cat}${t&&t.logo?' logo-only':''}">${igBg(p)}${t?timg(p,''):`<span class="pc-emoji">${p.emoji||'🍴'}</span>`}
       <span class="pc-status st-${p.status}">${p.status==='visitado'?'Visitado':'Quero ir'}</span>
       ${p.pet?'<span class="pc-pet" title="Pet friendly">🐶</span>':''}
       ${p.posts?.length?`<span class="pc-posts">${IC.play}${p.posts.length}</span>`:''}
@@ -2783,11 +2795,6 @@ window.openDetail=function(id){
   const p=places.find(x=>x.id===id);if(!p)return;
   _od(id);const c=capa(p);const hero=document.getElementById('detail-hero');
   hero.classList.toggle('has-cover',!!c);hero.style.backgroundImage=c?`url('${c}')`:'';
-  /* sem foto de capa: o 1º post do Instagram aparece no topo, recortado só na imagem */
-  const _oi=hero.querySelector('.hero-ig');if(_oi)_oi.remove();hero.classList.remove('ig-cover');
-  const _pm=!c&&String((p.posts||[])[0]||'').match(/instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/);
-  if(_pm){hero.classList.add('has-cover','ig-cover');const w=hero.clientWidth||390;
-    hero.insertAdjacentHTML('afterbegin',`<div class="hero-ig"><iframe src="https://www.instagram.com/p/${_pm[1]}/embed/" scrolling="no" tabindex="-1" title="Capa do Instagram" style="height:${w+420}px;top:-${Math.round(60+Math.max(0,(w-230)/2))}px"></iframe></div>`);}
   document.querySelectorAll('.detail-section-title').forEach(t=>{t.childNodes.forEach(n=>{if(n.nodeType===3)n.textContent=n.textContent.replace(/^[^A-Za-zÀ-ÿ]+/,'');});});
   document.getElementById('detail-name').textContent=p.name;
 };
@@ -3058,7 +3065,7 @@ window.renderDashboard=function(){_rd();
     const v=places.filter(p=>p.status==='visitado').length,av=document.getElementById('stat-avg').textContent;
     if(V===2)document.getElementById('h2-line').innerHTML=`<b>${qq.length}</b> para conhecer<i></i><b>${v}</b> visitados<i></i>nota média <b>${av}</b>`;
     const pr=document.getElementById('pick-row');pr.className='h2-grid';
-    pr.innerHTML=qq.slice(0,4).map(p=>{const t=__thumb(p),c=t&&t.src;return`<div class="h2-tile" onclick="openDetail('${p.id}')"><div class="h2-img${t&&t.logo?' logo-only':''}" ${c&&!t.logo?`style="background-image:url('${c}')"`:''}>${t&&t.logo?`<img class="is-logo" src="${c}" alt="">`:(c?'':__catIc(p.cat))}${p.posts?.length?`<span class="pc-posts">${IC.play}${p.posts.length}</span>`:''}</div><b>${esc(p.name)}</b><span>${mb(p)}</span></div>`;}).join('');
+    pr.innerHTML=qq.slice(0,4).map(p=>{const t=__thumb(p),c=t&&t.src;return`<div class="h2-tile" onclick="openDetail('${p.id}')"><div class="h2-img${t&&t.logo?' logo-only':''}" ${c&&!t.logo?`style="background-image:url('${c}')"`:''}>${__igBg(p)}${t&&t.logo?`<img class="is-logo" src="${c}" alt="">`:(c?'':__catIc(p.cat))}${p.posts?.length?`<span class="pc-posts">${IC.play}${p.posts.length}</span>`:''}</div><b>${esc(p.name)}</b><span>${mb(p)}</span></div>`;}).join('');
   }
   if(V===3){
     const pr=document.getElementById('pick-row');pr.className='h3-list';
