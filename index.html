@@ -901,6 +901,22 @@ body.dark{--bg:#14110F;--bg2:#1D1A17;--bg3:#2A2622;--card:#1D1A17;--border:#2E29
   --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35)}
 body.dark .detail-modal,body.dark .modal{background:var(--card)}
 body.dark img.is-logo,body.dark .pc-media.logo-only{background:#fff}
+/* ---- ajustes pós-publicação ---- */
+/* logo sem capa: círculo sobre fundo neutro (esconde os cantos pretos do recorte) */
+img.is-logo{width:56%!important;height:auto!important;aspect-ratio:1/1;object-fit:cover!important;padding:0!important;border-radius:50%;background:transparent;position:static!important;box-shadow:0 4px 14px rgba(40,30,20,.12)}
+.pc-media.logo-only,.h2-img.logo-only{background:var(--bg3)!important;display:flex;align-items:center;justify-content:center}
+.pc-media.logo-only img.is-logo{position:static!important;inset:auto}
+.vi-img img.is-logo,.rk-img img.is-logo{width:100%!important;height:100%!important;box-shadow:none}
+body.dark .pc-media.logo-only,body.dark .h2-img.logo-only{background:var(--bg3)!important}
+body.dark img.is-logo{background:transparent}
+/* barra inferior fixa, sem flutuar sobre o conteúdo */
+.mobile-nav{left:0!important;right:0!important;bottom:0!important;border-radius:0!important;border:none!important;border-top:1px solid var(--border)!important;box-shadow:0 -6px 18px rgba(40,30,20,.06)!important;padding:8px 6px calc(10px + env(safe-area-inset-bottom,0px))!important;background:var(--card)!important;z-index:1200!important}
+.fab{bottom:calc(88px + env(safe-area-inset-bottom,0px))!important;z-index:1200!important}
+.view{padding-bottom:110px}
+/* mapa: deixa espaço para a barra e mantém os botões visíveis */
+.view-map .map-container{margin-bottom:calc(74px + env(safe-area-inset-bottom,0px))!important}
+.map-loc-btn{bottom:20px!important}
+body[data-view=mapa] .fab{display:none!important}
 
 </style>
 </head>
@@ -2640,7 +2656,7 @@ function renderUI(){ensureCity();
 window.__renderFx=renderUI;
 /* cidade padrão: a que tem mais lugares (definida quando os dados chegam) */
 let cityInit=false;
-function ensureCity(){if(cityInit||!places.length)return;cityInit=true;const c=cities()[0];if(c&&cities().length>1)ST.city.add(c[0]);}
+function ensureCity(){/* começa com todas as cidades */}
 window.__ensureCity=ensureCity;
 
 /* folha de filtros */
@@ -2689,7 +2705,7 @@ window.renderDashboard=function(){_rd();
     const v=places.filter(p=>p.status==='visitado').length,av=document.getElementById('stat-avg').textContent;
     if(V===2)document.getElementById('h2-line').innerHTML=`<b>${qq.length}</b> para conhecer<i></i><b>${v}</b> visitados<i></i>nota média <b>${av}</b>`;
     const pr=document.getElementById('pick-row');pr.className='h2-grid';
-    pr.innerHTML=qq.slice(0,4).map(p=>{const t=__thumb(p),c=t&&t.src;return`<div class="h2-tile" onclick="openDetail('${p.id}')"><div class="h2-img${c&&!__capa(p)?' is-logo':''}" ${c?`style="background-image:url('${c}')"`:''}>${c?'':__catIc(p.cat)}${p.posts?.length?`<span class="pc-posts">${IC.play}${p.posts.length}</span>`:''}</div><b>${p.name}</b><span>${mb(p)}</span></div>`;}).join('');
+    pr.innerHTML=qq.slice(0,4).map(p=>{const t=__thumb(p),c=t&&t.src;return`<div class="h2-tile" onclick="openDetail('${p.id}')"><div class="h2-img${t&&t.logo?' logo-only':''}" ${c&&!t.logo?`style="background-image:url('${c}')"`:''}>${t&&t.logo?`<img class="is-logo" src="${c}" alt="">`:(c?'':__catIc(p.cat))}${p.posts?.length?`<span class="pc-posts">${IC.play}${p.posts.length}</span>`:''}</div><b>${p.name}</b><span>${mb(p)}</span></div>`;}).join('');
   }
   if(V===3){
     const pr=document.getElementById('pick-row');pr.className='h3-list';
