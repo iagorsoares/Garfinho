@@ -868,6 +868,15 @@ body{background:var(--bg)}
 @keyframes spIn{to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){#splash .sp-wrap,#splash .sp-sym,#splash .sp-name,#splash .sp-sub{animation-duration:.01s;animation-delay:0s}}
 .logo-nav{width:1em;height:1.1em}
+/* abertura mais longa: símbolo cai e quica, segura, depois diminui e o nome aparece */
+#splash .sp-wrap{animation:spWrap .7s cubic-bezier(.5,0,.15,1) 1.6s forwards}
+#splash .sp-sym{animation:spShrink .7s cubic-bezier(.5,0,.15,1) 1.6s forwards}
+#splash .sp-sym svg{animation:spDrop .9s cubic-bezier(.3,.7,.4,1) both,spBeat .5s ease-in-out 1.05s}
+#splash .sp-name{animation:spIn .5s ease 2.15s forwards}
+#splash .sp-sub{animation:spIn .5s ease 2.45s forwards}
+@keyframes spDrop{0%{opacity:0;transform:translateY(-70px)}55%{opacity:1;transform:translateY(5px)}75%{transform:translateY(-6px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes spBeat{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@media (prefers-reduced-motion:reduce){#splash .sp-sym svg{animation:none}}
 
 /* miniaturas com logo (sem capa nem foto) */
 img.is-logo{object-fit:contain!important;padding:16%;background:#fff}
@@ -920,6 +929,13 @@ body[data-view=mapa] .fab{display:none!important}
 .rk-img:has(img.is-logo),.vi-img:has(img.is-logo){border-radius:50%}.vi-img img.is-logo,.rk-img img.is-logo{border-radius:50%}
 /* mapa sem a barra de filtros no topo */
 .view-map .map-header{display:none!important}
+/* janelas sempre acima da barra inferior e do botão + */
+.overlay,.detail-overlay,.fx-sheet,.city-sheet{z-index:1300!important}
+.crop-overlay{z-index:1400!important}
+#toast{z-index:1500!important}
+/* sem Ranking */
+.nav-item[onclick*="ranking"]{display:none!important}
+#splash{z-index:2000!important}
 
 </style>
 </head>
@@ -1177,7 +1193,7 @@ window._onPlacesLoaded=function(){
   if(!localStorage.getItem('garfinho_geocoder_v2')){
     window.places.forEach(p=>{delete p.lat;delete p.lng;});
     localStorage.setItem('garfinho_geocoder_v2','1');
-  }window._appReady=true;renderAll();setTimeout(()=>document.getElementById('splash').classList.add('hidden'),Math.max(300,2300-performance.now()));};
+  }window._appReady=true;renderAll();setTimeout(()=>document.getElementById('splash').classList.add('hidden'),Math.max(300,4200-performance.now()));};
 window.addEventListener('load',()=>{setTimeout(()=>{if(!window._appReady){window._appReady=true;renderAll();document.getElementById('splash').classList.add('hidden');}},6000);});
 
 /* Comprime/redimensiona a foto no navegador antes de enviar — reduz bastante
@@ -1714,7 +1730,7 @@ function renderPostsDraft(){
   const row=document.getElementById('posts-row');if(!row)return;
   row.innerHTML=postsDraft.map((u,i)=>{
     const reel=/\/(reel|tv)\//.test(u);
-    return`<div class="post-chip">${i===0?'<span class="pc-cover">Capa</span>':''}<span class="pc-ic">${reel?'🎬':'🖼️'}</span>${reel?'Reel':'Post'}<button class="slot-remove" onclick="removePostDraft(${i})">✕</button></div>`;
+    return`<div class="post-chip">${i===0?'<span class="pc-cover">Capa</span>':''}<span class="pc-ic pc-ic-svg">${reel?'<svg viewBox="0 0 24 24" class="fill"><path d="M8 5v14l11-7z"/></svg>':'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>'}</span>${reel?'Reel':'Post'}<button class="slot-remove" onclick="removePostDraft(${i})">✕</button></div>`;
   }).join('');
   row.style.display=postsDraft.length?'flex':'none';
 }
@@ -2366,7 +2382,24 @@ const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agos
 const MES3=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
 /* endereço: "Rua, número, bairro, cidade" (aceita "- RS", CEP e "Brasil" no fim) */
 const addrParts=p=>{const a=(p.address||'').split(',').map(s=>s.trim()).filter(Boolean).filter(s=>!/^(\d{5}-?\d{3}|brasil|[A-Za-z]{2})$/i.test(s));if(a.length)a[a.length-1]=a[a.length-1].replace(/\s*-\s*[A-Za-z]{2}$/,'').trim();return a;};
-window.__cityOf=p=>{const a=addrParts(p);return (a.length>=2?a[a.length-1]:'')||p.city||'Sem cidade';};
+/* cidade: do endereço quando for um nome válido; senão, pela localização do pino (consulta guardada no aparelho) */
+let _cc={};try{_cc=JSON.parse(localStorage.getItem('garfinho_cidades')||'{}');}catch(e){}
+const cityTxt=p=>{const a=addrParts(p);const c=a.length>=2?a[a.length-1]:'';return (c&&!/\d/.test(c)&&c.length>2)?c:'';};
+window.__cityOf=p=>cityTxt(p)||(p.city&&!/\d/.test(p.city)?p.city:'')||_cc[p.id]||'Sem cidade';
+let _cityJob=false;
+window.__fillCities=async function(){
+  if(_cityJob)return;_cityJob=true;
+  const falta=(window.places||[]).filter(p=>!cityTxt(p)&&!_cc[p.id]&&p.lat&&p.lng);
+  for(const p of falta){
+    try{
+      const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=10&lat=${p.lat}&lon=${p.lng}`,{headers:{'Accept-Language':'pt-BR'}});
+      const d=await r.json();const a=d.address||{};const c=a.city||a.town||a.municipality||a.village||'';
+      if(c){_cc[p.id]=c;try{localStorage.setItem('garfinho_cidades',JSON.stringify(_cc));}catch(e){}if(window.__renderFx)window.__renderFx();}
+    }catch(e){}
+    await new Promise(r=>setTimeout(r,1100));
+  }
+  _cityJob=false;
+};
 const bairro=p=>{const a=addrParts(p);if(a.length<3)return '';let b=a[a.length-2];if(b.includes(' - '))b=b.split(' - ').pop().trim();return /^\d/.test(b)?'':b;};
 window.__bairro=bairro;
 const capa=p=>p.cover||null; /* fotos da visita só aparecem ao abrir o lugar */
@@ -2380,7 +2413,7 @@ window.__capa=capa;
 
 /* Navegação inferior: 5 itens com ícones de traço, Diário incluído */
 const nav=document.querySelector('.mobile-nav');
-nav.innerHTML=[['inicio','Início',IC.home],['lugares','Lugares',IC.list],['mapa','Mapa',IC.pin],['ranking','Ranking',IC.trophy],['timeline','Diário',IC.book]]
+nav.innerHTML=[['inicio','Início',IC.home],['lugares','Lugares',IC.list],['mapa','Mapa',IC.pin],['timeline','Diário',IC.book]]
   .map(([v,l,i],k)=>`<div class="mob-nav-item${k?'':' active'}" data-nav="${v}" onclick="navigate('${v}')"><span class="mn-ic">${i}</span><span class="mn-lb">${l}</span></div>`).join('');
 
 /* Botão flutuante de adicionar */
@@ -2657,6 +2690,7 @@ function renderUI(){ensureCity();
   const b=document.getElementById('fx-badge');if(b){b.textContent=nAct()||'';b.classList.toggle('show',nAct()>0);}
 }
 window.__renderFx=renderUI;
+window.__fxh={ST,cities:()=>cities(),cats:()=>cats(),nAct:()=>nAct(),n:()=>getFiltered().length,refresh:()=>refresh()};
 /* cidade padrão: a que tem mais lugares (definida quando os dados chegam) */
 let cityInit=false;
 function ensureCity(){/* começa com todas as cidades */}
@@ -2668,6 +2702,7 @@ document.body.insertAdjacentHTML('beforeend','<div class="fx-sheet" id="fx-sheet
 const ck=(on)=>`<span class="ck${on?' on':''}">${on?X.check:''}</span>`;
 function list(g,items){return`<div class="fx-list">`+items.map(([v,n])=>`<button type="button" class="fx-li" onclick="__tog('${g}','${q(v)}')">${ck(ST[g].has(v))}<span class="li-n">${v}</span><span class="li-c">${n}</span></button>`).join('')+'</div>';}
 function renderSheet(){
+  if(window.__sheetRender&&sheet==='all'){document.getElementById('fx-box').innerHTML=window.__sheetRender();return;}
   const n=getFiltered().length;let body='',title='';
   if(sheet==='city'){title='Cidade';body=list('city',cities());}
   else if(sheet==='cat'){title='Categoria';body=list('cat',cats());}
@@ -2753,6 +2788,108 @@ window.passesFilter=function(){return true;};
 window.excluirAtual=function(){const id=editId;if(!id)return;deletePlace(id);if(!window.places.find(p=>p.id===id))closeModal();};
 const _om=window.openModal;
 window.openModal=function(id){_om(id);const b=document.getElementById('btn-del');if(b)b.classList.toggle('show',!!id);};
+})();
+
+/* Opções de painel de filtros (prévia). ?fo=A|B|C|D */
+(function(){
+const V='A';
+document.body.classList.add('fo-'+V);
+const H=window.__fxh,X=window.__X,IC=window.__IC,CI=window.__catIc;
+const ST=H.ST;
+const q=s=>String(s).replace(/'/g,"\\'");
+const XX='<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+const ck=on=>`<span class="ck${on?' on':''}">${on?X.check:''}</span>`;
+const sw=on=>`<span class="fo-sw${on?' on':''}"><i></i></span>`;
+const seg=()=>`<div class="fo-seg">${[['','Todos'],['quero','Quero ir'],['visitado','Já fui']].map(([v,l])=>{const on=v?ST.status.size===1&&ST.status.has(v):ST.status.size===0;return`<button type="button" class="${on?'on':''}" onclick="__status('${v}')">${l}</button>`;}).join('')}</div>`;
+const foot=()=>{const n=H.n();return`<div class="fo-foot"><button type="button" class="fo-clear" onclick="__clear()">Limpar</button><button type="button" class="fo-go" onclick="closeSheet()">Ver ${n} ${n===1?'lugar':'lugares'}</button></div>`;};
+const head=(t)=>`<div class="cs-handle"></div><div class="fo-head"><b>${t}</b><button type="button" class="fo-x" aria-label="Fechar" onclick="closeSheet()">${XX}</button></div>`;
+const sum=(set,one,many)=>set.size===0?one:set.size===1?[...set][0]:set.size+' '+many;
+const pet=()=>(window.places||[]).filter(p=>p.pet).length;
+window.__acc=window.__acc||null;window.__side=window.__side||'status';
+window.__accT=k=>{window.__acc=window.__acc===k?null:k;H.refresh();};
+window.__sideT=k=>{window.__side=k;H.refresh();};
+
+const R={
+ /* A — chips agrupados */
+ A:()=>head('Filtros')+`
+  <div class="fo-sec"><h4>Status</h4><div class="fo-wrap">${[['quero','Quero ir'],['visitado','Já fui']].map(([v,l])=>`<button type="button" class="fo-chip${ST.status.has(v)?' on':''}" onclick="__tog('status','${v}')">${l}</button>`).join('')}</div></div>
+  <div class="fo-sec"><h4>Categoria</h4><div class="fo-wrap">${H.cats().map(([c,n])=>`<button type="button" class="fo-chip${ST.cat.has(c)?' on':''}" onclick="__tog('cat','${q(c)}')"><span class="fo-ci">${CI(c)}</span>${c}<em>${n}</em></button>`).join('')}</div></div>
+  <div class="fo-sec"><h4>Outros</h4><div class="fo-wrap"><button type="button" class="fo-chip${ST.pet?' on':''}" onclick="__tog('pet')">Pet friendly<em>${pet()}</em></button></div></div>
+  <div class="fo-sec"><h4>Cidade</h4><div class="fo-wrap">${H.cities().sort((x,y)=>(x[0]==='Sem cidade')-(y[0]==='Sem cidade')||y[1]-x[1]).map(([c,n])=>`<button type="button" class="fo-chip${ST.city.has(c)?' on':''}${c==='Sem cidade'?' muted':''}" onclick="__tog('city','${q(c)}')">${c}<em>${n}</em></button>`).join('')}</div></div>`+foot(),
+ /* B — acordeão */
+ B:()=>{const row=(k,label,val,body)=>`<div class="fo-acc${window.__acc===k?' open':''}"><button type="button" class="fo-row" onclick="__accT('${k}')"><span class="fo-rl">${label}</span><span class="fo-rv${val!=='Todas'&&val!=='Todos'?' set':''}">${val}</span><span class="fo-chev">${X.chev}</span></button>${window.__acc===k?`<div class="fo-body">${body}</div>`:''}</div>`;
+  const lst=(g,items)=>items.map(([v,n])=>`<button type="button" class="fo-li" onclick="__tog('${g}','${q(v)}')">${ck(ST[g].has(v))}<span>${v}</span><em>${n}</em></button>`).join('');
+  return head('Filtros')+`<div class="fo-sec"><h4>Status</h4>${seg()}</div>`+
+   row('city','Cidade',sum(ST.city,'Todas','cidades'),lst('city',H.cities()))+
+   row('cat','Categoria',sum(ST.cat,'Todas','categorias'),lst('cat',H.cats()))+
+   `<button type="button" class="fo-row fo-petrow" onclick="__tog('pet')"><span class="fo-rl">Pet friendly</span>${sw(ST.pet)}</button>`+foot();},
+ /* C — grade visual */
+ C:()=>head('Filtros')+`<div class="fo-sec">${seg()}</div>
+  <div class="fo-sec"><h4>Categoria</h4><div class="fo-grid">${H.cats().map(([c,n])=>`<button type="button" class="fo-tile${ST.cat.has(c)?' on':''}" onclick="__tog('cat','${q(c)}')"><span class="fo-ti">${CI(c)}</span><b>${c}</b><em>${n}</em></button>`).join('')}</div></div>
+  <div class="fo-sec"><h4>Cidade</h4><div class="fo-scroll">${H.cities().map(([c,n])=>`<button type="button" class="fo-chip${ST.city.has(c)?' on':''}" onclick="__tog('city','${q(c)}')">${IC.pin}${c}</button>`).join('')}</div></div>
+  <button type="button" class="fo-row fo-petrow" onclick="__tog('pet')"><span class="fo-rl">Só pet friendly</span>${sw(ST.pet)}</button>`+foot(),
+ /* D — tela cheia com menu lateral */
+ D:()=>{const s=window.__side;const secs=[['status','Status',ST.status.size],['city','Cidade',ST.city.size],['cat','Categoria',ST.cat.size],['outros','Outros',ST.pet?1:0]];
+  const lst=(g,items)=>items.map(([v,n])=>`<button type="button" class="fo-li" onclick="__tog('${g}','${q(v)}')">${ck(ST[g].has(v))}<span>${v}</span><em>${n}</em></button>`).join('');
+  const body=s==='status'?lst('status',[['quero',(places||[]).filter(p=>p.status==='quero').length],['visitado',(places||[]).filter(p=>p.status==='visitado').length]]).replace('>quero<','>Quero ir<').replace('>visitado<','>Já fui<')
+   :s==='city'?lst('city',H.cities()):s==='cat'?lst('cat',H.cats()):`<button type="button" class="fo-li" onclick="__tog('pet')">${ck(ST.pet)}<span>Pet friendly</span><em>${pet()}</em></button>`;
+  return `<div class="fo-head full"><button type="button" class="fo-x" aria-label="Fechar" onclick="closeSheet()">${XX}</button><b>Filtros</b><button type="button" class="fo-link" onclick="__clear()">Limpar</button></div>
+   <div class="fo-split"><nav class="fo-side">${secs.map(([k,l,c])=>`<button type="button" class="${s===k?'on':''}" onclick="__sideT('${k}')">${l}${c?`<i>${c}</i>`:''}</button>`).join('')}</nav><div class="fo-pane">${body}</div></div>`+foot();}
+};
+window.__sheetRender=R.A;
+if(window.__fillCities){setTimeout(()=>window.__fillCities(),4000);const _os=window.openSheet;window.openSheet=function(m){_os(m);window.__fillCities();};}
+const css=`
+.fo-head{display:flex;align-items:center;justify-content:space-between;margin:2px 0 14px}
+.fo-head b{font:900 1.15rem var(--font-d);color:var(--black)}
+.fo-x{width:36px;height:36px;border-radius:50%;border:1.5px solid var(--line);background:transparent;color:var(--gray1);display:flex;align-items:center;justify-content:center;font-size:1rem;cursor:pointer}
+.fo-sec{margin-bottom:18px}
+.fo-sec h4{font:800 .74rem var(--font-b);color:var(--gray2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:9px}
+.fo-wrap{display:flex;flex-wrap:wrap;gap:8px}
+.fo-chip{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 14px;border-radius:99px;border:1.5px solid var(--line);background:var(--card);color:var(--gray1);font:700 .84rem var(--font-b);cursor:pointer;white-space:nowrap;flex-shrink:0}
+.fo-chip em{font-style:normal;font-size:.72rem;color:var(--gray3);font-weight:700}
+.fo-chip.on{border-color:var(--red);background:var(--red-soft);color:var(--red)}.fo-chip.on em{color:var(--red)}
+.fo-chip svg{font-size:.95rem}
+.fo-ci{display:flex;font-size:1rem}
+.fo-foot{position:sticky;bottom:-18px;display:flex;gap:10px;background:var(--card);padding:14px 0 8px;margin-top:6px;border-top:1px solid var(--border)}
+.fo-clear{flex:0 0 auto;height:50px;padding:0 20px;border-radius:14px;border:1.5px solid var(--line-strong);background:transparent;color:var(--gray1);font:700 .9rem var(--font-b);cursor:pointer}
+.fo-go{flex:1;height:50px;border-radius:14px;border:none;background:var(--red);color:#fff;font:800 .95rem var(--font-d);cursor:pointer}
+.fo-seg{display:flex;border:1.5px solid var(--line);border-radius:12px;padding:3px;gap:3px}
+.fo-seg button{flex:1;height:38px;border:none;border-radius:9px;background:transparent;color:var(--gray1);font:700 .84rem var(--font-b);cursor:pointer}
+.fo-seg button.on{background:var(--red);color:#fff}
+.fo-row{width:100%;display:flex;align-items:center;gap:10px;min-height:56px;border:none;border-top:1px solid var(--border);background:none;padding:0 2px;cursor:pointer;text-align:left}
+.fo-rl{flex:1;font:700 .95rem var(--font-b);color:var(--black)}
+.fo-rv{font:600 .86rem var(--font-b);color:var(--gray2)}.fo-rv.set{color:var(--red);font-weight:800}
+.fo-chev{display:flex;color:var(--gray3);transition:transform .2s}
+.fo-acc.open .fo-chev{transform:rotate(180deg)}
+.fo-body{padding:0 0 8px}
+.fo-li{width:100%;display:flex;align-items:center;gap:12px;min-height:48px;border:none;background:none;font:600 .92rem var(--font-b);color:var(--black);text-align:left;cursor:pointer;padding:0 2px}
+.fo-li>span:not(.ck){flex:1}.fo-li em{font-style:normal;font-size:.8rem;color:var(--gray2);font-weight:600}
+.fo-petrow{border-bottom:1px solid var(--border);margin-bottom:6px}
+.fo-sw{width:44px;height:26px;border-radius:99px;background:var(--line);position:relative;flex-shrink:0;transition:background .2s}
+.fo-sw i{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.2);transition:transform .2s}
+.fo-sw.on{background:var(--red)}.fo-sw.on i{transform:translateX(18px)}
+.fo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.fo-tile{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 6px 10px;border-radius:14px;border:1.5px solid var(--line);background:var(--card);cursor:pointer;min-width:0}
+.fo-ti{font-size:1.5rem;color:var(--gray1);display:flex}
+.fo-tile b{font:700 .78rem var(--font-b);color:var(--black);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.fo-tile em{font-style:normal;font-size:.7rem;color:var(--gray2)}
+.fo-tile.on{border-color:var(--red);background:var(--red-soft)}.fo-tile.on .fo-ti,.fo-tile.on b{color:var(--red)}
+.fo-chip.muted{border-style:dashed;color:var(--gray2)}
+.fo-scroll{display:flex;gap:8px;overflow-x:auto;margin:0 -18px;padding:0 18px 4px;scrollbar-width:none}
+.fo-scroll::-webkit-scrollbar{display:none}
+body.fo-D .fx-box{height:100vh;max-height:100vh;border-radius:0;padding:0 0 0;display:flex;flex-direction:column}
+.fo-head.full{padding:14px 16px;margin:0;border-bottom:1px solid var(--border)}
+.fo-link{border:none;background:none;color:var(--red);font:700 .88rem var(--font-b);cursor:pointer;min-height:36px}
+.fo-split{flex:1;display:flex;min-height:0}
+.fo-side{width:118px;background:var(--bg);display:flex;flex-direction:column;flex-shrink:0}
+.fo-side button{position:relative;text-align:left;min-height:56px;padding:0 14px;border:none;background:none;font:700 .88rem var(--font-b);color:var(--gray2);cursor:pointer;display:flex;align-items:center;gap:6px}
+.fo-side button.on{background:var(--card);color:var(--black)}
+.fo-side button.on::before{content:'';position:absolute;left:0;top:12px;bottom:12px;width:3px;border-radius:0 3px 3px 0;background:var(--red)}
+.fo-side i{font-style:normal;min-width:18px;height:18px;border-radius:99px;background:var(--red);color:#fff;font-size:.66rem;display:inline-flex;align-items:center;justify-content:center;padding:0 5px}
+.fo-pane{flex:1;overflow-y:auto;padding:6px 16px}
+body.fo-D .fo-foot{position:static;margin:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px))}
+`;
+const st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
 })();
 
 </script>
