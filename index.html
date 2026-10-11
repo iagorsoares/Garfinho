@@ -402,7 +402,10 @@ import{getFirestore,doc,setDoc,onSnapshot}from"https://www.gstatic.com/firebasej
 const db=getFirestore(initializeApp({apiKey:"AIzaSyAck2Sz_o_U0f99bCRmN2cpWVYpWk3t_i4",authDomain:"garfinho.firebaseapp.com",projectId:"garfinho",storageBucket:"garfinho.firebasestorage.app",messagingSenderId:"323706945481",appId:"1:323706945481:web:36f2a45b0d1fb8ed8b7218"}));
 const REF=doc(db,'garfinho','lugares');
 let saveTimer=null,listening=false,saving=false;
-function syncBar(msg,cls){const b=document.getElementById('fb-sync');if(!b)return;b.textContent=msg;b.className='fb-sync-bar show '+cls;clearTimeout(b._t);if(cls==='ok')b._t=setTimeout(()=>b.classList.remove('show'),2000);}
+function syncBar(msg,cls){const b=document.getElementById('fb-sync');if(!b)return;clearTimeout(b._t);
+  if(cls==='saving'){b.className='fb-sync-bar show';b._t=setTimeout(()=>b.classList.remove('show'),20000);return;}
+  b.className='fb-sync-bar';
+  if(cls==='err'&&typeof window.toast==='function')window.toast('⚠️',String(msg).replace(/^[^A-Za-zÀ-ÿ]+/,''));}
 // Timestamp do último save local — usado para ignorar o próprio echo do onSnapshot
 let _lastSaveTs=0;
 window._fbLoaded=false;
@@ -881,7 +884,7 @@ body{background:var(--bg)}
 @keyframes spBeat{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 @media (prefers-reduced-motion:reduce){#splash .sp-sym svg{animation:none}}
 
-/* abertura v3 (10s): pino cai e amassa ao pousar, ondas no chão, encolhe, nome entra letra a letra */
+/* abertura v3 (7s): pino cai e amassa ao pousar, ondas no chão, encolhe, nome entra letra a letra */
 #splash{transition:opacity .55s ease,visibility .55s ease,transform .55s ease}
 #splash.hidden{transform:scale(1.05)}
 #splash .sp-sym{position:relative;animation:spShrink 1.6s cubic-bezier(.65,0,.2,1) 3.5s forwards}
@@ -892,8 +895,8 @@ body{background:var(--bg)}
 #splash .sp-ring{bottom:-10px;width:56px;height:16px;margin-left:-28px;border:1.5px solid var(--red);opacity:0;animation:spRing 2s ease-out 1.04s both}
 #splash .sp-ring.r2{animation-delay:1.48s}
 #splash .sp-name{opacity:1;transform:none;animation:none;white-space:nowrap}
-#splash .sp-name span{display:inline-block;opacity:0;transform:translateY(20px) scale(.6);animation:spLetter 1.2s cubic-bezier(.2,1.5,.4,1) forwards;animation-delay:calc(4.6s + var(--i)*.24s)}
-#splash .sp-sub{animation:spIn 1.1s ease 7.4s forwards}
+#splash .sp-name span{display:inline-block;opacity:0;transform:translateY(20px) scale(.6);animation:spLetter .4s cubic-bezier(.2,1.5,.4,1) forwards;animation-delay:calc(4.6s + var(--i)*.03s)}
+#splash .sp-sub{animation:spIn .5s ease 5.1s forwards}
 /* a animação só começa a rodar quando a tela está de fato visível */
 #splash:not(.go) *{animation-play-state:paused!important}
 @keyframes spDrop2{0%{opacity:0;transform:translateY(-170px) scale(.9,1.1);animation-timing-function:cubic-bezier(.6,0,.9,.5)}12%{opacity:1}46%{transform:translateY(0) scale(1.16,.82);animation-timing-function:cubic-bezier(.2,.7,.3,1)}64%{transform:translateY(-18px) scale(.95,1.06);animation-timing-function:cubic-bezier(.6,0,.8,.5)}82%{transform:translateY(0) scale(1.06,.94)}100%{opacity:1;transform:none}}
@@ -904,6 +907,10 @@ body{background:var(--bg)}
 @media (prefers-reduced-motion:reduce){#splash .sp-sym svg,#splash .sp-shadow,#splash .sp-ring{animation:none}#splash .sp-name span{animation-duration:.01s;animation-delay:0s}}
 
 /* delivery: campo vira só "Cidade" */
+
+/* sincronização: só uma bolinha girando no topo (fica atrás da abertura) */
+.fb-sync-bar,.fb-sync-bar.show{top:calc(9px + env(safe-area-inset-top,0px));left:50%;width:12px;height:12px;max-width:none;padding:0;margin-left:-6px;transform:none;background:none;border:2px solid var(--red-mid);border-top-color:var(--red);border-radius:50%;z-index:1999;font-size:0;pointer-events:none;animation:fbSpin .7s linear infinite}
+@keyframes fbSpin{to{transform:rotate(360deg)}}
 
 /* miniaturas com logo (sem capa nem foto) */
 img.is-logo{object-fit:contain!important;padding:16%;background:#fff}
@@ -1230,7 +1237,7 @@ function _hideSplash(){document.getElementById('splash').classList.add('hidden')
 window._onPlacesLoaded=function(){
   window._appReady=true;renderAll();
   // aberto por um compartilhamento do Instagram: abertura curta, o cadastro já está esperando
-  const dur=window._viaShare?1200:10000;
+  const dur=window._viaShare?0:7000;
   setTimeout(_hideSplash,Math.max(300,(window._spT0||performance.now())+dur-performance.now()));
 };
 /* Se a nuvem não responder: mostra a cópia guardada no aparelho (só leitura até sincronizar) */
@@ -2339,6 +2346,7 @@ const _shareBruto=(function(){
   const bruto=[qs.get('url'),qs.get('text'),qs.get('title')].filter(Boolean).join(' ');
   history.replaceState(null,'',location.pathname+location.hash);
   window._viaShare=true;
+  const sp=document.getElementById('splash');if(sp)sp.style.display='none'; // sem tela de abertura
   return bruto;
 })();
 
@@ -2348,6 +2356,7 @@ function processarCompartilhamento(){
   if(!r){toast('⚠️','Não achei um perfil do Instagram nesse link');return;}
   if(r.naoPerfil){toast('⚠️','Isso não é um perfil. Compartilhe o perfil do lugar.');return;}
 
+  window._shareHandle=r.handle;
   // Já cadastrado? Abre o lugar em vez de duplicar
   const ja=window.places.find(p=>{const x=extrairInstagram(p.ig);return x&&x.handle===r.handle;});
   if(ja){openDetail(ja.id);toast('📌',ja.name+' já está no Garfinho');return;}
@@ -2379,11 +2388,26 @@ function sugerirNome(handle){
     .join(' ');
 }
 
-// Espera os lugares carregarem do Firebase (para checar duplicado) e processa
-(function aguardarApp(){
+// Compartilhamento abre o cadastro na hora, sem esperar a nuvem: usa a cópia do aparelho para
+// checar duplicado e confere de novo quando a lista da nuvem chega.
+(function(){
   if(!_shareBruto)return;
-  if(window._appReady)setTimeout(processarCompartilhamento,450);
-  else setTimeout(aguardarApp,200);
+  const iniciar=()=>{
+    if(!window._appReady){
+      if(!window.places.length){try{window.places=JSON.parse(localStorage.getItem('garfinho_bkp')||'[]');}catch(e){}}
+      window._appReady=true;renderAll();
+    }
+    processarCompartilhamento();
+    const iv=setInterval(()=>{
+      if(!window._fbLoaded)return;
+      clearInterval(iv);
+      const h=window._shareHandle;if(!h||!aindaNoCadastro(h))return;
+      const ja=window.places.find(p=>{const x=extrairInstagram(p.ig);return x&&x.handle===h;});
+      if(ja){closeModal();openDetail(ja.id);toast('📌',ja.name+' já está no Garfinho');}
+    },300);
+    setTimeout(()=>clearInterval(iv),60000);
+  };
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',iniciar);else iniciar();
 })();
 
 /* ============================================================
