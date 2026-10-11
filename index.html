@@ -175,11 +175,6 @@ body.dark select{background:var(--card);color:var(--black);border-color:var(--bo
 .map-status-bar{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:1000;background:var(--card);border:1.5px solid var(--border);border-radius:99px;padding:7px 16px;font-size:.78rem;font-weight:700;color:var(--gray1);box-shadow:var(--shadow);white-space:nowrap;pointer-events:none}
 .map-loc-btn{position:absolute;bottom:20px;right:16px;z-index:1000;background:var(--card);border:1.5px solid var(--border);border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;cursor:pointer;box-shadow:var(--shadow-lg);transition:all var(--tr)}
 .map-loc-btn:hover{border-color:var(--red);background:var(--red-soft)}
-.map-city-search{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:1001;display:none;align-items:center;gap:6px;background:var(--card);border:1.5px solid var(--border);border-radius:99px;padding:6px 6px 6px 14px;box-shadow:var(--shadow-lg);width:260px}
-.map-city-search.show{display:flex}
-.map-city-search input{background:none;border:none;outline:none;font-family:'Nunito Sans',sans-serif;font-size:.82rem;color:var(--black);flex:1;min-width:0}
-.map-city-search input::placeholder{color:var(--gray3)}
-.map-city-search button{background:var(--red);border:none;border-radius:99px;color:#fff;font-size:.75rem;font-weight:700;padding:6px 14px;cursor:pointer;white-space:nowrap;flex-shrink:0;font-family:'Nunito',sans-serif}
 .leaflet-popup-content-wrapper{border-radius:12px!important;box-shadow:var(--shadow-lg)!important;border:1px solid var(--border)!important;padding:0!important}
 .leaflet-popup-content{margin:0!important;min-width:180px}
 .leaflet-popup-tip{display:none!important}
@@ -410,7 +405,10 @@ let saveTimer=null,listening=false,saving=false;
 function syncBar(msg,cls){const b=document.getElementById('fb-sync');if(!b)return;b.textContent=msg;b.className='fb-sync-bar show '+cls;clearTimeout(b._t);if(cls==='ok')b._t=setTimeout(()=>b.classList.remove('show'),2000);}
 // Timestamp do último save local — usado para ignorar o próprio echo do onSnapshot
 let _lastSaveTs=0;
+window._fbLoaded=false;
 window._fbSave=function(){
+  // Sem a lista da nuvem carregada, gravar apagaria tudo o que está lá (o documento é um só).
+  if(!window._fbLoaded){syncBar('❌ Sem conexão: alteração não salva','err');return false;}
   clearTimeout(saveTimer);
   syncBar('💾 Salvando...','saving');
   saveTimer=setTimeout(async()=>{
@@ -426,7 +424,7 @@ window._fbSave=function(){
         return limpo;
       });
       await setDoc(REF,{lista:listaSegura,_ts:_lastSaveTs});
-      localStorage.setItem('garfinho_bkp',JSON.stringify(listaSegura));
+      try{localStorage.setItem('garfinho_bkp',JSON.stringify(listaSegura));}catch(e){}
       syncBar('✅ Salvo','ok');
       // Libera saving após 2s para dar tempo do onSnapshot retornar
       setTimeout(()=>{saving=false;},2000);
@@ -444,8 +442,8 @@ async function fbLoad(){
       listening=true;
       let pv=true;
       onSnapshot(REF,s=>{
-        // Ignorar se foi um save nosso (echo)
-        if(saving)return;
+        // Ignorar o eco local do nosso próprio save (a confirmação do servidor é barrada pelo _ts abaixo)
+        if(s.metadata&&s.metadata.hasPendingWrites)return;
         const data=s.exists()?s.data():{};
         const remoteTs=data._ts||0;
         // Se o timestamp remoto é do nosso próprio save, ignora
@@ -464,27 +462,32 @@ async function fbLoad(){
           });
         }
         window.places=lista;
+        window._fbLoaded=true;
+        try{localStorage.setItem('garfinho_bkp',JSON.stringify(lista));}catch(e){}
         if(pv){
           pv=false;
           syncBar('✅ Sincronizado','ok');
           if(window._onPlacesLoaded)window._onPlacesLoaded();
           else if(window._appReady)window.renderAll();
+          if(window._refreshView)window._refreshView();
         }else{
           if(window._appReady)window.renderAll();
+          if(window._refreshView)window._refreshView();
         }
       },err=>{
         console.error(err);
         syncBar('❌ Sem conexão','err');
-        const bkp=localStorage.getItem('garfinho_bkp');
-        window.places=bkp?JSON.parse(bkp):[];
+        window._fbLoaded=false;
+        let bkp=[];try{bkp=JSON.parse(localStorage.getItem('garfinho_bkp')||'[]');}catch(e){}
+        window.places=bkp;
         if(window._onPlacesLoaded)window._onPlacesLoaded();
       });
     }
   }catch(e){
     console.error(e);
     syncBar('❌ Sem conexão','err');
-    const bkp=localStorage.getItem('garfinho_bkp');
-    window.places=bkp?JSON.parse(bkp):[];
+    let bkp=[];try{bkp=JSON.parse(localStorage.getItem('garfinho_bkp')||'[]');}catch(e){}
+    window.places=bkp;
     if(window._onPlacesLoaded)window._onPlacesLoaded();
   }
 }
@@ -1038,7 +1041,7 @@ body[data-view=mapa] .fab{display:none!important}
     <!-- MAPA -->
     <div class="view-map" id="view-mapa">
       <div class="map-header"><div class="map-filter-chips" id="map-chips"><div class="map-chip active" onclick="setMapFilter(this,'all')">Todos</div><div class="map-chip" onclick="setMapFilter(this,'quero')">🔖 Quero ir</div><div class="map-chip" onclick="setMapFilter(this,'visitado')">✅ Já fui</div><div class="map-chip" onclick="setMapFilter(this,'pet')">🐶 Pet friendly</div></div></div>
-      <div class="map-container"><div id="leaflet-map"></div><div class="map-status-bar" id="map-status">📍 Buscando localização…</div><div class="map-city-search" id="map-city-search"><input type="text" id="map-city-input" placeholder="Digite uma cidade…" onkeydown="if(event.key==='Enter')searchCity()"><button onclick="searchCity()">Ir</button></div><button class="map-loc-btn" onclick="centerOnMe()">📍</button></div>
+      <div class="map-container"><div id="leaflet-map"></div><div class="map-status-bar" id="map-status">📍 Buscando localização…</div><button class="map-loc-btn" onclick="centerOnMe()">📍</button></div>
     </div>
     <!-- RANKING -->
     <div class="view" id="view-ranking"><div class="ranking-list" id="ranking-list"></div></div>
@@ -1211,14 +1214,29 @@ let activeFilter='todos',searchQuery='',currentView='inicio';
 let isEditMode=false; // true quando abre modal para editar lugar existente
 const CE={'Bar':'🍺','Restaurante':'🍽️','Pizzaria':'🍕','Hamburgueria':'🍔','Café':'☕','Sorveteria':'🍦','Lanches':'🥪','Delivery':'🛵','Outros':'🍴'};
 
+/* utilitários */
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function hojeLocal(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function semAcento(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
+/* aceita "@perfil", "perfil" ou link sem https e devolve sempre um link válido */
+function igUrl(v){v=String(v||'').trim();if(!v)return '';if(/^https?:\/\//i.test(v))return v;if(/instagram\.com/i.test(v))return 'https://'+v.replace(/^\/+/,'');const h=v.replace(/^@/,'');return /^[A-Za-z0-9._]{1,30}$/.test(h)?'https://instagram.com/'+h:v;}
+/* reaplica a lista na aba aberta quando chegam dados novos (o mapa se atualiza sozinho ao entrar) */
+window._refreshView=function(){
+  if(currentView==='lugares')renderPlacesGrid();
+  else if(currentView==='ranking')renderRanking();
+  else if(currentView==='timeline')renderTimeline();
+};
+function _hideSplash(){document.getElementById('splash').classList.add('hidden');}
 window._onPlacesLoaded=function(){
-  // Limpa coords de todos os lugares para forçar re-geocodificação correta
-  // (remove coords erradas geradas pela versão anterior do geocoder)
-  if(!localStorage.getItem('garfinho_geocoder_v2')){
-    window.places.forEach(p=>{delete p.lat;delete p.lng;});
-    localStorage.setItem('garfinho_geocoder_v2','1');
-  }window._appReady=true;renderAll();setTimeout(()=>document.getElementById('splash').classList.add('hidden'),Math.max(300,(window._spT0||performance.now())+10000-performance.now()));};
-window.addEventListener('load',()=>{setTimeout(()=>{if(!window._appReady){window._appReady=true;renderAll();document.getElementById('splash').classList.add('hidden');}},14000);});
+  window._appReady=true;renderAll();
+  // aberto por um compartilhamento do Instagram: abertura curta, o cadastro já está esperando
+  const dur=window._viaShare?1200:10000;
+  setTimeout(_hideSplash,Math.max(300,(window._spT0||performance.now())+dur-performance.now()));
+};
+/* Se a nuvem não responder: mostra a cópia guardada no aparelho (só leitura até sincronizar) */
+window.addEventListener('load',()=>{setTimeout(()=>{if(!window._appReady){
+  if(!window.places.length){try{window.places=JSON.parse(localStorage.getItem('garfinho_bkp')||'[]');}catch(e){}}
+  window._appReady=true;renderAll();_hideSplash();}},14000);});
 
 /* Comprime/redimensiona a foto no navegador antes de enviar — reduz bastante
    o tamanho do arquivo (fotos de câmera podem vir com 5-15MB) e evita falha
@@ -1385,7 +1403,7 @@ function openModal(id=null){
     postsDraft=[];renderPostsDraft();
     ['f-name','f-city','f-address','f-ig','f-note','f-note-quero'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
     document.getElementById('f-cat').value='Restaurante';
-    document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
+    document.getElementById('f-date').value=hojeLocal();
     curStatus='quero';setRating(0);
     // Reset step cards
     document.getElementById('step-card-quero').className='step-card';
@@ -1415,7 +1433,7 @@ function showStep2(status){
   document.getElementById('fields-quero-note').style.display=status==='quero'?'block':'none';
   // Data padrão
   if(status==='visitado'&&!document.getElementById('f-date').value)
-    document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
+    document.getElementById('f-date').value=hojeLocal();
   // Botão voltar para edição
   if(!isEditMode){
     document.getElementById('btn-back').textContent='← Voltar';
@@ -1460,7 +1478,7 @@ function toggleVisited(){
   const t=document.getElementById('visited-toggle');if(t)t.classList.toggle('on',on);
   document.getElementById('fields-visitado').style.display=on?'block':'none';
   document.getElementById('fields-quero-note').style.display=on?'none':'block';
-  if(on&&!document.getElementById('f-date').value)document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
+  if(on&&!document.getElementById('f-date').value)document.getElementById('f-date').value=hojeLocal();
 }
 function triggerPhoto(key){const id=key==='logo'?'photo-input-logo':'photo-input-'+key;document.getElementById(id).click();}
 function loadPhoto(e,key){
@@ -1469,11 +1487,12 @@ function loadPhoto(e,key){
   else{photoFiles[key]=f;renderSlot(key,f);}
 }
 function removePhoto(e,key){e.stopPropagation();photoFiles[key]=null;renderSlot(key,null);const id=key==='logo'?'photo-input-logo':'photo-input-'+key;document.getElementById(id).value='';}
-function openIG(){const ig=document.getElementById('f-ig').value.trim();if(ig)window.open(ig,'_blank');}
+function openIG(){const ig=igUrl(document.getElementById('f-ig').value);if(ig)window.open(ig,'_blank');}
 
 async function savePlace(){
   const name=document.getElementById('f-name').value.trim();
   if(!name){toast('⚠️','Informe o nome do lugar!');return;}
+  if(!window._fbLoaded){toast('⚠️','Sem conexão com a nuvem. Aguarde sincronizar para salvar.');return;}
   const btn=document.getElementById('btn-save');btn.disabled=true;btn.textContent='Salvando…';
   try{
     const up=await uploadAllPhotos();
@@ -1483,10 +1502,13 @@ async function savePlace(){
     const noteQuero=(document.getElementById('f-note-quero')?.value||'').trim();
     const note=curStatus==='visitado'?noteVisitado:noteQuero;
     const existing=editId?window.places.find(x=>x.id===editId):null;
+    const address=document.getElementById('f-address').value.trim();
+    // endereço mudou: o pino antigo não vale mais (a não ser que tenha sido ajustado à mão)
+    const keepGeo=!!existing&&(existing.pinned||(existing.address||'')===address);
     const p={
       id:editId||Date.now().toString(),name,cat,
-      address:document.getElementById('f-address').value.trim(),city:'',
-      ig:document.getElementById('f-ig').value.trim(),
+      address,city:'',
+      ig:igUrl(document.getElementById('f-ig').value),
       posts:[...postsDraft],
       cover:up.cover||null,
       status:curStatus,rating,pet:curPet,
@@ -1498,12 +1520,12 @@ async function savePlace(){
       emoji:CE[cat]||'🍴',
       createdAt:existing?.createdAt||Date.now(),
       // Preservar coords existentes para não perder geocodificação
-      lat:existing?.lat||null,
-      lng:existing?.lng||null,
-      geoV:existing?.geoV||null,
+      lat:keepGeo?(existing.lat||null):null,
+      lng:keepGeo?(existing.lng||null):null,
+      geoV:keepGeo?(existing.geoV||null):null,
       pinned:existing?.pinned||false,
     };
-    if(editId){window.places[window.places.findIndex(x=>x.id===editId)]=p;toast('✏️','Lugar atualizado!');}
+    if(editId){const ix=window.places.findIndex(x=>x.id===editId);if(ix>=0)window.places[ix]=p;else window.places.unshift(p);toast('✏️','Lugar atualizado!');}
     else{window.places.unshift(p);toast('✅','Lugar adicionado!');}
     if(window._fbSave)window._fbSave();closeModal();renderAll();
     if(currentView!=='inicio')navigate(currentView);
@@ -1513,9 +1535,9 @@ async function savePlace(){
   finally{btn.disabled=false;btn.textContent='Salvar Lugar';}
 }
 
-function deletePlace(id){if(!confirm('Remover este lugar?'))return;window.places=window.places.filter(p=>p.id!==id);if(window._fbSave)window._fbSave();renderAll();toast('🗑️','Removido');if(currentView!=='inicio')navigate(currentView);}
+function deletePlace(id){if(!window._fbLoaded){toast('⚠️','Sem conexão com a nuvem. Aguarde sincronizar para excluir.');return;}if(!confirm('Remover este lugar?'))return;window.places=window.places.filter(p=>p.id!==id);if(window._fbSave)window._fbSave();renderAll();toast('🗑️','Removido');if(currentView!=='inicio')navigate(currentView);}
 function setFilter(el,v){document.querySelectorAll('#filter-bar .filter-chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');activeFilter=v;renderPlacesGrid();}
-function applyFilters(){searchQuery=document.getElementById('searchInput').value.toLowerCase();renderPlacesGrid();}
+function applyFilters(){searchQuery=semAcento(document.getElementById('searchInput').value.trim());renderPlacesGrid();}
 function getFiltered(){
   let list=window.places.filter(p=>{
     const mf=activeFilter==='todos'||p.status===activeFilter||p.cat===activeFilter||(activeFilter==='pet'&&p.pet);
@@ -1545,7 +1567,7 @@ function updateStats(){
 function renderDashboard(){
   updateStats();updateBadges();
   const rec=window.places.slice(0,5);
-  document.getElementById('recent-list').innerHTML=rec.length?rec.map(p=>`<div class="recent-item" onclick="openDetail('${p.id}')"><div class="recent-thumb">${p.logo?`<img src="${p.logo}" alt="" style="border-radius:50%;object-fit:cover;width:100%;height:100%">`:p.photos?.[0]?`<img src="${p.photos[0]}" alt="" style="border-radius:50%;object-fit:cover">`:p.emoji||'🍴'}</div><div style="flex:1;min-width:0"><div class="recent-name">${p.name}${p.pet?' 🐶':''}</div><div class="recent-cat">${p.cat}${(p.address||p.city)?' · '+(p.address||p.city).split(',').slice(-2).join(',').trim():''}</div></div><div class="stars">${stars(p.rating)}</div></div>`).join(''):'<div style="text-align:center;padding:20px;color:var(--gray2);font-size:.85rem">Nenhum lugar ainda 🍴</div>';
+  document.getElementById('recent-list').innerHTML=rec.length?rec.map(p=>`<div class="recent-item" onclick="openDetail('${p.id}')"><div class="recent-thumb">${p.logo?`<img src="${p.logo}" alt="" style="border-radius:50%;object-fit:cover;width:100%;height:100%">`:p.photos?.[0]?`<img src="${p.photos[0]}" alt="" style="border-radius:50%;object-fit:cover">`:p.emoji||'🍴'}</div><div style="flex:1;min-width:0"><div class="recent-name">${esc(p.name)}${p.pet?' 🐶':''}</div><div class="recent-cat">${p.cat}${(p.address||p.city)?' · '+(p.address||p.city).split(',').slice(-2).join(',').trim():''}</div></div><div class="stars">${stars(p.rating)}</div></div>`).join(''):'<div style="text-align:center;padding:20px;color:var(--gray2);font-size:.85rem">Nenhum lugar ainda 🍴</div>';
   const cats={};window.places.forEach(p=>{cats[p.cat]=(cats[p.cat]||0)+1;});
   // Mostra TODAS as categorias, ordenadas por quantidade
   const sorted=Object.entries(cats).sort((a,b)=>b[1]-a[1]);
@@ -1556,7 +1578,7 @@ function renderDashboard(){
   // Mostra todas as dicas completas (não palavras soltas), clicáveis
   const dicas=window.places.filter(p=>p.note);
   document.getElementById('mood-cloud').innerHTML=dicas.length
-    ?dicas.map(p=>`<span class="mood-tag" onclick="openDetail('${p.id}')" style="cursor:pointer" title="${p.name}">💬 ${p.note.length>40?p.note.slice(0,40)+'…':p.note}</span>`).join('')
+    ?dicas.map(p=>`<span class="mood-tag" onclick="openDetail('${p.id}')" style="cursor:pointer" title="${esc(p.name)}">💬 ${p.note.length>40?p.note.slice(0,40)+'…':p.note}</span>`).join('')
     :'<span style="color:var(--gray2);font-size:.82rem">Adicione dicas nos lugares</span>';
 }
 function stars(r){
@@ -1577,7 +1599,7 @@ function card(p){
   const SL={visitado:'✅ Visitado',quero:'🔖 Quero'};
   const avClass=avatarClass(p.cat);
   const avatarContent=p.logo
-    ?`<img src="${p.logo}" alt="${p.name}">`
+    ?`<img src="${p.logo}" alt="${esc(p.name)}">`
     :`<span>${p.emoji||'🍴'}</span>`;
   return`<div class="place-card" onclick="openDetail('${p.id}')">
     <div class="place-thumb${p.cover?' has-cover':''}"${p.cover?` style="background-image:url('${p.cover}')"`:''}>
@@ -1587,10 +1609,10 @@ function card(p){
       <div class="place-avatar-wrap ${avClass}">${avatarContent}</div>
     </div>
     <div class="place-body">
-      <div class="place-name">${p.name}</div>
+      <div class="place-name">${esc(p.name)}</div>
       <div class="place-cat">${p.cat}${(p.address||p.city)?' · '+(p.address||p.city).split(',').slice(-2).join(',').trim():''}</div>
       <div class="stars" style="justify-content:center">${stars(p.rating)}</div>
-      ${p.note?`<div class="place-note">💬 ${p.note}</div>`:''}
+      ${p.note?`<div class="place-note">💬 ${esc(p.note)}</div>`:''}
       <div class="place-footer"><span></span>
         <div class="place-actions">
           ${p.ig?`<div class="icon-btn" onclick="event.stopPropagation();window.open('${p.ig}','_blank')" title="Instagram">📸</div>`:''}
@@ -1613,8 +1635,8 @@ function renderPlacesGrid(){
   });
 }
 // renderWantGrid removida - use filtro na aba Lugares
-function renderRanking(){const rl=document.getElementById('ranking-list');const rk=[...places].filter(p=>p.rating>0).sort((a,b)=>b.rating-a.rating||a.name.localeCompare(b.name));if(!rk.length){rl.innerHTML=empty('Sem avaliações','Avalie os lugares visitados para ver o ranking');return;}const M=['🥇','🥈','🥉'];rl.innerHTML=rk.map((p,i)=>`<div class="ranking-item"><div class="rank-pos">${i<3?M[i]:i+1}</div><div class="rank-thumb">${p.logo?`<img src="${p.logo}" alt="">`:p.photos?.[0]?`<img src="${p.photos[0]}" alt="">`:p.emoji||'🍴'}</div><div style="flex:1;min-width:0"><div class="rank-name">${p.name}${p.pet?' 🐶':''}</div><div class="rank-cat">${p.cat}${(p.address||p.city)?' · '+(p.address||p.city).split(',').slice(-2).join(',').trim():''}</div></div><div class="rank-score">${p.rating}<span>★</span></div></div>`).join('');}
-function renderTimeline(){const tl=document.getElementById('timeline-list');const vs=[...places].filter(p=>p.date).sort((a,b)=>b.date.localeCompare(a.date));if(!vs.length){tl.innerHTML=empty('Sem histórico','Adicione datas de visita aos seus lugares');return;}const MN=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];tl.innerHTML=vs.map(p=>{const[y,m,d]=p.date.split('-');return`<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-inner"><div class="timeline-date">${parseInt(d)} ${MN[parseInt(m)-1]} ${y}</div><div class="timeline-card"><div class="timeline-title">${p.logo?`<img src="${p.logo}" style="width:22px;height:22px;object-fit:contain;border-radius:4px" alt="">`:p.emoji||'🍴'} ${p.name}${p.pet?' 🐶':''}</div>${p.note?`<div class="timeline-note">💬 ${p.note}</div>`:''}<div style="margin-top:6px">${stars(p.rating)}</div></div></div></div>`;}).join('');}
+function renderRanking(){const rl=document.getElementById('ranking-list');const rk=[...places].filter(p=>p.rating>0).sort((a,b)=>b.rating-a.rating||a.name.localeCompare(b.name));if(!rk.length){rl.innerHTML=empty('Sem avaliações','Avalie os lugares visitados para ver o ranking');return;}const M=['🥇','🥈','🥉'];rl.innerHTML=rk.map((p,i)=>`<div class="ranking-item"><div class="rank-pos">${i<3?M[i]:i+1}</div><div class="rank-thumb">${p.logo?`<img src="${p.logo}" alt="">`:p.photos?.[0]?`<img src="${p.photos[0]}" alt="">`:p.emoji||'🍴'}</div><div style="flex:1;min-width:0"><div class="rank-name">${esc(p.name)}${p.pet?' 🐶':''}</div><div class="rank-cat">${p.cat}${(p.address||p.city)?' · '+(p.address||p.city).split(',').slice(-2).join(',').trim():''}</div></div><div class="rank-score">${p.rating}<span>★</span></div></div>`).join('');}
+function renderTimeline(){const tl=document.getElementById('timeline-list');const vs=[...places].filter(p=>p.date).sort((a,b)=>b.date.localeCompare(a.date));if(!vs.length){tl.innerHTML=empty('Sem histórico','Adicione datas de visita aos seus lugares');return;}const MN=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];tl.innerHTML=vs.map(p=>{const[y,m,d]=p.date.split('-');return`<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-inner"><div class="timeline-date">${parseInt(d)} ${MN[parseInt(m)-1]} ${y}</div><div class="timeline-card"><div class="timeline-title">${p.logo?`<img src="${p.logo}" style="width:22px;height:22px;object-fit:contain;border-radius:4px" alt="">`:p.emoji||'🍴'} ${esc(p.name)}${p.pet?' 🐶':''}</div>${p.note?`<div class="timeline-note">💬 ${esc(p.note)}</div>`:''}<div style="margin-top:6px">${stars(p.rating)}</div></div></div></div>`;}).join('');}
 
 /* ── TELA DE DETALHES ── */
 function openDetail(id){
@@ -1656,7 +1678,7 @@ function openDetail(id){
   // Avaliação (só para visitado)
   const ratingEl=document.getElementById('detail-rating');
   if(p.status==='visitado'&&p.rating>0){
-    ratingEl.innerHTML=`<div class="detail-stars">${[1,2,3,4,5].map(i=>`<span class="detail-star ${i<=p.rating?'filled':''}">★</span>`).join('')}</div><div class="detail-rating-num">${p.rating}★</div>`;
+    ratingEl.innerHTML=`<div class="detail-stars">${[1,2,3,4,5].map(i=>`<span class="detail-star ${i<=Math.ceil(p.rating)?'filled':''}"${i>p.rating&&i<=Math.ceil(p.rating)?' style="opacity:.5"':''}>★</span>`).join('')}</div><div class="detail-rating-num">${p.rating}★</div>`;
     ratingEl.style.display='flex';
   }else{
     ratingEl.style.display='none';
@@ -1679,7 +1701,7 @@ function openDetail(id){
   if(p.status==='visitado'&&fotos.length>0){
     photosEl.innerHTML=fotos.map((f,i)=>{
       const cap=(p.captions&&p.captions[i])?p.captions[i]:'';
-      return`<div class="detail-photo"><img src="${f}" alt="Foto do prato">${cap?`<div style="padding:6px 8px;font-size:.75rem;color:var(--gray2);font-style:italic;background:var(--bg);border-radius:0 0 10px 10px">💬 ${cap}</div>`:''}</div>`;
+      return`<div class="detail-photo"><img src="${f}" alt="Foto do prato">${cap?`<div style="padding:6px 8px;font-size:.75rem;color:var(--gray2);font-style:italic;background:var(--bg);border-radius:0 0 10px 10px">💬 ${esc(cap)}</div>`:''}</div>`;
     }).join('');
     photosSection.style.display='block';
   }else{
@@ -1689,13 +1711,13 @@ function openDetail(id){
   // Info: endereço
   const infoSection=document.getElementById('detail-info-section');
   let infoHtml='';
-  if(p.address)infoHtml+=`<div class="detail-info-row"><span class="detail-info-icon">📍</span><span>${p.address}</span></div>`;
-  if(p.ig)infoHtml+=`<div class="detail-info-row"><span class="detail-info-icon">📸</span><a href="${p.ig}" target="_blank" style="color:var(--red);font-weight:700">Ver Instagram</a></div>`;
+  if(p.address)infoHtml+=`<div class="detail-info-row"><span class="detail-info-icon">📍</span><span>${esc(p.address)}</span></div>`;
+  if(p.ig)infoHtml+=`<div class="detail-info-row"><span class="detail-info-icon">📸</span><a href="${esc(igUrl(p.ig))}" target="_blank" rel="noopener" style="color:var(--red);font-weight:700">Ver Instagram</a></div>`;
   infoSection.innerHTML=infoHtml?`<div class="detail-section-title">ℹ️ Informações</div>${infoHtml}`:'';
 
   // Ações
   const actionsEl=document.getElementById('detail-actions');
-  const mapsUrl=`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(p.address||p.name||'')}`;
+  const mapsUrl=`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(p.address||p.name||'').replace(/'/g,'%27')}`;
   actionsEl.innerHTML=`
     <button class="detail-btn" onclick="window.open('${mapsUrl}','_blank')">🗺️ Ver rota</button>
     <button class="detail-btn" onclick="closeDetail();openModal('${p.id}')">✏️ Editar</button>
@@ -1898,7 +1920,7 @@ function toast(icon,msg){document.getElementById('ti').textContent=icon;document
 /* ===== Estado do mapa ===== */
 let leafletMap=null,mapMarkers=[],userMarker=null,mapFilter='all',userCoords=null;
 let _geoMigrating=false;
-const GEO_VERSION=4; // suba este número se mudar a lógica de geocodificação (força recalcular tudo)
+const GEO_VERSION=5; // suba este número se mudar a lógica de geocodificação (força recalcular tudo)
 
 /* UF -> nome completo (Nominatim responde os estados em português) */
 const UF_FULL={AC:'Acre',AL:'Alagoas',AP:'Amapá',AM:'Amazonas',BA:'Bahia',CE:'Ceará',DF:'Distrito Federal',ES:'Espírito Santo',GO:'Goiás',MA:'Maranhão',MT:'Mato Grosso',MS:'Mato Grosso do Sul',MG:'Minas Gerais',PA:'Pará',PB:'Paraíba',PR:'Paraná',PE:'Pernambuco',PI:'Piauí',RJ:'Rio de Janeiro',RN:'Rio Grande do Norte',RS:'Rio Grande do Sul',RO:'Rondônia',RR:'Roraima',SC:'Santa Catarina',SP:'São Paulo',SE:'Sergipe',TO:'Tocantins'};
@@ -1967,6 +1989,13 @@ function expandStreet(s){
     .replace(/\s+/g,' ').trim();
 }
 
+const _geoNz=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+const _geoRua=/^(rua|r\.|av\.?|avenida|travessa|trav\.?|tv\.?|estrada|estr\.?|rodovia|rod\.?|alameda|al\.|pra[cç]a|largo|beco|br[- ]?\d)/i;
+function _ufByName(v){const n=_geoNz(v);for(const k in UF_FULL){if(_geoNz(UF_FULL[k])===n)return k;}return '';}
+/* Só refaz a localização de quem a versão anterior lia errado (estado por extenso ou número sem vírgula) */
+function _geoAfetado(addr){const b=String(addr||'').split(',').map(x=>x.trim()).filter(Boolean);return b.some(x=>_ufByName(x))||(b.length>0&&_geoRua.test(b[0])&&/\D\s+\d{1,6}[A-Za-z]?$/.test(b[0]));}
+function _geoAtual(p){return p.geoV===GEO_VERSION||(p.geoV===4&&!_geoAfetado(p.address));}
+
 /* Quebra o endereço BR em rua / número / bairro / cidade / UF / CEP */
 function splitAddr(addr){
   const out={street:'',number:'',hood:'',city:'',uf:'',cep:''};
@@ -1976,12 +2005,24 @@ function splitAddr(addr){
   const cepM=work.match(/\d{5}-?\d{3}/);
   if(cepM){out.cep=cepM[0];work=work.replace(cepM[0],' ');}
 
-  const ufM=work.match(new RegExp('[-,]\\s*('+UF_KEYS+')(?![A-Za-z])','i'));
+  work=work.replace(/[,\s-]*\b(brasil|brazil)\s*$/i,' ');
+  // sigla do estado: vale a última do texto ("- RS", ", RS")
+  const ufAll=[...work.matchAll(new RegExp('[-,/]\\s*('+UF_KEYS+')(?![A-Za-zÀ-ÿ])','gi'))];
+  const ufM=ufAll[ufAll.length-1];
   let head=work;
   if(ufM){out.uf=ufM[1].toUpperCase();head=work.slice(0,ufM.index);}
   head=head.replace(/[,\s-]+$/,'').trim();
 
   let blocks=head.split(',').map(s=>s.trim()).filter(Boolean);
+  // estado por extenso no fim ("..., Porto Alegre, Rio Grande do Sul") não é a cidade
+  while(blocks.length>1){
+    const u=_ufByName(blocks[blocks.length-1]);if(!u)break;
+    if((u==='RJ'||u==='SP')&&_geoNz(blocks[blocks.length-2])!==_geoNz(blocks[blocks.length-1]))break;
+    out.uf=out.uf||u;blocks.pop();
+  }
+  head=blocks.join(', ');
+  // só o nome da cidade (ex.: delivery): não há rua para localizar
+  if(blocks.length===1&&!/\d/.test(blocks[0])&&!_geoRua.test(blocks[0])){out.city=blocks[0];out.cityOnly=true;return out;}
   let rest;
   if(blocks.length>=2){out.city=blocks[blocks.length-1];rest=blocks.slice(0,-1).join(', ').trim();}
   else{rest=head;}
@@ -1997,8 +2038,15 @@ function splitAddr(addr){
   if(numIdx>=0){
     out.number=(sp[numIdx].match(/^\d+/)||[''])[0];
     out.street=(numIdx-1>=0)?sp[numIdx-1]:sp[numIdx].replace(/^\d+\s*/,'');
+    if(!out.hood&&sp[numIdx+1])out.hood=sp[numIdx+1];
   }else{
-    out.street=sp[sp.length-1]||'';
+    // sem número separado por vírgula: a rua é o trecho que começa com Rua/Av./etc. (senão, o último)
+    let k=sp.findIndex(x=>_geoRua.test(x));if(k<0)k=sp.length-1;
+    out.street=sp[k]||'';
+    // número colado na rua ("Rua João Francisco Martins 55")
+    const mn=out.street.match(/^(.*\D)\s+(\d{1,6})[A-Za-z]?$/);
+    if(mn&&_geoRua.test(out.street)){out.street=mn[1].trim();out.number=mn[2];}
+    if(!out.hood&&sp[k+1])out.hood=sp[k+1];
   }
   out.street=expandStreet(out.street);
   return out;
@@ -2051,6 +2099,7 @@ async function geocodeCEP(cep,expectUF){
 async function geocodePlace(p,force){
   if(!force&&p.lat&&p.lng)return[p.lat,p.lng];
   const a=splitAddr(p.address||p.city||'');
+  if(a.cityOnly)return null; // sem rua nem CEP: não entra no mapa
   const stateFull=UF_FULL[a.uf]||a.uf||'';
   const country='Brasil';
   let res;
@@ -2110,9 +2159,11 @@ async function geocodeAndSave(p){
   if(coords){window.places[idx].lat=coords[0];window.places[idx].lng=coords[1];window.places[idx].geoV=GEO_VERSION;if(window._fbSave)window._fbSave();}
 }
 
-function isGeoReady(p){return p.lat&&p.lng&&p.geoV===GEO_VERSION;}
+function isGeoReady(p){return p.lat&&p.lng&&_geoAtual(p);}
 /* Pode plotar: já geocodificado na versão atual OU ajustado manualmente (pino fixo) */
-function canPlot(p){return !!(p.lat&&p.lng&&(p.geoV===GEO_VERSION||p.pinned));}
+function canPlot(p){return !!(p.lat&&p.lng&&(p.pinned||((p.geoV===GEO_VERSION||p.geoV===4)&&!splitAddr(p.address||p.city||'').cityOnly)));}
+/* Precisa (re)localizar: tem endereço com rua/CEP e ainda não foi lido pela versão atual. Enquanto isso o pino antigo continua no mapa. */
+function needsGeo(p){const ad=(p.address||p.city||'').trim();return !p.pinned&&!!ad&&!splitAddr(ad).cityOnly&&!(p.lat&&p.lng&&_geoAtual(p));}
 function passesFilter(p){
   if(mapFilter==='quero')return p.status==='quero';
   if(mapFilter==='visitado')return p.status==='visitado';
@@ -2124,7 +2175,7 @@ function passesFilter(p){
    Roda em background e plota cada pin assim que encontra. */
 async function migrateCoords(){
   if(_geoMigrating)return;
-  const pend=window.places.filter(p=>!canPlot(p));
+  const pend=window.places.filter(needsGeo);
   if(!pend.length)return;
   _geoMigrating=true;
   const sb=document.getElementById('map-status');
@@ -2136,7 +2187,13 @@ async function migrateCoords(){
     const idx=window.places.findIndex(x=>x.id===p.id);
     if(idx>=0&&coords){
       window.places[idx].lat=coords[0];window.places[idx].lng=coords[1];window.places[idx].geoV=GEO_VERSION;ok++;
+      // troca o pino antigo (se havia) pelo novo
+      const old=mapMarkers.findIndex(m=>m._pid===p.id);
+      if(old>=0){leafletMap.removeLayer(mapMarkers[old]);mapMarkers.splice(old,1);}
       if(passesFilter(window.places[idx]))addMarker(window.places[idx]);
+    }else if(idx>=0&&window.places[idx].lat&&window.places[idx].lng){
+      // a nova busca não achou: fica com o pino que já existia e não tenta de novo
+      window.places[idx].geoV=GEO_VERSION;ok++;
     }
   }
   _geoMigrating=false;
@@ -2150,14 +2207,14 @@ async function migrateCoords(){
 function addMarker(p){
   if(!p.lat||!p.lng)return;
   const statusLabel=p.status==='visitado'?'✅ Já fui':'🔖 Quero ir';
-  const dest=encodeURIComponent(p.address||p.name||'');
+  const dest=encodeURIComponent(p.address||p.name||'').replace(/'/g,'%27');
   const marker=L.marker([p.lat,p.lng],{icon:makeIcon(p.cat,p.status,p.pet),draggable:false})
     .addTo(leafletMap)
     .bindPopup(`<div class="map-popup">
-      <div class="map-popup-name">${p.name}${p.pet?' 🐶':''}${p.pinned?' 📌':''}</div>
+      <div class="map-popup-name">${esc(p.name)}${p.pet?' 🐶':''}${p.pinned?' 📌':''}</div>
       <div class="map-popup-meta">${p.cat}${(p.address||p.city)?' · '+(p.address||p.city).split(',').slice(-2).join(',').trim():''}</div>
       <div style="font-size:.72rem;font-weight:700;margin-bottom:8px;color:${p.status==='visitado'?'#50a773':'#f5a623'}">${statusLabel}</div>
-      ${p.rating?`<div style="color:#f5a623;margin-bottom:8px">${'★'.repeat(Math.floor(p.rating))}</div>`:''}
+      ${p.rating?`<div style="color:#f5a623;margin-bottom:8px">${'★'.repeat(Math.floor(p.rating))}${p.rating%1?'½':''}</div>`:''}
       <button class="map-popup-btn" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${dest}','_blank')">🗺️ Abrir rota</button>
       <button class="map-popup-btn" style="margin-top:6px;background:var(--bg3);color:var(--gray1)" onclick="startPinAdjust('${p.id}')">📌 Ajustar local no mapa</button>
     </div>`,{maxWidth:220,minWidth:180});
@@ -2206,19 +2263,33 @@ async function renderMap(){
   ready.forEach(addMarker);
 
   if(ready.length){
-    if(sb)sb.textContent=`📍 ${ready.length} ${ready.length>1?'lugares':'lugar'}${ready.length<list.length?' · localizando mais…':''}`;
+    if(sb)sb.textContent=`📍 ${ready.length} ${ready.length>1?'lugares':'lugar'}${list.some(needsGeo)?' · localizando mais…':''}`;
     if(ready.length===1)leafletMap.setView([ready[0].lat,ready[0].lng],14);
     else leafletMap.fitBounds(ready.map(p=>[p.lat,p.lng]),{padding:[48,48]});
   }else{
-    if(sb)sb.textContent='📡 Localizando endereços…';
+    if(sb)sb.textContent=list.some(needsGeo)?'📡 Localizando endereços…':'Nenhum lugar com endereço para mostrar';
   }
 
-  if(list.some(p=>!canPlot(p))&&!_geoMigrating)migrateCoords();
+  if(list.some(needsGeo)&&!_geoMigrating)migrateCoords();
 }
 
-function centerOnMe(){if(!leafletMap)return;if(userCoords){leafletMap.setView(userCoords,13,{animate:true});return;}if(!navigator.geolocation){showCitySearch();return;}document.getElementById('map-status').textContent='📡 Obtendo localização…';navigator.geolocation.getCurrentPosition(pos=>{userCoords=[pos.coords.latitude,pos.coords.longitude];if(userMarker)leafletMap.removeLayer(userMarker);userMarker=L.circleMarker(userCoords,{radius:8,fillColor:'#ea1d2c',fillOpacity:1,color:'#fff',weight:3}).addTo(leafletMap).bindPopup('<div class="map-popup"><div class="map-popup-name">Você está aqui</div></div>');leafletMap.setView(userCoords,13,{animate:true});fetch(`https://nominatim.openstreetmap.org/reverse?lat=${userCoords[0]}&lon=${userCoords[1]}&format=json`,{headers:{'Accept-Language':'pt-BR'}}).then(r=>r.json()).then(d=>{const city=d.address?.city||d.address?.town||d.address?.state||'sua região';document.getElementById('map-status').textContent=`📍 Você está em ${city}`;});},()=>{showCitySearch();},{timeout:8000});}
-function showCitySearch(){document.getElementById('map-status').style.display='none';document.getElementById('map-city-search').classList.add('show');setTimeout(()=>document.getElementById('map-city-input').focus(),100);}
-async function searchCity(){const val=document.getElementById('map-city-input').value.trim();if(!val)return;try{const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(val)}&format=json&limit=1`,{headers:{'Accept-Language':'pt-BR','User-Agent':'GarfinhoApp/1.0'}});const d=await r.json();if(d[0]){leafletMap.setView([parseFloat(d[0].lat),parseFloat(d[0].lon)],12,{animate:true});document.getElementById('map-city-search').classList.remove('show');document.getElementById('map-status').style.display='';document.getElementById('map-status').textContent=`📍 Mostrando: ${val}`;}else{document.getElementById('map-city-input').placeholder='Cidade não encontrada…';}}catch(e){}}
+function mapCountText(){const t=mapMarkers.length;return t?`📍 ${t} ${t>1?'lugares':'lugar'} no mapa`:'';}
+function centerOnMe(){
+  if(!leafletMap)return;
+  if(userCoords){leafletMap.setView(userCoords,13,{animate:true});return;}
+  const sb=document.getElementById('map-status');
+  /* sem localização: o mapa continua enquadrado nos lugares cadastrados */
+  const semLoc=()=>{if(sb)sb.textContent=mapCountText()||'Localização indisponível';};
+  if(!navigator.geolocation){semLoc();return;}
+  if(sb)sb.textContent='📡 Obtendo localização…';
+  navigator.geolocation.getCurrentPosition(pos=>{
+    userCoords=[pos.coords.latitude,pos.coords.longitude];
+    if(userMarker)leafletMap.removeLayer(userMarker);
+    userMarker=L.circleMarker(userCoords,{radius:8,fillColor:'#ea1d2c',fillOpacity:1,color:'#fff',weight:3}).addTo(leafletMap).bindPopup('<div class="map-popup"><div class="map-popup-name">Você está aqui</div></div>');
+    leafletMap.setView(userCoords,13,{animate:true});
+    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${userCoords[0]}&lon=${userCoords[1]}&format=json`,{headers:{'Accept-Language':'pt-BR'}}).then(r=>r.json()).then(d=>{const city=d.address?.city||d.address?.town||d.address?.state||'sua região';if(sb)sb.textContent=`📍 Você está em ${city}`;}).catch(()=>semLoc());
+  },semLoc,{timeout:8000});
+}
 let addrTimer=null;
 document.addEventListener('DOMContentLoaded',()=>setupAddrAutocomplete());
 if(document.readyState!=='loading')setTimeout(setupAddrAutocomplete,100);
@@ -2267,6 +2338,7 @@ const _shareBruto=(function(){
   if(!qs.has('text')&&!qs.has('url')&&!qs.has('title'))return null;
   const bruto=[qs.get('url'),qs.get('text'),qs.get('title')].filter(Boolean).join(' ');
   history.replaceState(null,'',location.pathname+location.hash);
+  window._viaShare=true;
   return bruto;
 })();
 
@@ -2474,9 +2546,9 @@ window.renderDashboard=function(){
   const D=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];const d=new Date();
   document.getElementById('hh-sub').textContent=D[d.getDay()]+', '+d.getDate()+' de '+MESES[d.getMonth()].toLowerCase();
   const q=places.filter(p=>p.status==='quero').sort((a,b)=>(!!capa(b))-(!!capa(a)));
-  document.getElementById('pick-row').innerHTML=q.map(p=>{const t=thumb(p),c=t&&t.src;return`<div class="pick ${c?'':'no-img av-'+p.cat}${t&&t.logo?' is-logo':''}" onclick="openDetail('${p.id}')" ${c?`style="background-image:url('${c}')"`:''}>${c?'':`<span class="pick-emoji">${p.emoji||'🍴'}</span>`}${p.posts?.length?`<span class="pc-posts">${IC.play}${p.posts.length}</span>`:''}<div class="pick-txt"><div class="pick-name">${p.name}</div><div class="pick-meta">${meta(p)}</div></div></div>`;}).join('');
+  document.getElementById('pick-row').innerHTML=q.map(p=>{const t=thumb(p),c=t&&t.src;return`<div class="pick ${c?'':'no-img av-'+p.cat}${t&&t.logo?' is-logo':''}" onclick="openDetail('${p.id}')" ${c?`style="background-image:url('${c}')"`:''}>${c?'':`<span class="pick-emoji">${p.emoji||'🍴'}</span>`}${p.posts?.length?`<span class="pc-posts">${IC.play}${p.posts.length}</span>`:''}<div class="pick-txt"><div class="pick-name">${esc(p.name)}</div><div class="pick-meta">${meta(p)}</div></div></div>`;}).join('');
   const v=places.filter(p=>p.status==='visitado'&&p.date).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
-  document.getElementById('recent-list').innerHTML=v.map(p=>{const c=capa(p);const[y,m,dd]=p.date.split('-');return`<div class="vi" onclick="openDetail('${p.id}')"><div class="vi-img">${timg(p,window.__catIc?__catIc(p.cat):p.emoji)}</div><div class="vi-txt"><div class="vi-name">${p.name}</div><div class="vi-meta">${parseInt(dd)} ${MES3[m-1]} · ${p.cat}</div></div>${p.rating?`<div class="vi-rate">${IC.star}${String(p.rating).replace('.',',')}</div>`:''}</div>`;}).join('');
+  document.getElementById('recent-list').innerHTML=v.map(p=>{const c=capa(p);const[y,m,dd]=p.date.split('-');return`<div class="vi" onclick="openDetail('${p.id}')"><div class="vi-img">${timg(p,window.__catIc?__catIc(p.cat):p.emoji)}</div><div class="vi-txt"><div class="vi-name">${esc(p.name)}</div><div class="vi-meta">${parseInt(dd)} ${MES3[m-1]} · ${p.cat}</div></div>${p.rating?`<div class="vi-rate">${IC.star}${String(p.rating).replace('.',',')}</div>`:''}</div>`;}).join('');
   const cats={};places.forEach(p=>{cats[p.cat]=(cats[p.cat]||0)+1;});
   document.getElementById('cat-chart').innerHTML=Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([c,n])=>`<div class="cg" onclick="navigateFiltered('${c}')"><span class="cg-e">${CE[c]||'🍴'}</span><span class="cg-n">${c}</span><b>${n}</b></div>`).join('');
 };
@@ -2492,18 +2564,18 @@ window.card=function(p){
     </div>
     <div class="pc-body">
       ${p.logo?`<img class="pc-logo" src="${p.logo}" alt="">`:''}
-      <div class="pc-txt"><div class="pc-name">${p.name}</div><div class="pc-meta">${meta(p)}</div></div>
+      <div class="pc-txt"><div class="pc-name">${esc(p.name)}</div><div class="pc-meta">${meta(p)}</div></div>
       ${p.rating?`<div class="pc-rate">${IC.star}${String(p.rating).replace('.',',')}</div>`:''}
     </div>
-    ${p.note?`<div class="pc-note">${p.note}</div>`:''}
+    ${p.note?`<div class="pc-note">${esc(p.note)}</div>`:''}
   </div>`;
 };
 
 /* Detalhe: capa no topo, títulos sem emoji */
 const _od=window.openDetail;
 window.openDetail=function(id){
-  _od(id);
-  const p=places.find(x=>x.id===id);const c=capa(p);const hero=document.getElementById('detail-hero');
+  const p=places.find(x=>x.id===id);if(!p)return;
+  _od(id);const c=capa(p);const hero=document.getElementById('detail-hero');
   hero.classList.toggle('has-cover',!!c);hero.style.backgroundImage=c?`url('${c}')`:'';
   document.querySelectorAll('.detail-section-title').forEach(t=>{t.childNodes.forEach(n=>{if(n.nodeType===3)n.textContent=n.textContent.replace(/^[^A-Za-zÀ-ÿ]+/,'');});});
   document.getElementById('detail-name').textContent=p.name;
@@ -2513,7 +2585,7 @@ window.openDetail=function(id){
 window.renderRanking=function(){
   const rl=document.getElementById('ranking-list');
   const rk=[...places].filter(p=>p.rating>0).sort((a,b)=>b.rating-a.rating||a.name.localeCompare(b.name));
-  rl.innerHTML=`<div class="rk-head">${rk.length} lugares avaliados</div>`+rk.map((p,i)=>{const c=capa(p);return`<div class="ranking-item rk ${i<3?'top top'+(i+1):''}" onclick="openDetail('${p.id}')"><div class="rk-pos">${i+1}</div><div class="rk-img">${timg(p,window.__catIc?__catIc(p.cat):p.emoji)}</div><div class="rk-txt"><div class="rk-name">${p.name}</div><div class="rk-meta">${meta(p)}</div></div><div class="rk-score">${String(p.rating).replace('.',',')}${IC.star}</div></div>`;}).join('');
+  rl.innerHTML=`<div class="rk-head">${rk.length} lugares avaliados</div>`+rk.map((p,i)=>{const c=capa(p);return`<div class="ranking-item rk ${i<3?'top top'+(i+1):''}" onclick="openDetail('${p.id}')"><div class="rk-pos">${i+1}</div><div class="rk-img">${timg(p,window.__catIc?__catIc(p.cat):p.emoji)}</div><div class="rk-txt"><div class="rk-name">${esc(p.name)}</div><div class="rk-meta">${meta(p)}</div></div><div class="rk-score">${String(p.rating).replace('.',',')}${IC.star}</div></div>`;}).join('');
 };
 
 /* Diário (timeline) agrupado por mês */
@@ -2523,7 +2595,7 @@ window.renderTimeline=function(){
   let mes='';
   tl.innerHTML=vs.map(p=>{const[y,m,d]=p.date.split('-');const k=MESES[m-1]+' '+y;const h=k!==mes?`<div class="tl-month">${k}</div>`:'';mes=k;
     const fotos=(p.photos||[]).filter(Boolean);
-    return h+`<div class="timeline-item tl" onclick="openDetail('${p.id}')"><div class="tl-day"><b>${parseInt(d)}</b><span>${MES3[m-1]}</span></div><div class="timeline-card tl-card">${fotos.length?`<div class="tl-photos">${fotos.map(f=>`<img src="${f}" alt="">`).join('')}</div>`:''}<div class="tl-body"><div class="tl-name">${p.name}</div><div class="tl-meta">${meta(p)}${p.rating?`<span class="tl-rate">${IC.star}${String(p.rating).replace('.',',')}</span>`:''}</div>${p.note?`<div class="tl-note">${p.note}</div>`:''}</div></div></div>`;}).join('');
+    return h+`<div class="timeline-item tl" onclick="openDetail('${p.id}')"><div class="tl-day"><b>${parseInt(d)}</b><span>${MES3[m-1]}</span></div><div class="timeline-card tl-card">${fotos.length?`<div class="tl-photos">${fotos.map(f=>`<img src="${f}" alt="">`).join('')}</div>`:''}<div class="tl-body"><div class="tl-name">${esc(p.name)}</div><div class="tl-meta">${meta(p)}${p.rating?`<span class="tl-rate">${IC.star}${String(p.rating).replace('.',',')}</span>`:''}</div>${p.note?`<div class="tl-note">${esc(p.note)}</div>`:''}</div></div></div>`;}).join('');
 };
 
 /* Títulos da barra superior */
@@ -2624,7 +2696,8 @@ window.renderDashboard=function(){
 };
 const _od=window.openDetail;
 window.openDetail=function(id){
-  _od(id);const p=places.find(x=>x.id===id)||(window.__all||[]).find(x=>x.id===id);
+  const p=places.find(x=>x.id===id)||(window.__all||[]).find(x=>x.id===id);if(!p)return;
+  _od(id);
   const b=document.getElementById('detail-status-badge');
   b.innerHTML=p.status==='visitado'?`<span class="detail-badge-visitado">${X.check}Visitado${p.date?' · '+formatDate(p.date):''}</span>`:`<span class="detail-badge-quero">${X.bookmark}Quero conhecer</span>`;
   if(p.pet)b.insertAdjacentHTML('beforeend',`<span class="detail-badge-pet">${X.paw}Pet friendly</span>`);
@@ -2667,7 +2740,7 @@ const mb=p=>p.cat+(bairro(p)?' · '+bairro(p):'');
 const ST={city:new Set(),status:new Set(),pet:false,cat:new Set()};window.__ST=ST;
 const STL={quero:'Quero ir',visitado:'Já fui'};
 const passes=p=>(!ST.city.size||ST.city.has(cityOf(p)))&&(!ST.status.size||ST.status.has(p.status))&&(!ST.pet||p.pet)&&(!ST.cat.size||ST.cat.has(p.cat));
-window.getFiltered=function(){ensureCity();const q=(typeof searchQuery!=='undefined'?searchQuery:'');return places.filter(p=>passes(p)&&(!q||(p.name+' '+p.cat+' '+cityOf(p)+' '+bairro(p)).toLowerCase().includes(q)));};
+window.getFiltered=function(){ensureCity();const q=(typeof searchQuery!=='undefined'?searchQuery:'');return places.filter(p=>passes(p)&&(!q||semAcento(p.name+' '+p.cat+' '+cityOf(p)+' '+bairro(p)).includes(q)));};
 window.passesFilter=passes;
 const nAct=()=>ST.city.size+ST.status.size+(ST.pet?1:0)+ST.cat.size;
 const count=(arr)=>{const m={};arr.forEach(k=>m[k]=(m[k]||0)+1);return Object.entries(m).sort((a,b)=>b[1]-a[1]);};
@@ -2774,13 +2847,13 @@ window.renderDashboard=function(){_rd();
     const v=places.filter(p=>p.status==='visitado').length,av=document.getElementById('stat-avg').textContent;
     if(V===2)document.getElementById('h2-line').innerHTML=`<b>${qq.length}</b> para conhecer<i></i><b>${v}</b> visitados<i></i>nota média <b>${av}</b>`;
     const pr=document.getElementById('pick-row');pr.className='h2-grid';
-    pr.innerHTML=qq.slice(0,4).map(p=>{const t=__thumb(p),c=t&&t.src;return`<div class="h2-tile" onclick="openDetail('${p.id}')"><div class="h2-img${t&&t.logo?' logo-only':''}" ${c&&!t.logo?`style="background-image:url('${c}')"`:''}>${t&&t.logo?`<img class="is-logo" src="${c}" alt="">`:(c?'':__catIc(p.cat))}${p.posts?.length?`<span class="pc-posts">${IC.play}${p.posts.length}</span>`:''}</div><b>${p.name}</b><span>${mb(p)}</span></div>`;}).join('');
+    pr.innerHTML=qq.slice(0,4).map(p=>{const t=__thumb(p),c=t&&t.src;return`<div class="h2-tile" onclick="openDetail('${p.id}')"><div class="h2-img${t&&t.logo?' logo-only':''}" ${c&&!t.logo?`style="background-image:url('${c}')"`:''}>${t&&t.logo?`<img class="is-logo" src="${c}" alt="">`:(c?'':__catIc(p.cat))}${p.posts?.length?`<span class="pc-posts">${IC.play}${p.posts.length}</span>`:''}</div><b>${esc(p.name)}</b><span>${mb(p)}</span></div>`;}).join('');
   }
   if(V===3){
     const pr=document.getElementById('pick-row');pr.className='h3-list';
     const [f,...rest]=qq;
     pr.innerHTML=(f?`<div class="h3-feat" onclick="openDetail('${f.id}')" style="background-image:url('${__capa(f)}')">${f.posts?.length?`<span class="pc-posts">${IC.play}${f.posts.length}</span>`:''}<div><b>${f.name}</b><span>${f.cat} · ${bairro(f)}, ${cityOf(f)}</span></div></div>`:'')+
-      rest.slice(0,3).map(p=>{const c=__capa(p);return`<div class="vi" onclick="openDetail('${p.id}')"><div class="vi-img">${c?`<img src="${c}" alt="">`:__catIc(p.cat)}</div><div class="vi-txt"><div class="vi-name">${p.name}</div><div class="vi-meta">${p.cat} · ${bairro(p)}</div></div>${X.chev.replace('<svg','<svg class="go"')}</div>`;}).join('');
+      rest.slice(0,3).map(p=>{const c=__capa(p);return`<div class="vi" onclick="openDetail('${p.id}')"><div class="vi-img">${c?`<img src="${c}" alt="">`:__catIc(p.cat)}</div><div class="vi-txt"><div class="vi-name">${esc(p.name)}</div><div class="vi-meta">${p.cat} · ${bairro(p)}</div></div>${X.chev.replace('<svg','<svg class="go"')}</div>`;}).join('');
   }
 };
 const _rpg=window.renderPlacesGrid;
