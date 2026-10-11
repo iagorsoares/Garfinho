@@ -3262,5 +3262,74 @@ document.getElementById('detail-photos').addEventListener('click',e=>{
 });
 })();
 </script>
+<style>
+/* ── Início: recentes, categorias e últimas visitas ── */
+#hv svg{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#hv svg.f{fill:currentColor;stroke:none}
+#hv{padding-bottom:20px}
+.hv-sec{margin:0 0 24px}
+.hv-h{display:flex;align-items:baseline;justify-content:space-between;margin:0 2px 10px}
+.hv-h h3{font:900 1.05rem var(--font-d);color:var(--black);letter-spacing:-.01em;margin:0}
+.hv-h a{font:800 .8rem var(--font-b);color:var(--red);cursor:pointer}
+.hv-lg{flex-shrink:0;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;color:var(--gray2);overflow:hidden;border:1px solid var(--border)}
+.hv-lg img{width:100%;height:100%;object-fit:cover;display:block}
+.hv-lg svg{width:46%!important;height:46%!important;stroke-width:1.6!important}
+.hv-meta{font:600 .76rem var(--font-b);color:var(--gray2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hv-name{font:800 .95rem var(--font-d);color:var(--black);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hv-rate{display:inline-flex;align-items:center;gap:3px;font:800 .78rem var(--font-b);color:var(--black);flex-shrink:0}
+.hv-rate svg{color:#e7a33e;font-size:.9rem}
+.b-stories{display:flex;gap:14px;overflow-x:auto;margin:0 -16px;padding:2px 16px 4px;scrollbar-width:none}
+.b-stories::-webkit-scrollbar{display:none}
+.b-st{flex:0 0 74px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;text-align:center}
+.b-ring{padding:3px;border-radius:50%;border:2px solid var(--red)}
+.b-ring.v{border-color:var(--border)}
+.b-st>span:last-child{font:700 .72rem var(--font-b);color:var(--black);line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.b-cats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.b-cat{display:flex;align-items:center;gap:10px;background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:12px;cursor:pointer;min-width:0}
+.b-cat i{width:38px;height:38px;border-radius:12px;background:var(--red-soft);color:var(--red);display:flex;align-items:center;justify-content:center;font-size:1.15rem;flex-shrink:0}
+.b-cat b{display:block;font:800 .86rem var(--font-d);color:var(--black);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.b-cat span{font:600 .72rem var(--font-b);color:var(--gray2)}
+.b-cat>div{min-width:0}
+.c-tl{background:var(--card);border:1.5px solid var(--border);border-radius:18px;padding:4px 14px}
+.c-ti{display:flex;align-items:center;gap:12px;padding:10px 0;cursor:pointer}
+.c-ti+.c-ti{border-top:1px solid var(--border)}
+.c-dt{width:42px;text-align:center;flex-shrink:0}
+.c-dt b{display:block;font:900 1.15rem var(--font-d);color:var(--black);line-height:1}
+.c-dt span{font:800 .66rem var(--font-b);color:var(--gray2);text-transform:uppercase}
+.c-ti .tx{flex:1;min-width:0}
+.hv-empty{color:var(--gray2);font:600 .84rem var(--font-b);padding:6px 2px}
+</style>
+<script>
+/* Início: Adicionados recentemente, Explorar por categoria e Últimas visitas (o topo, os números e o sortear continuam iguais) */
+(function(){
+const vi=document.getElementById('view-inicio');if(!vi)return;
+const MES3=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const STAR='<svg viewBox="0 0 24 24" class="f"><path d="m12 3 2.8 5.8 6.2.9-4.5 4.4 1 6.3L12 17.5 6.5 20.4l1-6.3L3 9.7l6.2-.9z"/></svg>';
+['pick-row','recent-list'].forEach(id=>{const s=document.getElementById(id);const sec=s&&s.closest('.home-sec');if(sec)sec.style.display='none';});
+const ref=vi.querySelector('.h4-sort')||vi.querySelector('.h3-sort')||vi.querySelector('.home-stats');
+const box=document.createElement('div');box.id='hv';
+if(ref)ref.insertAdjacentElement('afterend',box);else vi.appendChild(box);
+const lg=(p,sz)=>{const s=`width:${sz}px;height:${sz}px`;return p.logo?`<span class="hv-lg" style="${s}"><img src="${esc(p.logo)}" alt="" loading="lazy"></span>`:`<span class="hv-lg" style="${s}">${window.__catIc?__catIc(p.cat):''}</span>`;};
+const qa=s=>String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+const rate=p=>p.rating?`<span class="hv-rate">${STAR}${String(p.rating).replace('.',',')}</span>`:'';
+const when=p=>Number(p.createdAt)||Number(p.id)||0;
+const _prev=window.renderDashboard;
+window.renderDashboard=function(){
+  if(_prev)_prev();
+  const all=window.places||[];
+  const rec=[...all].sort((a,b)=>when(b)-when(a)).slice(0,12);
+  const cats={};all.forEach(p=>{if(p.cat)cats[p.cat]=(cats[p.cat]||0)+1;});
+  const cl=Object.entries(cats).sort((a,b)=>b[1]-a[1]);
+  const vis=all.filter(p=>p.status==='visitado'&&p.date).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
+  box.innerHTML=
+   `<section class="hv-sec"><div class="hv-h"><h3>Adicionados recentemente</h3><a onclick="__clear&&__clear();navigate('lugares')">Ver todos</a></div>`+
+   (rec.length?`<div class="b-stories">${rec.map(p=>`<div class="b-st" onclick="openDetail('${p.id}')"><span class="b-ring${p.status==='visitado'?' v':''}">${lg(p,60)}</span><span>${esc(p.name)}</span></div>`).join('')}</div>`:'<div class="hv-empty">Nenhum lugar cadastrado ainda.</div>')+`</section>`+
+   (cl.length?`<section class="hv-sec"><div class="hv-h"><h3>Explorar por categoria</h3></div><div class="b-cats">${cl.map(([c,n])=>`<div class="b-cat" onclick="navigateFiltered('${qa(c)}')"><i>${window.__catIc?__catIc(c):''}</i><div><b>${esc(c)}</b><span>${n} ${n>1?'lugares':'lugar'}</span></div></div>`).join('')}</div></section>`:'')+
+   `<section class="hv-sec"><div class="hv-h"><h3>Últimas visitas</h3><a onclick="navigate('timeline')">Diário</a></div>`+
+   (vis.length?`<div class="c-tl">${vis.map(p=>{const[y,m,d]=p.date.split('-');return`<div class="c-ti" onclick="openDetail('${p.id}')"><div class="c-dt"><b>${parseInt(d)}</b><span>${MES3[m-1]}</span></div>${lg(p,40)}<div class="tx"><div class="hv-name">${esc(p.name)}</div><div class="hv-meta">${esc(p.cat)}</div></div>${rate(p)}</div>`;}).join('')}</div>`:'<div class="hv-empty">Nenhuma visita registrada ainda.</div>')+`</section>`;
+};
+if(document.getElementById('view-inicio').classList.contains('active')&&window.places)window.renderDashboard();
+})();
+</script>
 </body>
 </html>
