@@ -938,6 +938,7 @@ img.is-logo{object-fit:contain!important;padding:16%;background:#fff}
 .btn-del.show{display:block}
 /* foto de capa no cadastro */
 .cover-slot{aspect-ratio:16/9!important}
+.form-field:has(#slotcover){display:none!important} /* campo de capa removido */
 /* modo escuro */
 body.dark{--bg:#14110F;--bg2:#1D1A17;--bg3:#2A2622;--card:#1D1A17;--border:#2E2925;--line:#3B3530;--line-strong:#4A433D;
   --black:#F3EFEA;--gray1:#D6D0C8;--gray2:#9A928A;--gray3:#5E5852;--red:#E04345;--red-dark:#C83235;--red-soft:#34191A;--red-mid:#5A2627;
@@ -2708,7 +2709,7 @@ window.__fillCities=async function(){
 };
 const bairro=p=>{const a=addrParts(p);if(a.length<3)return '';let b=a[a.length-2];if(b.includes(' - '))b=b.split(' - ').pop().trim();return /^\d/.test(b)?'':b;};
 window.__bairro=bairro;
-const capa=p=>p.cover||null; /* fotos da visita só aparecem ao abrir o lugar */
+const capa=p=>null; /* sem capa: os cards e o detalhe usam só o logo */
 /* imagem para miniaturas: capa > 1ª foto > logo */
 const thumb=p=>{const c=capa(p);return c?{src:c,logo:false}:(p.logo?{src:p.logo,logo:true}:null);};
 window.__thumb=thumb;
