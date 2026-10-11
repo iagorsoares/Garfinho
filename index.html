@@ -878,19 +878,19 @@ body{background:var(--bg)}
 @keyframes spBeat{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 @media (prefers-reduced-motion:reduce){#splash .sp-sym svg{animation:none}}
 
-/* abertura v3 (4s): pino cai e amassa ao pousar, ondas no chão, encolhe, nome entra letra a letra */
+/* abertura v3 (8s): pino cai e amassa ao pousar, ondas no chão, encolhe, nome entra letra a letra */
 #splash{transition:opacity .55s ease,visibility .55s ease,transform .55s ease}
 #splash.hidden{transform:scale(1.05)}
-#splash .sp-sym{position:relative;animation:spShrink .8s cubic-bezier(.65,0,.2,1) 1.75s forwards}
-#splash .sp-wrap{animation:spWrap .8s cubic-bezier(.65,0,.2,1) 1.75s forwards}
-#splash .sp-sym svg{position:relative;z-index:1;transform-origin:50% 100%;animation:spDrop2 1.1s both}
+#splash .sp-sym{position:relative;animation:spShrink 1.6s cubic-bezier(.65,0,.2,1) 3.5s forwards}
+#splash .sp-wrap{animation:spWrap 1.6s cubic-bezier(.65,0,.2,1) 3.5s forwards}
+#splash .sp-sym svg{position:relative;z-index:1;transform-origin:50% 100%;animation:spDrop2 2.2s both}
 #splash .sp-shadow,#splash .sp-ring{position:absolute;left:50%;border-radius:50%;pointer-events:none}
-#splash .sp-shadow{bottom:-7px;width:44px;height:9px;margin-left:-22px;background:rgba(70,20,20,.2);filter:blur(1.5px);opacity:0;animation:spShadow 1.1s both,spOut .35s ease 1.6s forwards}
-#splash .sp-ring{bottom:-10px;width:56px;height:16px;margin-left:-28px;border:1.5px solid var(--red);opacity:0;animation:spRing 1s ease-out .52s both}
-#splash .sp-ring.r2{animation-delay:.74s}
+#splash .sp-shadow{bottom:-7px;width:44px;height:9px;margin-left:-22px;background:rgba(70,20,20,.2);filter:blur(1.5px);opacity:0;animation:spShadow 2.2s both,spOut .7s ease 3.2s forwards}
+#splash .sp-ring{bottom:-10px;width:56px;height:16px;margin-left:-28px;border:1.5px solid var(--red);opacity:0;animation:spRing 2s ease-out 1.04s both}
+#splash .sp-ring.r2{animation-delay:1.48s}
 #splash .sp-name{opacity:1;transform:none;animation:none;white-space:nowrap}
-#splash .sp-name span{display:inline-block;opacity:0;transform:translateY(20px) scale(.6);animation:spLetter .5s cubic-bezier(.2,1.5,.4,1) forwards;animation-delay:calc(2.3s + var(--i)*.06s)}
-#splash .sp-sub{animation:spIn .55s ease 3s forwards}
+#splash .sp-name span{display:inline-block;opacity:0;transform:translateY(20px) scale(.6);animation:spLetter 1s cubic-bezier(.2,1.5,.4,1) forwards;animation-delay:calc(4.6s + var(--i)*.12s)}
+#splash .sp-sub{animation:spIn 1.1s ease 6s forwards}
 @keyframes spDrop2{0%{opacity:0;transform:translateY(-170px) scale(.9,1.1);animation-timing-function:cubic-bezier(.6,0,.9,.5)}12%{opacity:1}46%{transform:translateY(0) scale(1.16,.82);animation-timing-function:cubic-bezier(.2,.7,.3,1)}64%{transform:translateY(-18px) scale(.95,1.06);animation-timing-function:cubic-bezier(.6,0,.8,.5)}82%{transform:translateY(0) scale(1.06,.94)}100%{opacity:1;transform:none}}
 @keyframes spShadow{0%{opacity:0;transform:scale(.2)}46%{opacity:1;transform:scale(1.15)}64%{opacity:.6;transform:scale(.75)}82%,100%{opacity:1;transform:scale(1)}}
 @keyframes spRing{0%{opacity:0;transform:scale(.3)}12%{opacity:.5}100%{opacity:0;transform:scale(2.8)}}
@@ -1215,8 +1215,8 @@ window._onPlacesLoaded=function(){
   if(!localStorage.getItem('garfinho_geocoder_v2')){
     window.places.forEach(p=>{delete p.lat;delete p.lng;});
     localStorage.setItem('garfinho_geocoder_v2','1');
-  }window._appReady=true;renderAll();setTimeout(()=>document.getElementById('splash').classList.add('hidden'),Math.max(300,(window._spT0||performance.now())+4000-performance.now()));};
-window.addEventListener('load',()=>{setTimeout(()=>{if(!window._appReady){window._appReady=true;renderAll();document.getElementById('splash').classList.add('hidden');}},6000);});
+  }window._appReady=true;renderAll();setTimeout(()=>document.getElementById('splash').classList.add('hidden'),Math.max(300,(window._spT0||performance.now())+8000-performance.now()));};
+window.addEventListener('load',()=>{setTimeout(()=>{if(!window._appReady){window._appReady=true;renderAll();document.getElementById('splash').classList.add('hidden');}},10000);});
 
 /* Comprime/redimensiona a foto no navegador antes de enviar — reduz bastante
    o tamanho do arquivo (fotos de câmera podem vir com 5-15MB) e evita falha
