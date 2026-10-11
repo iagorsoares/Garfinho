@@ -972,6 +972,78 @@ body[data-view=mapa] .fab{display:none!important}
 #splash{z-index:2000!important}
 
 </style>
+
+<style>
+/* ── Compartilhar post do Instagram: escolher o lugar ── */
+.pk-box{height:92dvh;max-height:92dvh;display:flex;flex-direction:column;overflow:hidden;padding:10px 0 0}
+.pk-top{padding:0 18px;flex-shrink:0}
+.pk-head{display:flex;align-items:center;justify-content:space-between;margin:2px 0 10px}
+.pk-head b{font:900 1.1rem var(--font-d);color:var(--black)}
+.pk-x{width:36px;height:36px;border-radius:50%;border:1.5px solid var(--line);background:none;color:var(--gray1);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.pk-x svg,.pk-post svg,.pk-search svg,.pk-new svg,.pk-chev svg{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pk-x svg{font-size:1.05rem}
+.pk-post{display:flex;align-items:center;gap:10px;border:1.5px solid var(--line);border-radius:12px;padding:9px 12px;margin-bottom:10px;background:var(--bg)}
+.pk-post .pk-pic{width:34px;height:34px;border-radius:9px;background:var(--red-soft);color:var(--red);display:flex;align-items:center;justify-content:center;font-size:1.05rem;flex-shrink:0}
+.pk-post .pk-pic svg.fill{fill:currentColor;stroke:none}
+.pk-post b{display:block;font:800 .84rem var(--font-b);color:var(--black)}
+.pk-post span{display:block;font-size:.72rem;color:var(--gray2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pk-post>div:last-child{min-width:0}
+.pk-search{display:flex;align-items:center;gap:8px;height:46px;border:1.5px solid var(--line-strong);border-radius:var(--r);padding:0 14px;background:var(--card);color:var(--gray2);margin-bottom:6px}
+.pk-search svg{font-size:1.05rem;flex-shrink:0}
+.pk-search input{flex:1;min-width:0;border:none;outline:none;background:none;font:600 .9rem var(--font-b);color:var(--black)}
+.pk-scroll{flex:1;overflow-y:auto;padding:4px 18px 24px;-webkit-overflow-scrolling:touch}
+.pk-h{font:800 .72rem var(--font-b);color:var(--gray2);text-transform:uppercase;letter-spacing:.06em;margin:14px 0 6px}
+.pk-new{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;border:1.5px dashed var(--line-strong);border-radius:var(--r);background:none;padding:0 12px;margin-top:8px;cursor:pointer;text-align:left;color:var(--black)}
+.pk-new i{width:38px;height:38px;border-radius:50%;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;font-style:normal}
+.pk-new b{display:block;font:800 .9rem var(--font-b)}
+.pk-new span{display:block;font-size:.74rem;color:var(--gray2)}
+.pk-li{display:flex;align-items:center;gap:12px;width:100%;min-height:62px;border:none;border-bottom:1px solid var(--border);background:none;padding:6px 2px;cursor:pointer;text-align:left;color:var(--black)}
+.pk-li:last-child{border-bottom:none}
+.pk-av{width:44px;height:44px;border-radius:50%;background:var(--bg3) center/cover no-repeat;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--gray2);font-size:1.15rem;overflow:hidden;border:1px solid var(--border)}
+.pk-av svg{width:1em;height:1em}
+.pk-tx{flex:1;min-width:0;display:block}
+.pk-tx b{display:block;font:800 .92rem var(--font-d);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pk-tx span{display:block;font-size:.74rem;color:var(--gray2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pk-tag{font:800 .66rem var(--font-b);color:var(--red);border:1.5px solid var(--red);border-radius:99px;padding:2px 8px;flex-shrink:0;white-space:nowrap}
+.pk-tag.gray{color:var(--gray2);border-color:var(--line)}
+.pk-chev{color:var(--gray3);font-size:1rem;flex-shrink:0;display:flex}
+.pk-li.sug{border:1.5px solid var(--red);border-radius:var(--r);background:var(--red-soft);padding:8px 10px;margin-bottom:4px}
+.pk-empty{text-align:center;color:var(--gray2);font-size:.84rem;padding:26px 10px}
+/* variante 2: grade com capas */
+.pk-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pk-cd{border:1.5px solid var(--border);border-radius:var(--r);background:var(--card);overflow:hidden;cursor:pointer;text-align:left;padding:0;color:var(--black);position:relative}
+.pk-cd.sug{border-color:var(--red);box-shadow:0 0 0 1.5px var(--red)}
+.pk-cd .pk-im{display:flex;align-items:center;justify-content:center;aspect-ratio:16/10;background:var(--bg3) center/cover no-repeat;color:var(--gray3);font-size:1.6rem}
+.pk-cd .pk-im.logo{background-color:#fff;background-size:auto 62%}
+.pk-cd .pk-im svg{width:1em;height:1em}
+.pk-cd .pk-tx{padding:8px 10px 10px}
+.pk-cd .pk-tag{position:absolute;top:8px;left:8px;background:var(--red);color:#fff}
+/* variante 3: sugestão em destaque */
+.pk-hero{border:1.5px solid var(--red);border-radius:18px;overflow:hidden;background:var(--card);margin-top:10px}
+.pk-hero .pk-im{height:120px;background:var(--bg3) center/cover no-repeat;display:flex;align-items:center;justify-content:center;color:var(--gray3);font-size:2rem}
+.pk-hero .pk-im.logo{background-color:#fff;background-size:auto 70%}
+.pk-hero .pk-im svg{width:1em;height:1em}
+.pk-hero .pk-hb{padding:12px 14px 14px}
+.pk-hero small{display:block;font:800 .68rem var(--font-b);color:var(--red);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
+.pk-hero b{display:block;font:900 1.05rem var(--font-d);color:var(--black)}
+.pk-hero span{display:block;font-size:.76rem;color:var(--gray2);margin-bottom:10px}
+.pk-hero button{width:100%;height:46px;border-radius:12px;border:none;background:var(--red);color:#fff;font:800 .9rem var(--font-d);cursor:pointer}
+/* variante 4: destaque + faixa de recentes + lista + novo fixo */
+.pk-v4 .pk-hero .pk-im{height:150px}
+.pk-strip{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:18px;margin:0 -18px;padding:2px 18px 8px;scrollbar-width:none}
+.pk-strip::-webkit-scrollbar{display:none}
+.pk-rc{flex:0 0 128px;scroll-snap-align:start;border:1.5px solid var(--border);border-radius:14px;background:var(--card);overflow:hidden;padding:0;cursor:pointer;text-align:left;color:var(--black);position:relative}
+.pk-rc .pk-im{display:flex;align-items:center;justify-content:center;height:96px;background:var(--bg3) center/cover no-repeat;color:var(--gray3);font-size:1.5rem}
+.pk-rc .pk-im.logo{background-color:#fff;background-size:auto 64%}
+.pk-rc .pk-im svg{width:1em;height:1em}
+.pk-rc .pk-tx{padding:7px 9px 9px}
+.pk-rc .pk-tx b{font-size:.84rem}
+.pk-rc .pk-tx span{font-size:.7rem}
+.pk-rc .pk-tag{position:absolute;top:6px;left:6px;background:var(--card)}
+.pk-rc:active,.pk-li:active{transform:scale(.98)}
+.pk-foot{flex-shrink:0;padding:10px 18px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--border);background:var(--card)}
+.pk-foot .pk-new{margin-top:0;border-style:solid;border-color:var(--red);min-height:52px}
+</style>
 </head>
 <body>
 <div id="ib"><div style="font-size:24px">🍽️</div><div><div class="ibt">Instalar na tela inicial</div><div class="ibs">Acesso rápido sem o navegador</div></div><button id="ibBtn">Instalar</button><button id="ibX" onclick="document.getElementById('ib').classList.remove('show')">×</button></div>
@@ -2352,6 +2424,8 @@ const _shareBruto=(function(){
 
 function processarCompartilhamento(){
   if(!_shareBruto)return;
+  const post=igPermalink(_shareBruto);
+  if(post){abrirEscolhaLugar(post,_shareBruto);return;}
   const r=extrairInstagram(_shareBruto);
   if(!r){toast('⚠️','Não achei um perfil do Instagram nesse link');return;}
   if(r.naoPerfil){toast('⚠️','Isso não é um perfil. Compartilhe o perfil do lugar.');return;}
@@ -2375,6 +2449,110 @@ function processarCompartilhamento(){
   if(typeof window.preencherPorInstagram==='function')window.preencherPorInstagram(r.handle);
   // Foco com o texto selecionado: se a sugestão estiver errada, é só digitar por cima
   setTimeout(()=>{nomeEl.focus();nomeEl.select();},350);
+}
+
+
+/* ============================================================
+   COMPARTILHAR POST OU REEL: escolher em qual lugar guardar
+   Android: Instagram > post/reel > Compartilhar > Garfinho.
+   Sem Worker nem Apify: a escolha é manual, com sugestão quando o
+   texto enviado pelo Instagram traz o @ de um lugar já cadastrado.
+   ============================================================ */
+const PK_V=4;
+let _pk=null;
+const PKI={
+  x:'<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  search:'<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>',
+  plus:'<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+  chev:'<svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>',
+  play:'<svg viewBox="0 0 24 24" class="fill"><path d="M8 5v14l11-7z"/></svg>',
+  img:'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>',
+  fork:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v8a2 2 0 0 0 2 2v8M5 3v5M9 3v5M17 21V3c-2 1-3 3.5-3 7h3"/></svg>'
+};
+// @menções e links de perfil que vierem no texto do compartilhamento
+function pkMencoes(txt){
+  const s=new Set();txt=String(txt||'');
+  txt.replace(/@([A-Za-z0-9._]{2,30})/g,(m,h)=>{s.add(h.toLowerCase().replace(/\.+$/,''));});
+  txt.replace(/instagram\.com\/([A-Za-z0-9._]{2,30})(?=[\/?#\s]|$)/gi,(m,h)=>{h=h.toLowerCase();if(!IG_RESERVADOS.includes(h)&&h!=='stories')s.add(h);});
+  return s;
+}
+function pkHandle(p){const x=extrairInstagram(igUrl(p.ig));return x&&x.handle||'';}
+function pkSub(p){const b=window.__bairro?window.__bairro(p):'';const c=window.__cityOf?window.__cityOf(p):'';return [p.cat,b||(c!=='Sem cidade'?c:'')].filter(Boolean).join(' · ');}
+function pkPh(p){return window.__catIc?window.__catIc(p.cat):PKI.fork;}
+function pkImg(p){const t=window.__thumb?window.__thumb(p):(p.logo?{src:p.logo,logo:true}:null);return t&&t.src?t:null;}
+function abrirEscolhaLugar(link,bruto){
+  _pk={link,mencoes:pkMencoes(bruto),q:''};
+  if(!document.getElementById('pk-sheet'))
+    document.body.insertAdjacentHTML('beforeend','<div class="fx-sheet" id="pk-sheet" onclick="if(event.target===this)fecharEscolhaLugar()"><div class="fx-box pk-box" id="pk-box"></div></div>');
+  const reel=/\/(reel|tv)\//.test(link);
+  document.getElementById('pk-box').innerHTML=`<div class="pk-top"><div class="cs-handle"></div>
+    <div class="pk-head"><b>Salvar em qual lugar?</b><button type="button" class="pk-x" onclick="fecharEscolhaLugar()" aria-label="Fechar">${PKI.x}</button></div>
+    <div class="pk-post"><div class="pk-pic">${reel?PKI.play:PKI.img}</div><div><b>${reel?'Reel':'Post'} do Instagram</b><span>${esc(link.replace('https://www.',''))}</span></div></div>
+    <label class="pk-search">${PKI.search}<input id="pk-q" type="search" placeholder="Buscar lugar" autocomplete="off" oninput="pkBuscar(this.value)"></label></div>
+    <div class="pk-scroll${PK_V===4?' pk-v4':''}" id="pk-list"></div>${PK_V===4?`<div class="pk-foot"><button type="button" class="pk-new" onclick="pkNovo()"><i>${PKI.plus}</i><span><b>Novo lugar</b><span>Cadastrar em Quero ir com este post</span></span></button></div>`:''}`;
+  pkRender();
+  document.getElementById('pk-sheet').classList.add('open');
+}
+function fecharEscolhaLugar(){const s=document.getElementById('pk-sheet');if(s)s.classList.remove('open');_pk=null;}
+function pkBuscar(v){if(!_pk)return;_pk.q=semAcento(v.trim());pkRender();}
+window._pkRefresh=function(){if(_pk)pkRender();};
+function pkRender(){
+  if(!_pk)return;
+  const el=document.getElementById('pk-list');if(!el)return;
+  const q=_pk.q;
+  const todos=[...(window.places||[])].sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'pt-BR'));
+  const sug=q?[]:todos.filter(p=>{const h=pkHandle(p);return h&&_pk.mencoes.has(h);});
+  const ids=new Set(sug.map(p=>p.id));
+  const resto=todos.filter(p=>!ids.has(p.id)&&(!q||semAcento((p.name||'')+' '+pkSub(p)+' '+pkHandle(p)).includes(q)));
+  const tem=p=>(p.posts||[]).includes(_pk.link);
+  const av=p=>{const t=pkImg(p);return `<span class="pk-av"${t?` style="background-image:url('${esc(t.src)}')"`:''}>${t?'':pkPh(p)}</span>`;};
+  const tag=(p,s)=>tem(p)?'<span class="pk-tag gray">Já salvo</span>':(s?'<span class="pk-tag">Sugestão</span>':'');
+  const li=(p,s)=>`<button type="button" class="pk-li${s?' sug':''}" onclick="pkEscolher('${p.id}')">${av(p)}<span class="pk-tx"><b>${esc(p.name)}</b><span>${esc(pkSub(p))}</span></span>${tag(p,s)}<span class="pk-chev">${PKI.chev}</span></button>`;
+  const cd=(p,s)=>{const t=pkImg(p);return `<button type="button" class="pk-cd${s?' sug':''}" onclick="pkEscolher('${p.id}')"><span class="pk-im${t&&t.logo?' logo':''}"${t?` style="background-image:url('${esc(t.src)}')"`:''}>${t?'':pkPh(p)}</span>${s?'<span class="pk-tag">Sugestão</span>':(tem(p)?'<span class="pk-tag" style="background:var(--gray2)">Já salvo</span>':'')}<span class="pk-tx"><b>${esc(p.name)}</b><span>${esc(pkSub(p))}</span></span></button>`;};
+  const novo=`<button type="button" class="pk-new" onclick="pkNovo()"><i>${PKI.plus}</i><span><b>Novo lugar</b><span>Cadastrar em Quero ir com este post</span></span></button>`;
+  let h='';
+  const hero=p=>{const t=pkImg(p);const hd=pkHandle(p);return `<div class="pk-hero"><div class="pk-im${t&&t.logo?' logo':''}"${t?` style="background-image:url('${esc(t.src)}')"`:''}>${t?'':pkPh(p)}</div><div class="pk-hb"><small>${tem(p)?'Esse post já está aqui':'Parece ser este lugar'}</small><b>${esc(p.name)}</b><span>${esc([pkSub(p),hd?'@'+hd:''].filter(Boolean).join(' · '))}</span><button type="button" onclick="pkEscolher('${p.id}')">${tem(p)?'Abrir lugar':'Salvar neste lugar'}</button></div></div>`;};
+  if(PK_V===4){
+    const rec=q?[]:resto.slice().sort((a,b)=>(Number(b.createdAt)||Number(b.id)||0)-(Number(a.createdAt)||Number(a.id)||0)).slice(0,8);
+    const rc=p=>{const t=pkImg(p);return `<button type="button" class="pk-rc" onclick="pkEscolher('${p.id}')"><span class="pk-im${t&&t.logo?' logo':''}"${t?` style="background-image:url('${esc(t.src)}')"`:''}>${t?'':pkPh(p)}</span>${tem(p)?'<span class="pk-tag gray">Já salvo</span>':''}<span class="pk-tx"><b>${esc(p.name)}</b><span>${esc(pkSub(p))}</span></span></button>`;};
+    h=sug.map(hero).join('')+
+      (rec.length?`<div class="pk-h">${sug.length?'Ou um dos últimos cadastrados':'Últimos cadastrados'}</div><div class="pk-strip">${rec.map(rc).join('')}</div>`:'')+
+      `<div class="pk-h">${q?'Resultados':'Todos os lugares'} · ${resto.length}</div>`+(resto.length?resto.map(p=>li(p)).join(''):'<div class="pk-empty">Nenhum lugar com esse nome.</div>');
+  }else if(PK_V===2){
+    h=novo+(sug.length?`<div class="pk-h">Sugestão pela legenda</div><div class="pk-grid">${sug.map(p=>cd(p,true)).join('')}</div>`:'')+
+      `<div class="pk-h">${q?'Resultados':'Todos os lugares'} · ${resto.length}</div>`+(resto.length?`<div class="pk-grid">${resto.map(p=>cd(p)).join('')}</div>`:'<div class="pk-empty">Nenhum lugar com esse nome.</div>');
+  }else if(PK_V===3){
+    h=sug.map(p=>{const t=pkImg(p);return `<div class="pk-hero"><div class="pk-im${t&&t.logo?' logo':''}"${t?` style="background-image:url('${esc(t.src)}')"`:''}>${t?'':pkPh(p)}</div><div class="pk-hb"><small>Parece ser este lugar</small><b>${esc(p.name)}</b><span>${esc(pkSub(p))} · @${esc(pkHandle(p))}</span><button type="button" onclick="pkEscolher('${p.id}')">${tem(p)?'Abrir lugar':'Salvar neste lugar'}</button></div></div>`;}).join('')+
+      `<div class="pk-h">${q?'Resultados':(sug.length?'Ou escolha outro':'Todos os lugares')} · ${resto.length}</div>`+(resto.length?resto.map(p=>li(p)).join(''):'<div class="pk-empty">Nenhum lugar com esse nome.</div>')+novo;
+  }else{
+    h=novo+(sug.length?`<div class="pk-h">Sugestão pela legenda</div>${sug.map(p=>li(p,true)).join('')}`:'')+
+      `<div class="pk-h">${q?'Resultados':'Todos os lugares'} · ${resto.length}</div>`+(resto.length?resto.map(p=>li(p)).join(''):'<div class="pk-empty">Nenhum lugar com esse nome.</div>');
+  }
+  el.innerHTML=h;
+}
+// Lugar escolhido: o post entra na lista dele e a edição abre para conferir e salvar
+function pkEscolher(id){
+  if(!_pk)return;
+  const link=_pk.link,p=(window.places||[]).find(x=>x.id===id);if(!p)return;
+  fecharEscolhaLugar();
+  if((p.posts||[]).includes(link)){openDetail(id);toast('','Esse post já está em '+p.name);return;}
+  openModal(id);
+  if(!postsDraft.includes(link))postsDraft.push(link);
+  renderPostsDraft();
+  toast('','Post adicionado. Toque em Salvar para confirmar.');
+  setTimeout(()=>{const r=document.getElementById('posts-row');if(r&&r.scrollIntoView)r.scrollIntoView({block:'center',behavior:'smooth'});},380);
+}
+function pkNovo(){
+  if(!_pk)return;
+  const link=_pk.link;
+  fecharEscolhaLugar();
+  openModal();
+  curStatus='quero';
+  document.getElementById('step-card-quero').className='step-card sel-quero';
+  showStep2('quero');
+  postsDraft=[link];renderPostsDraft();
+  toast('','Post incluído no cadastro');
+  setTimeout(()=>{const n=document.getElementById('f-name');if(n)n.focus();},350);
 }
 
 // "leiteria639" -> "Leiteria 639" · "cantina.do.ze" -> "Cantina do Ze" · "bar_ocidente_poa" -> "Bar Ocidente Poa"
@@ -2401,6 +2579,7 @@ function sugerirNome(handle){
     const iv=setInterval(()=>{
       if(!window._fbLoaded)return;
       clearInterval(iv);
+      if(window._pkRefresh)window._pkRefresh();
       const h=window._shareHandle;if(!h||!aindaNoCadastro(h))return;
       const ja=window.places.find(p=>{const x=extrairInstagram(p.ig);return x&&x.handle===h;});
       if(ja){closeModal();openDetail(ja.id);toast('📌',ja.name+' já está no Garfinho');}
