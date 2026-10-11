@@ -381,6 +381,7 @@ body.dark select{background:var(--card);color:var(--black);border-color:var(--bo
 .ig-slide{flex:0 0 100%;scroll-snap-align:center;min-width:0}
 .ig-slide .instagram-media{margin:0!important;min-width:0!important;width:100%!important}
 .ig-dots{display:flex;justify-content:center;gap:6px;margin-top:10px}
+.ig-leg-btn{display:block;margin:8px auto 0;padding:7px 16px;border:1.5px solid var(--line,#ddd);border-radius:99px;background:none;color:var(--gray1,#555);font:700 .8rem var(--font-b,inherit);cursor:pointer}
 .ig-dot{width:6px;height:6px;border-radius:99px;background:var(--bg3);transition:all var(--tr)}
 .ig-dot.on{width:18px;background:var(--red)}
 .ig-count{font-weight:600;color:var(--gray3);text-transform:none;letter-spacing:0}
@@ -1816,10 +1817,18 @@ function igPermalink(url){
   const m=String(url||'').match(/instagram\.com\/(?:[^\/]+\/)?(p|reel|tv)\/([A-Za-z0-9_-]+)/);
   return m?`https://www.instagram.com/${m[1]}/${m[2]}/`:null;
 }
-window.igEmbed=window.igEmbed||function(url){
+window.igEmbed=window.igEmbed||function(url,leg){
   const link=igPermalink(url);
-  return`<blockquote class="instagram-media" data-instgrm-permalink="${link}?utm_source=ig_embed" data-instgrm-version="14" data-instgrm-captioned><a href="${link}" target="_blank">Ver no Instagram</a></blockquote>`;
+  return`<blockquote class="instagram-media" data-instgrm-permalink="${link}?utm_source=ig_embed" data-instgrm-version="14"${leg?' data-instgrm-captioned':''}><a href="${link}" target="_blank">Ver no Instagram</a></blockquote>`;
 };
+// Legenda escondida por padrão; o botão abaixo do post mostra ou esconde
+function igLegenda(btn){
+  const sl=btn.closest('.ig-slide');if(!sl)return;
+  const on=sl.dataset.leg!=='1';sl.dataset.leg=on?'1':'';
+  const box=sl.querySelector('.ig-emb');box.innerHTML=window.igEmbed(sl.dataset.u,on);
+  btn.textContent=on?'Esconder legenda':'Ver legenda';
+  loadIgScript();
+}
 let _igScript=null;
 function loadIgScript(){
   if(window.instgrm){window.instgrm.Embeds.process();return;}
@@ -1836,7 +1845,7 @@ function renderIgPosts(p){
   sec.style.display='';
   const track=document.getElementById('detail-ig-track'),dots=document.getElementById('detail-ig-dots');
   document.getElementById('detail-ig-count').textContent=posts.length>1?`· 1 de ${posts.length}`:'';
-  track.innerHTML=posts.map(u=>`<div class="ig-slide">${window.igEmbed(u)}</div>`).join('');
+  track.innerHTML=posts.map(u=>`<div class="ig-slide" data-u="${esc(u)}"><div class="ig-emb">${window.igEmbed(u,false)}</div><button type="button" class="ig-leg-btn" onclick="igLegenda(this)">Ver legenda</button></div>`).join('');
   dots.innerHTML=posts.length>1?posts.map((_,i)=>`<span class="ig-dot${i?'':' on'}"></span>`).join(''):'';
   track.scrollLeft=0;
   track.onscroll=()=>{
