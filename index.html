@@ -1177,10 +1177,6 @@ body[data-view=mapa] .fab{display:none!important}
         <div class="posts-row" id="posts-row" style="display:none"></div>
         <div class="post-add"><input class="form-input" id="f-post-url" placeholder="Cole o link do post ou reel" type="url"><button class="post-add-btn" type="button" onclick="addPostDraft()">Adicionar</button></div>
       </div>
-      <div class="form-field" style="display:none">
-        <label class="form-label">Foto de capa <span style="font-size:.68rem;font-weight:600;color:var(--gray2);text-transform:none;letter-spacing:0;font-style:italic">— aparece na lista e no topo do lugar</span></label>
-        <div class="photo-slot cover-slot" id="slotcover" onclick="triggerPhoto('cover')"><div class="slot-icon">📷</div><div class="slot-txt">Adicionar capa</div><button class="slot-remove" onclick="removePhoto(event,'cover')">✕</button><input type="file" accept="image/*" style="display:none" id="photo-input-cover" onchange="loadPhoto(event,'cover')"></div>
-      </div>
       <!-- Logo circular -->
       <div class="form-field">
         <label class="form-label">Logo do Lugar</label>
