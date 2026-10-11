@@ -389,7 +389,9 @@ body.dark select{background:var(--card);color:var(--black);border-color:var(--bo
 .ig-stage.ok .ig-sk{display:none}
 @keyframes igSk{to{background-position:-100% 0}}
 .ig-v{position:absolute;left:0;top:0;width:100%;visibility:hidden;pointer-events:none}
-.ig-v.on{position:relative;visibility:visible;pointer-events:auto;opacity:0;transition:opacity .25s ease}
+.ig-v.on{position:relative;visibility:inherit;pointer-events:inherit;opacity:0;transition:opacity .25s ease}
+/* detalhe fechado: os posts guardados ficam totalmente inativos (não podem receber toques) */
+.detail-overlay:not(.open) .ig-track{visibility:hidden!important;pointer-events:none!important}
 .ig-v.on.ok{opacity:1}
 .ig-leg-btn{display:block;margin:8px auto 0;padding:7px 16px;border:1.5px solid var(--line,#ddd);border-radius:99px;background:none;color:var(--gray1,#555);font:700 .8rem var(--font-b,inherit);cursor:pointer}
 .ig-dot{width:6px;height:6px;border-radius:99px;background:var(--bg3);transition:all var(--tr)}
