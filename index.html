@@ -1463,7 +1463,7 @@ function openModal(id=null){
       // Nota vai pro campo correto de acordo com o status do lugar
       if(p.status==='visitado'){if(noteEl)noteEl.value=p.note||'';if(noteQEl)noteQEl.value='';}
       else{if(noteQEl)noteQEl.value=p.note||'';if(noteEl)noteEl.value='';}
-      document.getElementById('f-date').value=p.date||'';
+      document.getElementById('f-date').value=p.status==='visitado'?(p.date||''):'';
       curStatus=p.status||'quero';curPet=!!p.pet;
       photoFiles.logo=p.logo||null;photoFiles.cover=p.cover||null;photoFiles[0]=p.photos?.[0]||null;photoFiles[1]=p.photos?.[1]||null;
       const c0=document.getElementById('f-caption0');const c1=document.getElementById('f-caption1');
@@ -1713,7 +1713,7 @@ function renderPlacesGrid(){
 }
 // renderWantGrid removida - use filtro na aba Lugares
 function renderRanking(){const rl=document.getElementById('ranking-list');const rk=[...places].filter(p=>p.rating>0).sort((a,b)=>b.rating-a.rating||a.name.localeCompare(b.name));if(!rk.length){rl.innerHTML=empty('Sem avaliações','Avalie os lugares visitados para ver o ranking');return;}const M=['🥇','🥈','🥉'];rl.innerHTML=rk.map((p,i)=>`<div class="ranking-item"><div class="rank-pos">${i<3?M[i]:i+1}</div><div class="rank-thumb">${p.logo?`<img src="${p.logo}" alt="">`:p.photos?.[0]?`<img src="${p.photos[0]}" alt="">`:p.emoji||'🍴'}</div><div style="flex:1;min-width:0"><div class="rank-name">${esc(p.name)}${p.pet?' 🐶':''}</div><div class="rank-cat">${p.cat}${(p.address||p.city)?' · '+(p.address||p.city).split(',').slice(-2).join(',').trim():''}</div></div><div class="rank-score">${p.rating}<span>★</span></div></div>`).join('');}
-function renderTimeline(){const tl=document.getElementById('timeline-list');const vs=[...places].filter(p=>p.date).sort((a,b)=>b.date.localeCompare(a.date));if(!vs.length){tl.innerHTML=empty('Sem histórico','Adicione datas de visita aos seus lugares');return;}const MN=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];tl.innerHTML=vs.map(p=>{const[y,m,d]=p.date.split('-');return`<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-inner"><div class="timeline-date">${parseInt(d)} ${MN[parseInt(m)-1]} ${y}</div><div class="timeline-card"><div class="timeline-title">${p.logo?`<img src="${p.logo}" style="width:22px;height:22px;object-fit:contain;border-radius:4px" alt="">`:p.emoji||'🍴'} ${esc(p.name)}${p.pet?' 🐶':''}</div>${p.note?`<div class="timeline-note">💬 ${esc(p.note)}</div>`:''}<div style="margin-top:6px">${stars(p.rating)}</div></div></div></div>`;}).join('');}
+function renderTimeline(){const tl=document.getElementById('timeline-list');const vs=[...places].filter(p=>p.status==='visitado'&&p.date).sort((a,b)=>b.date.localeCompare(a.date));if(!vs.length){tl.innerHTML=empty('Sem histórico','Adicione datas de visita aos seus lugares');return;}const MN=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];tl.innerHTML=vs.map(p=>{const[y,m,d]=p.date.split('-');return`<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-inner"><div class="timeline-date">${parseInt(d)} ${MN[parseInt(m)-1]} ${y}</div><div class="timeline-card"><div class="timeline-title">${p.logo?`<img src="${p.logo}" style="width:22px;height:22px;object-fit:contain;border-radius:4px" alt="">`:p.emoji||'🍴'} ${esc(p.name)}${p.pet?' 🐶':''}</div>${p.note?`<div class="timeline-note">💬 ${esc(p.note)}</div>`:''}<div style="margin-top:6px">${stars(p.rating)}</div></div></div></div>`;}).join('');}
 
 /* ── TELA DE DETALHES ── */
 function openDetail(id){
@@ -2800,7 +2800,7 @@ window.renderRanking=function(){
 /* Diário (timeline) agrupado por mês */
 window.renderTimeline=function(){
   const tl=document.getElementById('timeline-list');
-  const vs=[...places].filter(p=>p.date).sort((a,b)=>b.date.localeCompare(a.date));
+  const vs=[...places].filter(p=>p.status==='visitado'&&p.date).sort((a,b)=>b.date.localeCompare(a.date));
   let mes='';
   tl.innerHTML=vs.map(p=>{const[y,m,d]=p.date.split('-');const k=MESES[m-1]+' '+y;const h=k!==mes?`<div class="tl-month">${k}</div>`:'';mes=k;
     const fotos=(p.photos||[]).filter(Boolean);
@@ -3290,6 +3290,11 @@ document.getElementById('detail-photos').addEventListener('click',e=>{
 .b-cat b{display:block;font:800 .86rem var(--font-d);color:var(--black);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .b-cat span{font:600 .72rem var(--font-b);color:var(--gray2)}
 .b-cat>div{min-width:0}
+.a-vis{display:flex;gap:10px;overflow-x:auto;margin:0 -16px;padding:0 16px 4px;scrollbar-width:none}
+.a-vis::-webkit-scrollbar{display:none}
+.a-vc{flex:0 0 132px;background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:14px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;min-width:0}
+.a-vc .hv-name{font-size:.86rem;max-width:100%}
+.a-vc .hv-meta{font-size:.72rem}
 .c-tl{background:var(--card);border:1.5px solid var(--border);border-radius:18px;padding:4px 14px}
 .c-ti{display:flex;align-items:center;gap:12px;padding:10px 0;cursor:pointer}
 .c-ti+.c-ti{border-top:1px solid var(--border)}
@@ -3320,13 +3325,13 @@ window.renderDashboard=function(){
   const rec=[...all].sort((a,b)=>when(b)-when(a)).slice(0,12);
   const cats={};all.forEach(p=>{if(p.cat)cats[p.cat]=(cats[p.cat]||0)+1;});
   const cl=Object.entries(cats).sort((a,b)=>b[1]-a[1]);
-  const vis=all.filter(p=>p.status==='visitado'&&p.date).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
+  const vis=all.filter(p=>p.status==='visitado'&&p.date).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,10);
   box.innerHTML=
    `<section class="hv-sec"><div class="hv-h"><h3>Adicionados recentemente</h3><a onclick="__clear&&__clear();navigate('lugares')">Ver todos</a></div>`+
    (rec.length?`<div class="b-stories">${rec.map(p=>`<div class="b-st" onclick="openDetail('${p.id}')"><span class="b-ring${p.status==='visitado'?' v':''}">${lg(p,60)}</span><span>${esc(p.name)}</span></div>`).join('')}</div>`:'<div class="hv-empty">Nenhum lugar cadastrado ainda.</div>')+`</section>`+
    (cl.length?`<section class="hv-sec"><div class="hv-h"><h3>Explorar por categoria</h3></div><div class="b-cats">${cl.map(([c,n])=>`<div class="b-cat" onclick="navigateFiltered('${qa(c)}')"><i>${window.__catIc?__catIc(c):''}</i><div><b>${esc(c)}</b><span>${n} ${n>1?'lugares':'lugar'}</span></div></div>`).join('')}</div></section>`:'')+
    `<section class="hv-sec"><div class="hv-h"><h3>Últimas visitas</h3><a onclick="navigate('timeline')">Diário</a></div>`+
-   (vis.length?`<div class="c-tl">${vis.map(p=>{const[y,m,d]=p.date.split('-');return`<div class="c-ti" onclick="openDetail('${p.id}')"><div class="c-dt"><b>${parseInt(d)}</b><span>${MES3[m-1]}</span></div>${lg(p,40)}<div class="tx"><div class="hv-name">${esc(p.name)}</div><div class="hv-meta">${esc(p.cat)}</div></div>${rate(p)}</div>`;}).join('')}</div>`:'<div class="hv-empty">Nenhuma visita registrada ainda.</div>')+`</section>`;
+   (vis.length?`<div class="a-vis">${vis.map(p=>{const[y,m,d]=p.date.split('-');return`<div class="a-vc" onclick="openDetail('${p.id}')">${lg(p,58)}<div class="hv-name">${esc(p.name)}</div><div class="hv-meta">${parseInt(d)} ${MES3[m-1]}</div>${rate(p)}</div>`;}).join('')}</div>`:'<div class="hv-empty">Nenhuma visita registrada ainda.</div>')+`</section>`;
 };
 if(document.getElementById('view-inicio').classList.contains('active')&&window.places)window.renderDashboard();
 })();
