@@ -10,7 +10,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
-<title>Garfinho 🍽️</title>
+<title>Garfinho</title>
 <link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
@@ -415,7 +415,15 @@ window._fbSave=function(){
   if(!window._fbLoaded){syncBar('❌ Sem conexão: alteração não salva','err');return false;}
   clearTimeout(saveTimer);
   syncBar('💾 Salvando...','saving');
-  saveTimer=setTimeout(async()=>{
+  saveTimer=setTimeout(_doSave,250);
+  return true;
+};
+// Se o app for fechado ou trocado logo depois de salvar, envia na hora (não espera o atraso)
+function _flushSave(){if(saveTimer){clearTimeout(saveTimer);_doSave();}}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_flushSave();});
+window.addEventListener('pagehide',_flushSave);
+async function _doSave(){
+    saveTimer=null;
     try{
       saving=true;
       _lastSaveTs=Date.now();
@@ -437,8 +445,7 @@ window._fbSave=function(){
       console.error(e);
       syncBar('❌ Erro ao salvar','err');
     }
-  },600);
-};
+}
 async function fbLoad(){
   syncBar('☁️ Carregando...','saving');
   try{
@@ -1293,6 +1300,11 @@ const CE={'Bar':'🍺','Restaurante':'🍽️','Pizzaria':'🍕','Hamburgueria':
 
 /* utilitários */
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+/* Cloudinary entrega a imagem já no tamanho em que aparece (bem mais leve que o original).
+   Se a versão reduzida falhar por qualquer motivo, a imagem volta sozinha para o original. */
+const _CLT=/\/image\/upload\/f_auto,q_auto,c_limit,w_\d+\//;
+function clImg(u,w){u=String(u||'');return /^https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\//.test(u)&&!_CLT.test(u)?u.replace('/image/upload/','/image/upload/f_auto,q_auto,c_limit,w_'+w+'/'):u;}
+document.addEventListener('error',e=>{const t=e.target;if(t&&t.tagName==='IMG'&&_CLT.test(t.src||''))t.src=t.src.replace(_CLT,'/image/upload/');},true);
 function hojeLocal(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function semAcento(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
 /* aceita "@perfil", "perfil" ou link sem https e devolve sempre um link válido */
@@ -1588,7 +1600,7 @@ async function savePlace(){
       ig:igUrl(document.getElementById('f-ig').value),
       posts:[...postsDraft],
       cover:up.cover||null,
-      status:curStatus,rating,pet:curPet,
+      status:curStatus,rating:curStatus==='visitado'?rating:0,pet:curPet,
       logo:up.logo||null,
       photos:curStatus==='visitado'?[up[0]||null,up[1]||null]:[null,null],
       captions:curStatus==='visitado'?[(document.getElementById('f-caption0')?.value||'').trim(),(document.getElementById('f-caption1')?.value||'').trim()]:['',''],
@@ -1708,7 +1720,7 @@ function renderPlacesGrid(){
   g.innerHTML=l.map(card).join('');
   // Animação escalonada nos cards
   g.querySelectorAll('.place-card').forEach((c,i)=>{
-    c.style.animationDelay=`${i*90}ms`;
+    c.style.animationDelay=`${Math.min(i,8)*45}ms`;
   });
 }
 // renderWantGrid removida - use filtro na aba Lugares
@@ -1731,7 +1743,7 @@ function openDetail(id){
   heroLogo.innerHTML='';
   if(p.logo){
     const img=document.createElement('img');
-    img.src=p.logo;
+    img.src=clImg(p.logo,330);
     heroLogo.appendChild(img);
     heroLogo.style.background='var(--bg)';
   }else{
@@ -1778,7 +1790,7 @@ function openDetail(id){
   if(p.status==='visitado'&&fotos.length>0){
     photosEl.innerHTML=fotos.map((f,i)=>{
       const cap=(p.captions&&p.captions[i])?p.captions[i]:'';
-      return`<div class="detail-photo"><img src="${f}" alt="Foto do prato">${cap?`<div style="padding:6px 8px;font-size:.75rem;color:var(--gray2);font-style:italic;background:var(--bg);border-radius:0 0 10px 10px">💬 ${esc(cap)}</div>`:''}</div>`;
+      return`<div class="detail-photo"><img decoding="async" src="${clImg(f,900)}" data-full="${f}" alt="Foto do prato">${cap?`<div style="padding:6px 8px;font-size:.75rem;color:var(--gray2);font-style:italic;background:var(--bg);border-radius:0 0 10px 10px">💬 ${esc(cap)}</div>`:''}</div>`;
     }).join('');
     photosSection.style.display='block';
   }else{
@@ -1926,10 +1938,15 @@ function closeCrop(){
 }
 
 function confirmCrop(){
-  const cv=document.getElementById('crop-canvas');
-  const dataUrl=cv.toDataURL('image/png');
+  // Exporta em 600 px (antes saía com 260 px e ficava borrado na tela do celular) e com fundo
+  // branco: a foto vira JPEG no envio, e o canto transparente do círculo ficava preto.
+  const out=document.createElement('canvas'),S=600,k=S/_cSZ;out.width=out.height=S;
+  const cx=out.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,S,S);
+  if(_cImg){cx.save();cx.beginPath();cx.arc(S/2,S/2,S/2,0,Math.PI*2);cx.clip();cx.drawImage(_cImg,_cX*k,_cY*k,_cImg.width*_cScale*k,_cImg.height*_cScale*k);cx.restore();}
+  else cx.drawImage(document.getElementById('crop-canvas'),0,0,S,S);
+  const dataUrl=out.toDataURL('image/jpeg',0.9);
   fetch(dataUrl).then(r=>r.blob()).then(blob=>{
-    const file=new File([blob],'logo.png',{type:'image/png'});
+    const file=new File([blob],'logo.jpg',{type:'image/jpeg'});
     photoFiles['logo']=file;
     renderSlot('logo',dataUrl);
     document.getElementById('crop-overlay').classList.remove('open');
@@ -1997,7 +2014,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 function toast(icon,msg){document.getElementById('ti').textContent=icon;document.getElementById('tm').textContent=msg;const t=document.getElementById('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
 </script>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 /* ===== Data no topbar (inalterado) ===== */
 (function(){const d=new Date();const dias=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];const dia=dias[d.getDay()];const data=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});const semFeira=['Domingo','Sábado'];const label=semFeira.includes(dia)?dia:dia+'-feira';document.getElementById('topbar-date').textContent=label+' '+data;})();
@@ -2012,7 +2029,7 @@ const UF_FULL={AC:'Acre',AL:'Alagoas',AP:'Amapá',AM:'Amazonas',BA:'Bahia',CE:'C
 const UF_KEYS=Object.keys(UF_FULL).join('|');
 
 function initMap(){
-  if(leafletMap)return;
+  if(leafletMap||typeof L==='undefined')return;
   leafletMap=L.map('leaflet-map',{zoomControl:false,attributionControl:false});
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(leafletMap);
   L.control.zoom({position:'topright'}).addTo(leafletMap);
@@ -2438,7 +2455,7 @@ function processarCompartilhamento(){
 
   window._shareHandle=r.handle;
   // Já cadastrado? Abre o lugar em vez de duplicar
-  const ja=window.places.find(p=>{const x=extrairInstagram(p.ig);return x&&x.handle===r.handle;});
+  const ja=window.places.find(p=>{const x=extrairInstagram(igUrl(p.ig));return x&&x.handle===r.handle;});
   if(ja){openDetail(ja.id);toast('📌',ja.name+' já está no Garfinho');return;}
 
   openModal();
@@ -2587,7 +2604,7 @@ function sugerirNome(handle){
       clearInterval(iv);
       if(window._pkRefresh)window._pkRefresh();
       const h=window._shareHandle;if(!h||!aindaNoCadastro(h))return;
-      const ja=window.places.find(p=>{const x=extrairInstagram(p.ig);return x&&x.handle===h;});
+      const ja=window.places.find(p=>{const x=extrairInstagram(igUrl(p.ig));return x&&x.handle===h;});
       if(ja){closeModal();openDetail(ja.id);toast('📌',ja.name+' já está no Garfinho');}
     },300);
     setTimeout(()=>clearInterval(iv),60000);
@@ -2704,11 +2721,12 @@ window.__fillCities=async function(){
   const falta=(window.places||[]).filter(p=>!cityTxt(p)&&!_cc[p.id]&&p.lat&&p.lng);
   for(const p of falta){
     try{
+      if(typeof _nomThrottle==='function')await _nomThrottle();
       const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=10&lat=${p.lat}&lon=${p.lng}`,{headers:{'Accept-Language':'pt-BR'}});
       const d=await r.json();const a=d.address||{};const c=a.city||a.town||a.municipality||a.village||'';
       if(c){_cc[p.id]=c;try{localStorage.setItem('garfinho_cidades',JSON.stringify(_cc));}catch(e){}if(window.__renderFx)window.__renderFx();}
     }catch(e){}
-    await new Promise(r=>setTimeout(r,1100));
+    if(typeof _nomThrottle!=='function')await new Promise(r=>setTimeout(r,1100));
   }
   _cityJob=false;
 };
@@ -2718,7 +2736,7 @@ const capa=p=>null; /* sem capa: os cards e o detalhe usam só o logo */
 /* imagem para miniaturas: capa > 1ª foto > logo */
 const thumb=p=>{const c=capa(p);return c?{src:c,logo:false}:(p.logo?{src:p.logo,logo:true}:null);};
 window.__thumb=thumb;
-const timg=(p,fallback)=>{const t=thumb(p);return t?`<img src="${t.src}" alt=""${t.logo?' class="is-logo"':''}>`:fallback;};
+const timg=(p,fallback)=>{const t=thumb(p);return t?`<img loading="lazy" decoding="async" src="${clImg(t.src,300)}" alt=""${t.logo?' class="is-logo"':''}>`:fallback;};
 window.__timg=timg;
 const meta=p=>p.cat+(bairro(p)?' · '+bairro(p):'');
 window.__capa=capa;
@@ -2772,7 +2790,7 @@ window.card=function(p){
       ${p.posts?.length?`<span class="pc-posts">${IC.play}${p.posts.length}</span>`:''}
     </div>
     <div class="pc-body">
-      ${p.logo?`<img class="pc-logo" src="${p.logo}" alt="">`:''}
+      ${p.logo?`<img class="pc-logo" loading="lazy" decoding="async" src="${clImg(p.logo,160)}" alt="">`:''}
       <div class="pc-txt"><div class="pc-name">${esc(p.name)}</div><div class="pc-meta">${meta(p)}</div></div>
       ${p.rating?`<div class="pc-rate">${IC.star}${String(p.rating).replace('.',',')}</div>`:''}
     </div>
@@ -2804,7 +2822,7 @@ window.renderTimeline=function(){
   let mes='';
   tl.innerHTML=vs.map(p=>{const[y,m,d]=p.date.split('-');const k=MESES[m-1]+' '+y;const h=k!==mes?`<div class="tl-month">${k}</div>`:'';mes=k;
     const fotos=(p.photos||[]).filter(Boolean);
-    return h+`<div class="timeline-item tl" onclick="openDetail('${p.id}')"><div class="tl-day"><b>${parseInt(d)}</b><span>${MES3[m-1]}</span></div><div class="timeline-card tl-card">${fotos.length?`<div class="tl-photos">${fotos.map(f=>`<img src="${f}" alt="">`).join('')}</div>`:''}<div class="tl-body"><div class="tl-name">${esc(p.name)}</div><div class="tl-meta">${meta(p)}${p.rating?`<span class="tl-rate">${IC.star}${String(p.rating).replace('.',',')}</span>`:''}</div>${p.note?`<div class="tl-note">${esc(p.note)}</div>`:''}</div></div></div>`;}).join('');
+    return h+`<div class="timeline-item tl" onclick="openDetail('${p.id}')"><div class="tl-day"><b>${parseInt(d)}</b><span>${MES3[m-1]}</span></div><div class="timeline-card tl-card">${fotos.length?`<div class="tl-photos">${fotos.map(f=>`<img loading="lazy" decoding="async" src="${clImg(f,480)}" alt="">`).join('')}</div>`:''}<div class="tl-body"><div class="tl-name">${esc(p.name)}</div><div class="tl-meta">${meta(p)}${p.rating?`<span class="tl-rate">${IC.star}${String(p.rating).replace('.',',')}</span>`:''}</div>${p.note?`<div class="tl-note">${esc(p.note)}</div>`:''}</div></div></div>`;}).join('');
 };
 
 /* Títulos da barra superior */
@@ -3056,7 +3074,7 @@ window.renderDashboard=function(){_rd();
     const v=places.filter(p=>p.status==='visitado').length,av=document.getElementById('stat-avg').textContent;
     if(V===2)document.getElementById('h2-line').innerHTML=`<b>${qq.length}</b> para conhecer<i></i><b>${v}</b> visitados<i></i>nota média <b>${av}</b>`;
     const pr=document.getElementById('pick-row');pr.className='h2-grid';
-    pr.innerHTML=qq.slice(0,4).map(p=>{const t=__thumb(p),c=t&&t.src;return`<div class="h2-tile" onclick="openDetail('${p.id}')"><div class="h2-img${t&&t.logo?' logo-only':''}" ${c&&!t.logo?`style="background-image:url('${c}')"`:''}>${t&&t.logo?`<img class="is-logo" src="${c}" alt="">`:(c?'':__catIc(p.cat))}${p.posts?.length?`<span class="pc-posts">${IC.play}${p.posts.length}</span>`:''}</div><b>${esc(p.name)}</b><span>${mb(p)}</span></div>`;}).join('');
+    pr.innerHTML=qq.slice(0,4).map(p=>{const t=__thumb(p),c=t&&t.src;return`<div class="h2-tile" onclick="openDetail('${p.id}')"><div class="h2-img${t&&t.logo?' logo-only':''}" ${c&&!t.logo?`style="background-image:url('${c}')"`:''}>${t&&t.logo?`<img class="is-logo" loading="lazy" decoding="async" src="${clImg(c,300)}" alt="">`:(c?'':__catIc(p.cat))}${p.posts?.length?`<span class="pc-posts">${IC.play}${p.posts.length}</span>`:''}</div><b>${esc(p.name)}</b><span>${mb(p)}</span></div>`;}).join('');
   }
   if(V===3){
     const pr=document.getElementById('pick-row');pr.className='h3-list';
@@ -3214,7 +3232,7 @@ const up=()=>{const d=c.value==='Delivery';if(d===last)return;last=d;
   document.getElementById('addr-lbl').textContent=d?'Cidade':'Endereço';
   document.getElementById('addr-hint').style.display=d?'none':'';
   a.placeholder=d?'Ex: Porto Alegre':PH;};
-c.addEventListener('change',up);setInterval(up,400);up();})();
+c.addEventListener('change',up);const _om=window.openModal;window.openModal=function(id){_om(id);up();};up();})();
 </script>
 <style>
 /* fotos da visita em tela cheia */
@@ -3257,7 +3275,7 @@ fv.addEventListener('touchend',e=>{if(!on)return;on=false;const t=e.changedTouch
 document.getElementById('detail-photos').addEventListener('click',e=>{
   const el=e.target.closest('.detail-photo');if(!el)return;
   const all=[...document.querySelectorAll('#detail-photos .detail-photo')];
-  const fotos=all.map(d=>({src:d.querySelector('img').src,cap:(d.querySelector('div')?.textContent||'').trim()}));
+  const fotos=all.map(d=>({src:d.querySelector('img').dataset.full||d.querySelector('img').src,cap:(d.querySelector('div')?.textContent||'').trim()}));
   open(fotos,Math.max(0,all.indexOf(el)));
 });
 })();
@@ -3314,7 +3332,7 @@ const STAR='<svg viewBox="0 0 24 24" class="f"><path d="m12 3 2.8 5.8 6.2.9-4.5 
 const ref=vi.querySelector('.h4-sort')||vi.querySelector('.h3-sort')||vi.querySelector('.home-stats');
 const box=document.createElement('div');box.id='hv';
 if(ref)ref.insertAdjacentElement('afterend',box);else vi.appendChild(box);
-const lg=(p,sz)=>{const s=`width:${sz}px;height:${sz}px`;return p.logo?`<span class="hv-lg" style="${s}"><img src="${esc(p.logo)}" alt="" loading="lazy"></span>`:`<span class="hv-lg" style="${s}">${window.__catIc?__catIc(p.cat):''}</span>`;};
+const lg=(p,sz)=>{const s=`width:${sz}px;height:${sz}px`;return p.logo?`<span class="hv-lg" style="${s}"><img src="${esc(clImg(p.logo,200))}" alt="" loading="lazy" decoding="async"></span>`:`<span class="hv-lg" style="${s}">${window.__catIc?__catIc(p.cat):''}</span>`;};
 const qa=s=>String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
 const rate=p=>p.rating?`<span class="hv-rate">${STAR}${String(p.rating).replace('.',',')}</span>`:'';
 const when=p=>Number(p.createdAt)||Number(p.id)||0;
@@ -3334,6 +3352,46 @@ window.renderDashboard=function(){
    (vis.length?`<div class="a-vis">${vis.map(p=>{const[y,m,d]=p.date.split('-');return`<div class="a-vc" onclick="openDetail('${p.id}')">${lg(p,58)}<div class="hv-name">${esc(p.name)}</div><div class="hv-meta">${parseInt(d)} ${MES3[m-1]}</div>${rate(p)}</div>`;}).join('')}</div>`:'<div class="hv-empty">Nenhuma visita registrada ainda.</div>')+`</section>`;
 };
 if(document.getElementById('view-inicio').classList.contains('active')&&window.places)window.renderDashboard();
+})();
+</script>
+<script>
+/* Abertura mais rápida: a lista guardada no aparelho aparece na hora; a animação some no tempo dela
+   mesmo se a nuvem demorar (a nuvem atualiza a tela quando responder); um toque pula a animação. */
+(function(){
+  if(window._viaShare)return;
+  if(!window._appReady&&!(window.places||[]).length){
+    try{const b=JSON.parse(localStorage.getItem('garfinho_bkp')||'[]');if(b.length){window.places=b;window._appReady=true;renderAll();}}catch(e){}
+  }
+  const sp=document.getElementById('splash');
+  const tryHide=()=>{if(window._appReady)_hideSplash();else setTimeout(tryHide,400);};
+  setTimeout(tryHide,Math.max(300,(window._spT0||performance.now())+7000-performance.now()));
+  if(sp)sp.addEventListener('click',()=>{if(window._appReady)_hideSplash();});
+})();
+
+/* Botão voltar do Android fecha a janela aberta (cadastro, detalhe, filtros, recorte) em vez de sair do app */
+(function(){
+  const L=[ // do que fica por cima para o que fica por baixo
+    ['crop-overlay',()=>closeCrop()],
+    ['pk-sheet',()=>window.fecharEscolhaLugar&&fecharEscolhaLugar()],
+    ['fx-sheet',()=>window.closeSheet&&closeSheet()],
+    ['overlay',()=>closeModal()],
+    ['detail-overlay',()=>closeDetail()],
+    ['sidebar',()=>closeSidebar()]
+  ];
+  const aberto=()=>L.find(([id])=>{const el=document.getElementById(id);return el&&el.classList.contains('open');});
+  let guard=false;
+  const arma=()=>{if(!guard&&aberto()){try{history.pushState({gf:1},'');guard=true;}catch(e){}}};
+  window.addEventListener('popstate',e=>{
+    if(e.state&&e.state.gf)return; // voltou de algo acima (ex.: foto em tela cheia), não fecha mais nada
+    guard=false;
+    const a=aberto();if(a)a[1]();
+    setTimeout(arma,0);
+  });
+  const mo=new MutationObserver(arma);
+  const ligar=()=>L.forEach(([id])=>{const el=document.getElementById(id);if(el&&!el._gfo){el._gfo=1;mo.observe(el,{attributes:true,attributeFilter:['class']});}});
+  ligar();
+  // o painel de compartilhamento é criado só quando usado
+  new MutationObserver(ligar).observe(document.body,{childList:true});
 })();
 </script>
 </body>
