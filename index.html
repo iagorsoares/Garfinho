@@ -3452,5 +3452,93 @@ if(document.getElementById('view-inicio').classList.contains('active')&&window.p
   new MutationObserver(ligar).observe(document.body,{childList:true});
 })();
 </script>
+<style>
+/* ── Início com topo vermelho, "Que tal hoje?" e menu inferior escuro ── */
+.main{overflow-x:hidden}
+body[data-view=inicio] .topbar{background:var(--red)!important}
+body[data-view=inicio] .topbar,body[data-view=inicio] .topbar *{color:#fff!important}
+body[data-view=inicio] .topbar #topbar-date{color:rgba(255,255,255,.85)!important}
+body[data-view=inicio] .tb-ini span{background:rgba(255,255,255,.12)!important;border-color:rgba(255,255,255,.55)!important}
+.tb-sym{display:none;width:26px;height:34px;color:#fff;margin-left:4px}
+.tb-sym svg{width:100%;height:100%}
+body[data-view=inicio] .tb-sym{display:flex}
+#view-inicio{position:relative}
+#view-inicio::before{content:'';position:absolute;top:0;left:calc(-1*var(--px,16px));width:100vw;height:var(--hb,300px);background:var(--red);border-radius:0 0 32px 32px;z-index:0}
+#view-inicio>*{position:relative;z-index:1}
+#view-inicio .h2-search{background:#fff!important;border-color:transparent!important}
+#view-inicio .home-stats{display:flex!important;gap:22px;margin:4px 2px 18px!important}
+#view-inicio .home-stats .hs{background:none!important;border:none!important;padding:0!important;display:flex;align-items:baseline;gap:5px;box-shadow:none!important}
+#view-inicio .home-stats .hs b{color:#fff!important;font:900 1.4rem var(--font-d)!important}
+#view-inicio .home-stats .hs span{color:#fff!important;opacity:.85;font:700 .8rem var(--font-b)!important;text-transform:lowercase}
+#view-inicio .h4-sort{display:none!important}
+.qt{background:var(--card);border-radius:22px;padding:16px;margin:0 0 26px;box-shadow:0 14px 30px rgba(120,20,20,.16)}
+.qt small{display:block;font:800 .7rem var(--font-b);color:var(--red);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}
+.qt-r{display:flex;gap:12px;align-items:center;cursor:pointer}
+.qt-lg{width:58px;height:58px;border-radius:50%;flex-shrink:0;overflow:hidden;background:var(--bg3);display:flex;align-items:center;justify-content:center;color:var(--gray2);border:1px solid var(--border)}
+.qt-lg img{width:100%;height:100%;object-fit:cover}.qt-lg svg{width:46%;height:46%}
+.qt-r b{display:block;font:900 1.12rem var(--font-d);color:var(--black);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qt-r span{display:block;font:600 .78rem var(--font-b);color:var(--gray2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qt-r>div{min-width:0}
+.qt-b{display:flex;gap:8px;margin-top:14px}
+.qt-b button{height:42px;border-radius:13px;border:none;font:800 .86rem var(--font-d);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.qt-b .p{flex:1;background:var(--red);color:#fff}
+.qt-b .s{width:50px;background:var(--red-soft);color:var(--red);font-size:1.1rem}
+.qt-b svg{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+/* menu inferior como hoje (branco, preso embaixo), com o + vermelho no centro */
+.nav-add{width:48px;height:48px;border-radius:16px;border:none;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.5rem;cursor:pointer;flex-shrink:0;align-self:center;box-shadow:0 4px 12px rgba(186,16,17,.3)}
+.nav-add svg{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}
+/* no Início a barra de cima rola junto com a tela */
+body[data-view=inicio] .topbar{position:relative!important}
+/* botões em vermelho neon com brilho */
+.nav-add,.qt-b .p{background:linear-gradient(145deg,#FF3B4E 0%,#FF1430 45%,#D9001E 100%)!important;color:#fff!important;box-shadow:0 0 0 1px rgba(255,80,95,.35),0 6px 16px rgba(255,20,48,.45),0 0 22px rgba(255,40,64,.35)!important;text-shadow:0 0 8px rgba(255,255,255,.35)}
+.nav-add:active,.qt-b .p:active{transform:scale(.96);box-shadow:0 0 0 1px rgba(255,80,95,.45),0 3px 10px rgba(255,20,48,.55),0 0 28px rgba(255,40,64,.5)!important}
+.qt-b .s{background:#FFF0F1!important;color:#FF1430!important;box-shadow:inset 0 0 0 1.5px rgba(255,20,48,.25),0 0 14px rgba(255,40,64,.18)}
+.mobile-nav .mob-nav-item.active{color:#FF1430!important}
+.mobile-nav .mob-nav-item.active .mn-ic{color:#FF1430!important;background:rgba(255,20,48,.1)!important;box-shadow:0 0 14px rgba(255,40,64,.25)}
+body.dark .qt-b .s{background:rgba(255,20,48,.14)!important}
+.fab{display:none!important}
+</style>
+<script>
+(function(){
+const vi=document.getElementById('view-inicio');if(!vi)return;
+const IC=window.__IC||{},X=window.__X||{};
+/* logo no topo; no menu, Início volta a ser a casinha */
+const ta=document.querySelector('.topbar-actions');
+if(ta&&window.__sym&&!document.querySelector('.tb-sym'))ta.insertAdjacentHTML('beforeend',`<span class="tb-sym">${__sym()}</span>`);
+const it=document.querySelector('.mob-nav-item[data-nav="inicio"] .mn-ic');if(it&&IC.home)it.innerHTML=IC.home;
+/* + no centro do menu */
+const nav=document.querySelector('.mobile-nav');
+if(nav&&!nav.querySelector('.nav-add')){const items=nav.querySelectorAll('.mob-nav-item');if(items[1])items[1].insertAdjacentHTML('afterend',`<button type="button" class="nav-add" aria-label="Adicionar lugar" onclick="openModal()">${IC.plus||'+'}</button>`);}
+/* cartão "Que tal hoje?" no lugar do botão de sortear */
+const ref=vi.querySelector('.home-stats');
+const box=document.createElement('div');box.className='qt';box.id='qt';
+if(ref)ref.insertAdjacentElement('afterend',box);
+let sid=null;
+const bai=p=>(window.__bairro&&__bairro(p))||'';
+window.__qtOutra=function(){const q=(window.places||[]).filter(p=>p.status==='quero');if(!q.length)return;let n;do{n=q[Math.floor(Math.random()*q.length)];}while(q.length>1&&n.id===sid);sid=n.id;pinta();};
+function pinta(){
+  const q=(window.places||[]).filter(p=>p.status==='quero');
+  if(!q.length){box.style.display='none';ajusta();return;}
+  box.style.display='';
+  let p=q.find(x=>x.id===sid);if(!p){p=q[Math.floor(Math.random()*q.length)];sid=p.id;}
+  const lg=p.logo?`<img src="${esc(window.clImg?clImg(p.logo,200):p.logo)}" alt="">`:(window.__catIc?__catIc(p.cat):'');
+  box.innerHTML=`<small>Que tal hoje?</small><div class="qt-r" onclick="openDetail('${p.id}')"><span class="qt-lg">${lg}</span><div><b>${esc(p.name)}</b><span>${esc([p.cat,bai(p)].filter(Boolean).join(' · '))}</span></div></div><div class="qt-b"><button type="button" class="p" onclick="openDetail('${p.id}')">Ver lugar</button><button type="button" class="s" aria-label="Outra sugestão" onclick="__qtOutra()">${X.shuffle||'↻'}</button></div>`;
+  ajusta();
+}
+/* o vermelho desce até a metade do cartão */
+function ajusta(){
+  const vr=vi.getBoundingClientRect();if(!vr.width)return;
+  vi.style.setProperty('--px',vr.left+'px');
+  const b=box.style.display==='none'?ref:box;if(!b)return;
+  const r=b.getBoundingClientRect();
+  vi.style.setProperty('--hb',Math.round(r.top-vr.top+(b===box?r.height*0.45:r.height+18))+'px');
+}
+const _rd=window.renderDashboard;
+window.renderDashboard=function(){if(_rd)_rd();pinta();};
+window.addEventListener('resize',ajusta);
+const _nav=window.navigate;window.navigate=function(v){_nav(v);if(v==='inicio')requestAnimationFrame(ajusta);};
+if(window.places&&window.places.length)pinta();
+})();
+</script>
 </body>
 </html>
