@@ -1076,6 +1076,15 @@ body[data-view=mapa] .fab{display:none!important}
 @keyframes mePulse{0%{transform:scale(.4);opacity:1}100%{transform:scale(1.6);opacity:0}}
 @keyframes meFlash{0%,100%{transform:scale(1)}50%{transform:scale(1.35)}}
 </style>
+
+<style>
+/* ── Mapa: botão de filtros flutuante ── */
+.map-fx-btn{position:absolute;top:12px;left:12px;z-index:1001;display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 14px;border-radius:99px;border:1.5px solid var(--line-strong,var(--border));background:var(--card);color:var(--black);font:700 .85rem var(--font-b,'Nunito Sans',sans-serif);box-shadow:0 2px 10px rgba(0,0,0,.12);cursor:pointer}
+.map-fx-btn svg{width:1.1rem;height:1.1rem;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.map-fx-btn.on{border-color:var(--red);color:var(--red)}
+.map-fx-btn .fx-badge{margin-left:2px}
+.view-map .map-status-bar{top:auto!important;bottom:14px!important}
+</style>
 </head>
 <body>
 <div id="ib"><div style="font-size:24px">🍽️</div><div><div class="ibt">Instalar na tela inicial</div><div class="ibs">Acesso rápido sem o navegador</div></div><button id="ibBtn">Instalar</button><button id="ibX" onclick="document.getElementById('ib').classList.remove('show')">×</button></div>
@@ -3568,6 +3577,21 @@ window.renderDashboard=function(){if(_rd)_rd();pinta();};
 window.addEventListener('resize',ajusta);
 const _nav=window.navigate;window.navigate=function(v){_nav(v);if(v==='inicio')requestAnimationFrame(ajusta);};
 if(window.places&&window.places.length)pinta();
+})();
+</script>
+
+<script>
+/* Mapa: botão "Filtros" que abre o mesmo painel da aba Lugares (filtros compartilhados) */
+(function(){
+  const mc=document.querySelector('.view-map .map-container');if(!mc||!window.openSheet)return;
+  const SL='<svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>';
+  mc.insertAdjacentHTML('beforeend',`<button type="button" class="map-fx-btn" id="map-fx-btn" onclick="openSheet('all')">${SL}<span>Filtros</span><b class="fx-badge" id="map-fx-badge"></b></button>`);
+  const upd=()=>{const n=window.__fxh?window.__fxh.nAct():0;const b=document.getElementById('map-fx-badge');if(b){b.textContent=n||'';b.classList.toggle('show',n>0);}document.getElementById('map-fx-btn').classList.toggle('on',n>0);};
+  const _r=window.__renderFx;
+  if(_r)window.__renderFx=function(){_r.apply(this,arguments);upd();};
+  /* renderUI interno não passa por window.__renderFx: observa o painel do mapa */
+  const fm=document.getElementById('fx-map');if(fm)new MutationObserver(upd).observe(fm,{childList:true,subtree:true});
+  upd();
 })();
 </script>
 </body>
