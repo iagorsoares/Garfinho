@@ -3062,7 +3062,7 @@ const ST={city:new Set(),status:new Set(),pet:false,cat:new Set()};window.__ST=S
 const STL={quero:'Quero ir',visitado:'Já fui'};
 const passes=p=>(!ST.city.size||ST.city.has(cityOf(p)))&&(!ST.status.size||ST.status.has(p.status))&&(!ST.pet||p.pet)&&(!ST.cat.size||ST.cat.has(p.cat));
 window.getFiltered=function(){ensureCity();const q=(typeof searchQuery!=='undefined'?searchQuery:'');return places.filter(p=>passes(p)&&(!q||semAcento(p.name+' '+p.cat+' '+cityOf(p)+' '+bairro(p)).includes(q)));};
-window.passesFilter=passes;
+window.passesFilter=passes;window.__passes=passes;
 const nAct=()=>ST.city.size+ST.status.size+(ST.pet?1:0)+ST.cat.size;
 const count=(arr)=>{const m={};arr.forEach(k=>m[k]=(m[k]||0)+1);return Object.entries(m).sort((a,b)=>b[1]-a[1]);};
 const cities=()=>count(places.map(cityOf)),cats=()=>count(places.map(p=>p.cat));
@@ -3207,8 +3207,8 @@ const MOON='<svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0
 const setDk=()=>{const b=document.getElementById('dark-btn');if(b)b.innerHTML=document.body.classList.contains('dark')?MOON:X.sun;};
 const _td=window.toggleDark;if(_td)window.toggleDark=function(){_td();setDk();};
 setDk();
-/* mapa sem filtros: mostra todos os lugares */
-window.passesFilter=function(){return true;};
+/* mapa usa os mesmos filtros da aba Lugares (botão Filtros no mapa) */
+window.passesFilter=function(p){return window.__passes?window.__passes(p):true;};
 /* excluir passa para a tela de edição */
 window.excluirAtual=function(){const id=editId;if(!id)return;deletePlace(id);if(!window.places.find(p=>p.id===id))closeModal();};
 const _om=window.openModal;
