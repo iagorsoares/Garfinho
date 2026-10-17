@@ -516,6 +516,20 @@ async function fbLoad(){
   }
 }
 fbLoad();
+/* ── Duelo "Qual gostou mais?": garfinho/duelos = {d:[{w,l,t}], i:[{w,l,t}]} ── */
+const DU_REF=doc(db,'garfinho','duelos');
+window._duData={d:[],i:[]};window._duLoaded=false;
+window._duSave=function(k){
+  if(!window._duLoaded){if(window.toast)toast('','Sem conexão: escolha não salva');return false;}
+  setDoc(DU_REF,{[k]:window._duData[k]||[]},{merge:true}).catch(e=>{console.error(e);if(window.toast)toast('','Erro ao salvar o duelo');});
+  return true;
+};
+onSnapshot(DU_REF,s=>{
+  const d=s.exists()?s.data():{};
+  window._duData={d:Array.isArray(d.d)?d.d:[],i:Array.isArray(d.i)?d.i:[]};
+  window._duLoaded=true;
+  if(window._duOnData)window._duOnData();
+},err=>{console.error(err);});
 </script>
 <style id="garfinho-v3">
 /* ===== REDESIGN v3 (Garfinho+) ===== */
@@ -1084,6 +1098,102 @@ body[data-view=mapa] .fab{display:none!important}
 .map-fx-btn.on{border-color:var(--red);color:var(--red)}
 .map-fx-btn .fx-badge{margin-left:2px}
 .view-map .map-status-bar{top:auto!important;bottom:14px!important}
+</style>
+
+<style id="garfinho-duelo">
+/* ── Duelo "Qual gostou mais?" ── */
+:root{--du-win:#2F8A4A;--du-win-soft:#E6F3EA;--du-deb:var(--red);--du-deb-soft:var(--red-soft);--du-iag:#2F6F8F;--du-iag-soft:#E3EEF3;--du-gold:#C9922E;--du-bronze:#B0784A}
+body.dark{--du-win:#4FB06A;--du-win-soft:#1C3324;--du-iag:#6FAFCF;--du-iag-soft:#1C2C34;--du-gold:#E0B055}
+.du-seg{display:flex;border:1.5px solid var(--line);border-radius:12px;padding:3px;gap:3px;background:var(--card);margin:2px 0 14px}
+.du-seg button{flex:1;border:none;background:none;border-radius:9px;height:36px;font:800 .84rem var(--font-b);color:var(--gray2);cursor:pointer}
+.du-seg button.on{background:var(--red);color:#fff}
+.du-seg.sm{margin:0 0 12px}.du-seg.sm button{height:32px;font-size:.78rem}
+.du-seg.sm button.on.i{background:var(--du-iag)}.du-seg.sm button.on.c{background:var(--black);color:var(--card)}
+.du-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:14px;box-shadow:var(--shadow)}
+.du-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 2px 12px}
+.du-h b{font:900 1.15rem var(--font-d);letter-spacing:-.01em;color:var(--black)}
+.du-h small{display:block;font-size:.72rem;font-weight:700;color:var(--gray2);margin-top:1px}
+.du-who{display:flex;align-items:center;gap:7px;border:1.5px solid var(--line);background:var(--card);border-radius:99px;padding:3px 10px 3px 3px;cursor:pointer;font:800 .78rem var(--font-b);color:var(--black);flex-shrink:0}
+.du-ini{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font:900 .78rem var(--font-d)}
+.du-ini.d{background:var(--du-deb)}.du-ini.i{background:var(--du-iag)}
+.du-opt{display:flex;flex-direction:column;width:100%;border:1.5px solid var(--line);background:var(--card);border-radius:16px;padding:0;cursor:pointer;text-align:left;overflow:hidden;position:relative;color:var(--black);transition:transform .18s,border-color .18s,opacity .25s,filter .25s}
+.du-opt:active{transform:scale(.985)}
+.du-opt.in-l{animation:duInL .45s cubic-bezier(.2,.8,.2,1) backwards}
+.du-opt.in-r{animation:duInR .45s .08s cubic-bezier(.2,.8,.2,1) backwards}
+.du-opt.win{border-color:var(--du-win);box-shadow:0 0 0 2px var(--du-win),0 12px 26px rgba(47,138,74,.28);transform:scale(1.02);z-index:2}
+.du-opt.win .du-ob{background:var(--du-win-soft)}
+.du-opt.lose{opacity:.35;transform:scale(.95);filter:grayscale(.8)}
+.du-ph{display:grid;grid-template-columns:2fr 1fr;gap:2px;height:150px;background:var(--border);position:relative}
+.du-ph.one{grid-template-columns:1fr}
+.du-ph img{width:100%;height:100%;object-fit:cover;display:block}
+.du-cap{position:absolute;left:8px;bottom:8px;max-width:60%;background:rgba(22,20,18,.62);color:#fff;font-size:.7rem;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.du-cap.c2{left:auto;right:8px;max-width:30%}
+.du-ph.none{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:var(--bg)}
+.du-ph.none small{font-size:.72rem;color:var(--gray2);font-weight:700}
+.du-lg{width:38px;height:38px;border-radius:50%;flex-shrink:0;overflow:hidden;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--gray2);font-size:1.1rem}
+.du-lg img{width:100%;height:100%;object-fit:cover}
+.du-ph.none .du-lg{width:64px;height:64px;font-size:1.6rem}
+.du-ob{display:flex;align-items:center;gap:10px;padding:10px 12px;transition:background .2s}
+.du-ot{flex:1;min-width:0}
+.du-ot b{display:block;font:800 1rem var(--font-d);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.du-ot span{display:block;font-size:.74rem;color:var(--gray2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.du-chk{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;color:transparent;flex-shrink:0;transition:all .18s}
+.du-chk svg,.du-wb svg{stroke-width:2.6}
+.du-opt.win .du-chk{background:var(--du-win);border-color:var(--du-win);color:#fff}
+.du-wb{position:absolute;left:50%;top:75px;width:68px;height:68px;margin:-34px 0 0 -34px;border-radius:50%;background:var(--du-win);color:#fff;display:flex;align-items:center;justify-content:center;font-size:2.1rem;border:4px solid var(--card);box-shadow:0 6px 18px rgba(0,0,0,.25);transform:scale(0);z-index:3;pointer-events:none}
+.du-opt.win .du-wb{animation:duPop .45s cubic-bezier(.3,1.6,.5,1) forwards}
+.du-delta{position:absolute;right:10px;top:10px;z-index:3;font:900 .8rem var(--font-d);color:#fff;background:var(--du-win);border-radius:99px;padding:3px 9px;opacity:0;transform:translateY(-4px);transition:all .25s}
+.du-opt.win .du-delta{opacity:1;transform:none}
+.du-vs{display:flex;align-items:center;gap:10px;margin:-8px 0;position:relative;z-index:4}
+.du-vs::before,.du-vs::after{content:'';flex:1;height:1px;background:var(--border)}
+.du-vs span{width:42px;height:42px;border-radius:50%;background:var(--red);color:#fff;font:900 .85rem var(--font-d);display:flex;align-items:center;justify-content:center;border:3px solid var(--card);box-shadow:0 4px 12px rgba(0,0,0,.18);animation:duVs .5s .25s cubic-bezier(.3,1.6,.5,1) backwards}
+@keyframes duInL{from{opacity:0;transform:translateX(-46px) rotate(-2deg)}to{opacity:1;transform:none}}
+@keyframes duInR{from{opacity:0;transform:translateX(46px) rotate(2deg)}to{opacity:1;transform:none}}
+@keyframes duPop{from{transform:scale(0)}to{transform:scale(1)}}
+@keyframes duVs{from{transform:scale(0) rotate(-40deg)}to{transform:scale(1) rotate(0)}}
+@media (prefers-reduced-motion:reduce){.du-opt,.du-delta,.du-chk{transition:none}.du-opt,.du-vs span{animation:none!important}.du-opt.win .du-wb{animation:none;transform:scale(1)}}
+.du-f{display:flex;gap:8px;margin-top:12px}
+.du-ghost{flex:1;height:42px;border:1.5px solid var(--line);background:none;border-radius:12px;font:800 .84rem var(--font-b);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;color:var(--gray1)}
+.du-ghost:disabled{opacity:.4;cursor:default}
+.du-pick{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.du-pick button{border:1.5px solid var(--line);background:var(--card);border-radius:16px;padding:16px 10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;font:800 .9rem var(--font-b);color:var(--black)}
+.du-pick button.on{border-color:var(--red);background:var(--red-soft)}
+.du-pick .du-ini{width:50px;height:50px;font-size:1.25rem}
+.du-pick small{font-size:.7rem;color:var(--gray2);font-weight:700}
+.du-p{font-size:.8rem;color:var(--gray2);line-height:1.45;margin:0 2px 14px}
+.du-sh{display:flex;align-items:baseline;justify-content:space-between;margin:24px 2px 10px}
+.du-sh h3{font:900 1.1rem var(--font-d);margin:0;color:var(--black)}
+.du-sh span{font-size:.74rem;color:var(--gray2);font-weight:700}
+.du-list{display:flex;flex-direction:column;gap:8px}
+.du-row{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:16px;padding:8px 12px 8px 8px;box-shadow:var(--shadow);cursor:pointer}
+.du-pos{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:900 .82rem var(--font-d);color:var(--gray2);flex-shrink:0}
+.du-row:nth-child(1) .du-pos{background:var(--du-gold);color:#fff}
+.du-row:nth-child(2) .du-pos{background:var(--gray3);color:#fff}
+.du-row:nth-child(3) .du-pos{background:var(--du-bronze);color:#fff}
+.du-th{width:48px;height:48px;border-radius:12px;flex-shrink:0;background:var(--bg3) center/cover;display:flex;align-items:center;justify-content:center;overflow:hidden;color:var(--gray2);font-size:1.3rem}
+.du-th.lg{border-radius:50%}
+.du-th img{width:100%;height:100%;object-fit:cover}
+.du-rt{flex:1;min-width:0}
+.du-rt b{display:block;font:800 .92rem var(--font-b);color:var(--black);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.du-rt span{display:block;font-size:.72rem;color:var(--gray2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.du-sc{text-align:right;flex-shrink:0}
+.du-sc b{display:block;font:900 1.02rem var(--font-d);color:var(--black);font-variant-numeric:tabular-nums}
+.du-sc>span{display:block;font-size:.68rem;color:var(--gray2);font-weight:700}
+.du-pair{display:flex;gap:5px;justify-content:flex-end;margin-top:3px}
+.du-pd{font-size:.66rem;font-weight:800;border-radius:99px;padding:1px 6px}
+.du-pd.d{background:var(--du-deb-soft);color:var(--du-deb)}.du-pd.i{background:var(--du-iag-soft);color:var(--du-iag)}
+.du-note{font-size:.76rem;color:var(--gray2);line-height:1.45;margin:10px 2px 0}
+.du-dis{background:var(--card);border-radius:20px;padding:6px 14px;box-shadow:var(--shadow)}
+.du-dr{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer}
+.du-dr:last-child{border-bottom:none}
+.du-dr .du-th{width:42px;height:42px}
+.du-track{position:relative;height:6px;border-radius:99px;background:var(--bg);margin-top:9px}
+.du-dot{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;transform:translate(-50%,-50%);border:2px solid var(--card)}
+.du-dot.d{background:var(--du-deb)}.du-dot.i{background:var(--du-iag)}
+.du-dp{display:flex;justify-content:space-between;font-size:.66rem;color:var(--gray2);font-weight:700;margin-top:6px}
+.du-dv{text-align:right;font-size:.72rem;font-weight:800;flex-shrink:0;line-height:1.5}
+.du-dv .d{color:var(--du-deb)}.du-dv .i{color:var(--du-iag)}
+.du-empty{text-align:center;color:var(--gray2);font-size:.84rem;padding:24px 10px;line-height:1.5}
 </style>
 </head>
 <body>
@@ -3592,6 +3702,157 @@ if(window.places&&window.places.length)pinta();
   /* renderUI interno não passa por window.__renderFx: observa o painel do mapa */
   const fm=document.getElementById('fx-map');if(fm)new MutationObserver(upd).observe(fm,{childList:true,subtree:true});
   upd();
+})();
+</script>
+
+<script>
+/* ============================================================
+   DUELO "Qual gostou mais?" na aba Ranking
+   - Dois lugares visitados por vez; escolhe o preferido.
+   - Pontuação estilo Elo (todos começam com 1000), separada por
+     jogador (D = Débora, I = Iago); Casal = média dos dois.
+   - Histórico em garfinho/duelos; cada um grava só o próprio campo.
+   - Quem está jogando fica salvo no celular (localStorage).
+   ============================================================ */
+(function(){
+const K=32,LS='garfinho_jogador',NOME={d:'Débora',i:'Iago'};
+const ICK='<svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg>';
+const IUNDO='<svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>';
+const ISKIP='<svg viewBox="0 0 24 24"><path d="m13 6 6 6-6 6M5 6l6 6-6 6"/></svg>';
+const IDOWN='<svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>';
+let tab='nota',rk='c',me=null,cur=null,last=null,busy=false,escolher=false,prev=null;
+try{const v=localStorage.getItem(LS);if(v==='d'||v==='i')me=v;}catch(e){}
+try{if(localStorage.getItem('garfinho_rk_tab')==='duelo')tab='duelo';}catch(e){}
+
+const vis=()=>(window.places||[]).filter(p=>p.status==='visitado');
+const fotos=p=>(p.photos||[]).map((f,i)=>f?{src:f,cap:(p.captions&&p.captions[i])||''}:null).filter(Boolean);
+const ic=p=>window.__catIc?__catIc(p.cat):'';
+const cl=(u,w)=>window.clImg?clImg(u,w):u;
+const sub=p=>{const b=window.__bairro?__bairro(p):'';return [p.cat,b].filter(Boolean).join(' · ');};
+const MES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const dt=s=>{const m=String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})/);return m?`${+m[3]} ${MES[m[2]-1]}`:'';};
+const logo=p=>`<span class="du-lg">${p.logo?`<img src="${esc(cl(p.logo,160))}" alt="" loading="lazy" decoding="async">`:ic(p)}</span>`;
+const thumb=p=>{const f=fotos(p)[0];if(f)return`<span class="du-th"><img src="${esc(cl(f.src,200))}" alt="" loading="lazy" decoding="async"></span>`;return`<span class="du-th lg">${p.logo?`<img src="${esc(cl(p.logo,160))}" alt="" loading="lazy" decoding="async">`:ic(p)}</span>`;};
+
+// Pontuação: refaz todos os duelos em ordem (lugares apagados ou não visitados são ignorados)
+function calc(k){
+  const ids=new Set(vis().map(p=>String(p.id)));
+  const elo={},n={},w={},l={};ids.forEach(id=>{elo[id]=1000;n[id]=0;w[id]=0;l[id]=0;});
+  const h=((window._duData||{})[k]||[]);let tot=0;
+  h.forEach(x=>{const a=String(x.w),b=String(x.l);if(!ids.has(a)||!ids.has(b)||a===b)return;
+    const d=K*(1-1/(1+10**((elo[b]-elo[a])/400)));elo[a]+=d;elo[b]-=d;n[a]++;n[b]++;w[a]++;l[b]++;tot++;});
+  return{elo,n,w,l,tot};
+}
+function order(k){
+  const st=k==='c'?null:calc(k),sd=k==='c'?calc('d'):null,si=k==='c'?calc('i'):null;
+  const sc=id=>k==='c'?(sd.elo[id]+si.elo[id])/2:st.elo[id];
+  return vis().map(p=>({p,s:sc(String(p.id))})).sort((a,b)=>b.s-a.s||String(a.p.name).localeCompare(String(b.p.name),'pt-BR'));
+}
+function pick(){
+  const L=vis();if(L.length<2)return null;
+  const s=calc(me);
+  const ord=[...L].sort((a,b)=>s.n[String(a.id)]-s.n[String(b.id)]||Math.random()-.5);
+  const a=ord[0],A=String(a.id);
+  let pool=L.filter(p=>String(p.id)!==A&&!(last&&last.includes(A)&&last.includes(String(p.id))));
+  if(!pool.length)pool=L.filter(p=>String(p.id)!==A);
+  pool.sort((x,y)=>Math.abs(s.elo[String(x.id)]-s.elo[A])-Math.abs(s.elo[String(y.id)]-s.elo[A]));
+  const b=pool[Math.floor(Math.random()*Math.min(4,pool.length))];
+  return Math.random()<.5?[A,String(b.id)]:[String(b.id),A];
+}
+const byId=id=>vis().find(p=>String(p.id)===id);
+
+function opt(id,i){
+  const p=byId(id),ph=fotos(p).slice(0,2);
+  const media=ph.length
+    ?`<span class="du-ph${ph.length===1?' one':''}">${ph.map(f=>`<img src="${esc(cl(f.src,700))}" alt="${esc(f.cap||'Foto do prato')}" decoding="async">`).join('')}${ph[0].cap?`<span class="du-cap">${esc(ph[0].cap)}</span>`:''}${ph[1]&&ph[1].cap?`<span class="du-cap c2">${esc(ph[1].cap)}</span>`:''}</span>`
+    :`<span class="du-ph none">${logo(p)}<small>Sem fotos dos pratos</small></span>`;
+  const d=dt(p.date);
+  return`<button type="button" class="du-opt ${i?'in-r':'in-l'}" id="du-o${i}" onclick="duEscolher(${i})">${media}<span class="du-wb">${ICK}</span><span class="du-delta" id="du-dl${i}"></span>
+    <span class="du-ob">${logo(p)}<span class="du-ot"><b>${esc(p.name)}</b><span>${esc([sub(p),d?'visitado em '+d:''].filter(Boolean).join(' · '))}</span></span><span class="du-chk">${ICK}</span></span></button>`;
+}
+function renderDuel(novo){
+  const el=document.getElementById('du-game');if(!el)return;
+  if(!me||escolher){
+    const td=calc('d').tot,ti=calc('i').tot;
+    el.innerHTML=`<div class="du-h"><div><b>Quem está jogando?</b></div></div><p class="du-p">Fica salvo neste celular. As escolhas de cada um contam no ranking dele, e o do casal junta os dois.</p>
+      <div class="du-pick"><button type="button" class="${me==='d'?'on':''}" onclick="duJogador('d')"><span class="du-ini d">D</span>Débora<small>${td} escolhas</small></button><button type="button" class="${me==='i'?'on':''}" onclick="duJogador('i')"><span class="du-ini i">I</span>Iago<small>${ti} escolhas</small></button></div>`;
+    return;
+  }
+  if(vis().length<2){el.innerHTML=`<div class="du-empty">Marque pelo menos dois lugares como visitados para começar o duelo.</div>`;return;}
+  if(novo||!cur||!byId(cur[0])||!byId(cur[1]))cur=pick();
+  const tot=calc(me).tot,h=(window._duData||{})[me]||[];
+  el.innerHTML=`<div class="du-h"><div><b>Qual gostou mais?</b><small>${tot} escolhas ${me==='d'?'da Débora':'do Iago'}</small></div><button type="button" class="du-who" onclick="duTrocar()" aria-label="Trocar jogador"><span class="du-ini ${me}">${me.toUpperCase()}</span>${NOME[me]}${IDOWN}</button></div>
+    ${opt(cur[0],0)}<div class="du-vs"><span>VS</span></div>${opt(cur[1],1)}
+    <div class="du-f"><button type="button" class="du-ghost" onclick="duDesfazer()"${h.length?'':' disabled'}>${IUNDO}Desfazer</button><button type="button" class="du-ghost" onclick="duPular()">${ISKIP}Não sei, pular</button></div>`;
+}
+function renderRank(){
+  const el=document.getElementById('du-rank');if(!el)return;
+  const L=order(rk);
+  if(!L.length){el.innerHTML='';return;}
+  const st=rk==='c'?null:calc(rk);
+  const pos=k=>{const m={};order(k).forEach((x,j)=>m[String(x.p.id)]=j+1);return m;};
+  const pd=pos('d'),pi=pos('i');
+  let pp=null;
+  if(prev&&prev.k===rk){pp=prev.pos;}
+  const rows=L.map(({p,s},j)=>{const id=String(p.id);let mv='';
+    if(pp&&pp[id]){const d=pp[id]-(j+1);if(d>0)mv=` <span style="color:var(--du-win);font-size:.66rem">▲${d}</span>`;else if(d<0)mv=` <span style="color:var(--red);font-size:.66rem">▼${-d}</span>`;}
+    const right=rk==='c'?`<b>${Math.round(s)}</b><div class="du-pair"><span class="du-pd d">D ${pd[id]}º</span><span class="du-pd i">I ${pi[id]}º</span></div>`
+      :`<b>${Math.round(s)}${mv}</b><span>${st.w[id]} vitórias · ${st.l[id]} derrotas</span>`;
+    return`<div class="du-row" onclick="openDetail('${esc(id)}')"><span class="du-pos">${j+1}</span>${thumb(p)}<div class="du-rt"><b>${esc(p.name)}</b><span>${esc(sub(p))}</span></div><div class="du-sc">${right}</div></div>`;}).join('');
+  const td=calc('d').tot,ti=calc('i').tot;
+  let dis;
+  if(td<5||ti<5)dis=`<div class="du-empty">Aparece quando os dois tiverem feito pelo menos 5 escolhas.</div>`;
+  else{const N=L.length,X=n=>N>1?8+(n-1)/(N-1)*84:50;
+    const top=vis().map(p=>({p,a:pd[String(p.id)],b:pi[String(p.id)]})).filter(x=>x.a!==x.b).sort((x,y)=>Math.abs(y.a-y.b)-Math.abs(x.a-x.b)).slice(0,3);
+    dis=top.length?top.map(({p,a,b})=>`<div class="du-dr" onclick="openDetail('${esc(String(p.id))}')">${thumb(p)}<div class="du-rt"><b>${esc(p.name)}</b><div class="du-track"><span class="du-dot d" style="left:${X(a)}%"></span><span class="du-dot i" style="left:${X(b)}%"></span></div><div class="du-dp"><span>1º</span><span>${N}º</span></div></div><div class="du-dv"><div class="d">Débora ${a}º</div><div class="i">Iago ${b}º</div></div></div>`).join(''):`<div class="du-empty">Vocês estão de acordo em tudo.</div>`;}
+  el.innerHTML=`<div class="du-sh"><h3>Ranking do duelo</h3><span>${L.length} lugares visitados</span></div>
+    <div class="du-seg sm"><button type="button" class="${rk==='d'?'on d':''}" onclick="duRk('d')">Débora</button><button type="button" class="${rk==='i'?'on i':''}" onclick="duRk('i')">Iago</button><button type="button" class="${rk==='c'?'on c':''}" onclick="duRk('c')">Casal</button></div>
+    <div class="du-list">${rows}</div>
+    <p class="du-note">${rk==='c'?'A pontuação do casal é a média dos dois. ':''}Todo lugar começa com 1000 pontos. Ganhar de um lugar bem colocado vale mais do que ganhar de um lá de baixo.</p>
+    <div class="du-sh"><h3>Onde vocês discordam</h3><span>posição de cada um</span></div><div class="du-dis">${dis}</div>`;
+}
+function setup(){
+  const v=document.getElementById('view-ranking');if(!v||document.getElementById('du-seg'))return;
+  v.insertAdjacentHTML('afterbegin',`<div class="du-seg" id="du-seg"><button type="button" id="du-t-nota" onclick="duTab('nota')">Por nota</button><button type="button" id="du-t-duelo" onclick="duTab('duelo')">Duelo</button></div><div id="du-view" style="display:none"><div class="du-card" id="du-game"></div><div id="du-rank"></div></div>`);
+}
+function show(){
+  setup();
+  document.getElementById('du-t-nota').classList.toggle('on',tab==='nota');
+  document.getElementById('du-t-duelo').classList.toggle('on',tab==='duelo');
+  document.getElementById('ranking-list').style.display=tab==='nota'?'':'none';
+  document.getElementById('du-view').style.display=tab==='duelo'?'':'none';
+  if(tab==='duelo'){renderDuel();renderRank();}
+}
+const _rr=window.renderRanking;
+window.renderRanking=function(){if(_rr)_rr.apply(this,arguments);show();};
+window.duTab=function(t){tab=t;try{localStorage.setItem('garfinho_rk_tab',t);}catch(e){}show();};
+window.duRk=function(k){rk=k;prev=null;renderRank();};
+window.duJogador=function(k){me=k;escolher=false;last=null;cur=null;try{localStorage.setItem(LS,k);}catch(e){}renderDuel(true);renderRank();};
+window.duTrocar=function(){escolher=true;renderDuel();};
+window.duEscolher=function(i){
+  if(busy||!cur)return;
+  const w=cur[i],l=cur[1-i],s=calc(me);
+  const d=K*(1-1/(1+10**((s.elo[l]-s.elo[w])/400)));
+  const D=window._duData||(window._duData={d:[],i:[]});
+  const before={};order(me).forEach((x,j)=>before[String(x.p.id)]=j+1);
+  D[me]=[...(D[me]||[]),{w,l,t:Date.now()}];
+  if(window._duSave&&!window._duSave(me)){D[me].pop();return;}
+  busy=true;last=cur;prev={k:me,pos:before};
+  document.getElementById('du-o'+i).classList.add('win');document.getElementById('du-o'+(1-i)).classList.add('lose');
+  document.getElementById('du-dl'+i).textContent='+'+Math.round(d)+' pontos';
+  setTimeout(()=>{busy=false;renderDuel(true);renderRank();},950);
+};
+window.duPular=function(){if(busy)return;last=cur;renderDuel(true);};
+window.duDesfazer=function(){
+  if(busy)return;const D=window._duData||{};const h=D[me]||[];if(!h.length)return;
+  const x=h[h.length-1];D[me]=h.slice(0,-1);
+  if(window._duSave&&!window._duSave(me)){D[me]=h;return;}
+  cur=[String(x.w),String(x.l)];prev=null;renderDuel();renderRank();
+  if(window.toast)toast('','Última escolha desfeita');
+};
+// Dados novos da nuvem: atualiza sem trocar o par que está na tela
+window._duOnData=function(){if(tab==='duelo'&&!busy&&document.getElementById('du-view')){renderDuel();renderRank();}};
+if(document.getElementById('view-ranking'))setup();
 })();
 </script>
 </body>
