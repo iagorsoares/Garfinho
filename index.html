@@ -3903,8 +3903,8 @@ body.ab-novo .tb-dot{display:block}
    aberta e se existe uma mais nova no GitHub, e o estado da nuvem.
    A cada publicação, aumentar APP_VERSION e pôr a entrada no topo de APP_HIST.
    ============================================================ */
-const APP_VERSION='2026.10.17.3',APP_DATA='17/10/2026';
-const APP_HIST=[{"v": "2026.10.17.3", "d": "17/10/2026", "i": ["Botão de troféu no topo do Diário abre o duelo \"Qual gostou mais?\""]}, {"v": "2026.10.17.2", "d": "17/10/2026", "i": ["Painel Sobre ao tocar no logo: quem usa o celular, versão e atualização", "Aviso quando houver versão nova"]}, {"v": "2026.10.17.1", "d": "17/10/2026", "i": ["Duelo \"Qual gostou mais?\" na aba Ranking", "Ranking da Débora, do Iago e do casal"]}, {"v": "2026.10.14", "d": "14/10/2026", "i": ["Mapa respeita os filtros da aba Lugares", "Botão de filtros flutuante no mapa", "Ponto azul destacando onde você está"]}, {"v": "2026.10.11.2", "d": "11/10/2026", "i": ["Início com topo vermelho e \"Que tal hoje?\"", "Botão + no centro do menu", "Últimas visitas em cartões deslizantes"]}, {"v": "2026.10.11.1", "d": "11/10/2026", "i": ["Posts do Instagram aparecem prontos, sem pulos", "Legenda dos posts escondida, com Ver legenda", "Abertura e listas mais rápidas"]}];
+const APP_VERSION='2026.10.17.4',APP_DATA='17/10/2026';
+const APP_HIST=[{"v": "2026.10.17.4", "d": "17/10/2026", "i": ["Nota de cada um: Débora e Iago avaliam separado e o lugar mostra a média", "Aviso de avaliação pendente ao abrir o app quando o outro marca um lugar como visitado"]}, {"v": "2026.10.17.3", "d": "17/10/2026", "i": ["Botão de troféu no topo do Diário abre o duelo \"Qual gostou mais?\""]}, {"v": "2026.10.17.2", "d": "17/10/2026", "i": ["Painel Sobre ao tocar no logo: quem usa o celular, versão e atualização", "Aviso quando houver versão nova"]}, {"v": "2026.10.17.1", "d": "17/10/2026", "i": ["Duelo \"Qual gostou mais?\" na aba Ranking", "Ranking da Débora, do Iago e do casal"]}, {"v": "2026.10.14", "d": "14/10/2026", "i": ["Mapa respeita os filtros da aba Lugares", "Botão de filtros flutuante no mapa", "Ponto azul destacando onde você está"]}, {"v": "2026.10.11.2", "d": "11/10/2026", "i": ["Início com topo vermelho e \"Que tal hoje?\"", "Botão + no centro do menu", "Últimas visitas em cartões deslizantes"]}, {"v": "2026.10.11.1", "d": "11/10/2026", "i": ["Posts do Instagram aparecem prontos, sem pulos", "Legenda dos posts escondida, com Ver legenda", "Abertura e listas mais rápidas"]}];
 (function(){
 const LS='garfinho_jogador',NOME={d:'Débora',i:'Iago'};
 let remota=null,verif=false,ultima=0,histR=null,todas=false;
@@ -4003,6 +4003,368 @@ window.__abrirDuelo=function(){
   navigate('ranking');if(window.duTab)duTab('duelo');
   const t=document.getElementById('topbar-title');if(t)t.textContent='Qual gostou mais?';
 };
+})();
+</script>
+<style id="garfinho-notas">
+/* ── Nota de cada um + avaliação pendente ── */
+.ap-ov{position:fixed;inset:0;z-index:2000;background:rgba(22,20,18,.45);display:flex;align-items:flex-end;justify-content:center;padding:14px 14px calc(14px + env(safe-area-inset-bottom,0px));opacity:0;pointer-events:none;transition:opacity .3s}
+.ap-ov.open{opacity:1;pointer-events:auto}
+.ap-pop{width:100%;max-width:440px;background:var(--card);color:var(--black);border-radius:26px;padding:22px 20px 18px;position:relative;transform:translateY(115%);box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.ap-ov.open .ap-pop{animation:apUp .7s cubic-bezier(.2,1.35,.4,1) forwards}
+.ap-ov.leave .ap-pop{animation:apDown .32s ease-in forwards}
+@keyframes apUp{from{transform:translateY(115%)}to{transform:translateY(0)}}
+@keyframes apDown{from{transform:translateY(0)}to{transform:translateY(115%)}}
+.ap-count{position:absolute;top:16px;right:18px;font:800 .7rem var(--font-b);color:var(--gray2);font-variant-numeric:tabular-nums}
+.ap-eye{display:inline-flex;align-items:center;gap:6px;font:800 .7rem var(--font-b);letter-spacing:.06em;text-transform:uppercase;color:var(--red);background:var(--red-soft);border-radius:99px;padding:4px 10px}
+.ap-eye i{width:7px;height:7px;border-radius:50%;background:var(--red);animation:apPulse 1.4s ease-in-out infinite}
+@keyframes apPulse{50%{transform:scale(1.6);opacity:.4}}
+.ap-place{display:flex;align-items:center;gap:14px;margin:16px 0 14px}
+.ap-lg{width:68px;height:68px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--bg3);color:var(--gray2);font-size:1.7rem;position:relative;border:1px solid var(--border)}
+.ap-lg img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.ap-lg svg{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ap-ov.open .ap-lg{animation:apPop .6s .35s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes apPop{from{transform:scale(.4) rotate(-12deg);opacity:0}to{transform:none;opacity:1}}
+.ap-who{position:absolute;right:-4px;bottom:-4px;width:26px;height:26px;border-radius:50%;border:2px solid var(--card);display:flex;align-items:center;justify-content:center;font:900 .66rem var(--font-d);color:#fff}
+.ap-who.d,.ap-av.d{background:#2F8A4A}.ap-who.i,.ap-av.i{background:var(--red)}
+.ap-place h2{margin:0;font:900 1.35rem var(--font-d);letter-spacing:-.01em;line-height:1.15}
+.ap-place p{margin:2px 0 0;font-size:.8rem;color:var(--gray2)}
+.ap-msg{font-size:.92rem;line-height:1.45;color:var(--gray1);margin:0 0 14px}
+.ap-msg b{color:var(--black)}
+.ap-hid{display:flex;align-items:center;gap:12px;border:1.5px dashed var(--line,var(--border));border-radius:14px;padding:10px 12px;margin-bottom:16px}
+.ap-av{width:32px;height:32px;border-radius:50%;color:#fff;font:900 .8rem var(--font-d);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ap-hid .tx{flex:1;min-width:0}
+.ap-hid .tx b{display:block;font:800 .8rem var(--font-b)}
+.ap-hid .tx span{font-size:.72rem;color:var(--gray2)}
+.ap-blur{display:flex;gap:2px;filter:blur(3.5px);color:var(--star,#F5A623);font-size:.95rem}
+.ap-ico{display:inline-flex}
+.ap-ico svg,.ap-blur svg{width:1em;height:1em}
+.ap-lock{color:var(--gray2);font-size:1rem}
+.ap-lock svg{fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.ap-btns{display:flex;flex-direction:column;gap:8px}
+.ap-btn{height:50px;border-radius:14px;border:1.5px solid var(--line,var(--border));background:none;color:var(--black);font:800 .95rem var(--font-d);cursor:pointer;width:100%}
+.ap-btn.p{background:var(--red);border-color:var(--red);color:#fff}
+.ap-btn:disabled{opacity:.4;cursor:default}
+/* modal de avaliar */
+.ar-sh{position:fixed;inset:0;z-index:2001;background:rgba(22,20,18,.45);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s}
+.ar-sh.open{opacity:1;pointer-events:auto}
+.ar-box{width:100%;max-width:520px;max-height:94dvh;overflow:auto;background:var(--card);color:var(--black);border-radius:26px 26px 0 0;transform:translateY(100%);transition:transform .42s cubic-bezier(.2,.9,.3,1);position:relative}
+.ar-sh.open .ar-box{transform:none}
+.ar-hero{height:110px;display:flex;align-items:flex-end;justify-content:center;position:relative;background:var(--red-soft)}
+.ar-hero .ap-lg{width:84px;height:84px;font-size:2rem;transform:translateY(42px);border:4px solid var(--card);animation:none}
+.ar-handle{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:40px;height:5px;border-radius:99px;background:var(--line,var(--border))}
+.ar-x{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;border:none;background:var(--card);color:var(--gray1);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1rem}
+.ar-x svg{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.ar-body{padding:52px 20px calc(22px + env(safe-area-inset-bottom,0px));text-align:center}
+.ar-body h3{margin:0;font:900 1.4rem var(--font-d)}
+.ar-sub{font-size:.8rem;color:var(--gray2);margin-top:2px}
+.ar-rate{margin-top:18px;border:1.5px solid var(--line,var(--border));border-radius:18px;padding:16px 14px}
+.ar-lbl{font:800 .72rem var(--font-b);letter-spacing:.06em;text-transform:uppercase;color:var(--gray2)}
+.ar-stars{display:flex;justify-content:center;gap:4px;margin:10px 0 4px}
+.ar-st{position:relative;width:44px;height:44px}
+.ar-st svg{position:absolute;inset:0;width:100%;height:100%}
+.ar-st .e path{fill:none;stroke:var(--line,var(--border));stroke-width:1.4}
+.ar-st .f path{fill:var(--star,#F5A623);stroke:var(--star,#F5A623);stroke-width:1.4}
+.ar-st .f{transition:clip-path .15s}
+.ar-st button{position:absolute;top:0;bottom:0;width:50%;border:none;background:none;padding:0;cursor:pointer}
+.ar-st button.l{left:0}.ar-st button.r{right:0}
+.ar-st.bump{animation:arBump .3s}
+@keyframes arBump{50%{transform:scale(1.18)}}
+.ar-val{font:900 1.6rem var(--font-d);font-variant-numeric:tabular-nums;min-height:2rem}
+.ar-val.empty{color:var(--gray3);font-size:.9rem;font-weight:700;padding-top:6px}
+.ar-save{margin-top:14px}
+.ar-rev{margin-top:18px}
+.ar-duo{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px}
+.ar-nt{border:1.5px solid var(--line,var(--border));border-radius:16px;padding:12px 8px;opacity:0;transform:translateY(16px) scale(.9);position:relative;overflow:hidden}
+.ar-rev.on .ar-nt{animation:arIn .5s cubic-bezier(.3,1.5,.5,1) forwards}
+.ar-rev.on .ar-nt.o{animation-delay:.55s}
+.ar-rev.on .ar-nt.o::after{content:'';position:absolute;inset:0;background:var(--card);animation:arWipe .6s .9s ease-out forwards}
+@keyframes arIn{to{opacity:1;transform:none}}
+@keyframes arWipe{to{transform:translateY(-100%)}}
+.ar-nt .ap-av{margin:0 auto 6px;width:30px;height:30px;font-size:.78rem}
+.ar-nt b{display:block;font:900 1.5rem var(--font-d);font-variant-numeric:tabular-nums}
+.ar-nt span{font-size:.7rem;color:var(--gray2);font-weight:700}
+.ar-vs{font:900 .8rem var(--font-d);color:var(--gray3)}
+.ar-avg{margin-top:14px;border-radius:18px;background:var(--red);color:#fff;padding:14px;display:flex;align-items:center;justify-content:center;gap:10px;opacity:0;transform:scale(.85);position:relative}
+.ar-rev.on .ar-avg{animation:arIn .55s 1.5s cubic-bezier(.3,1.5,.5,1) forwards}
+.ar-avg small{display:block;font:800 .72rem var(--font-b);letter-spacing:.06em;text-transform:uppercase;opacity:.85}
+.ar-avg b{font:900 1.9rem var(--font-d);font-variant-numeric:tabular-nums}
+.ar-avg svg{width:22px;height:22px}
+.ar-avg svg path{fill:#fff}
+.ar-ver{margin-top:10px;font-size:.84rem;color:var(--gray1);opacity:0}
+.ar-rev.on .ar-ver{animation:arIn .4s 1.9s forwards}
+.ar-next{margin-top:14px;opacity:0}
+.ar-rev.on .ar-next{animation:arIn .4s 2.1s forwards}
+.ar-burst{position:absolute;pointer-events:none;width:8px;height:8px;border-radius:2px;z-index:2}
+/* quem usa este celular */
+.aq-row{display:flex;gap:10px;margin:14px 0 4px}
+.aq-row button{flex:1;height:76px;border-radius:16px;border:1.5px solid var(--line,var(--border));background:none;color:var(--black);font:800 .9rem var(--font-d);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer}
+/* notas no detalhe */
+.dn-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:2px 0 10px}
+.dn-chip{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--line,var(--border));border-radius:99px;padding:3px 10px 3px 3px;font:800 .8rem var(--font-b);color:var(--black);font-variant-numeric:tabular-nums}
+.dn-chip .ap-av{width:22px;height:22px;font-size:.62rem}
+.dn-chip.wait{color:var(--gray2);border-style:dashed}
+.dn-go{border:none;background:var(--red);color:#fff;border-radius:99px;height:30px;padding:0 14px;font:800 .78rem var(--font-b);cursor:pointer}
+.nota-hint{font-size:.74rem;color:var(--gray2);margin-top:6px}
+@media (prefers-reduced-motion: reduce){.ap-ov *,.ar-sh *,.ap-ov,.ar-sh{animation-duration:.01ms!important;animation-delay:0ms!important;transition-duration:.01ms!important}}
+</style>
+<script>
+/* ============================================================
+   NOTA DE CADA UM + AVALIAÇÃO PENDENTE
+   - Cada visita guarda notas:{d,i} e visitadoPor (d/i); rating = média.
+   - Lugares antigos (sem notas) ficam como estão: a nota vale como média.
+   - Quem marcou visitado já dá a nota; o outro, ao abrir o app, vê um
+     popup e avalia (a nota do outro só aparece depois).
+   - Quem usa o celular: garfinho_jogador (o mesmo do Duelo e do Sobre).
+   - Não aparece quando o app abre pelo compartilhamento do Instagram.
+   ============================================================ */
+(function(){
+const LS='garfinho_jogador',NOME={d:'Débora',i:'Iago'};
+const quem=()=>{try{const v=localStorage.getItem(LS);return v==='d'||v==='i'?v:null;}catch(e){return null;}};
+const outro=k=>k==='d'?'i':'d';
+const fmt=v=>String(v).replace('.',',');
+const temN=v=>typeof v==='number'&&v>0;
+const media=n=>{const v=['d','i'].map(k=>n&&n[k]).filter(temN);return v.length?Math.round(v.reduce((a,b)=>a+b,0)/v.length*10)/10:0;};
+const MES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const DIA=['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
+const quando=s=>{const m=String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})/);if(!m)return'';const d=new Date(+m[1],m[2]-1,+m[3]);const dia=DIA[d.getDay()];return(d.getDay()===0||d.getDay()===6?'no ':'na ')+dia+', '+(+m[3])+' de '+MES[m[2]-1];};
+const dCurta=s=>{const m=String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})/);return m?`${+m[3]} ${MES[m[2]-1]}`:'';};
+const sub=p=>{const b=window.__bairro?__bairro(p):'';return[p.cat,b].filter(Boolean).join(' · ');};
+const SV='<path d="m12 2.8 2.85 5.78 6.38.93-4.62 4.5 1.09 6.35L12 17.36l-5.7 3 1.09-6.35-4.62-4.5 6.38-.93z"/>';
+const STAR=`<svg viewBox="0 0 24 24">${SV}</svg>`;
+const STARF=`<svg viewBox="0 0 24 24" style="fill:currentColor">${SV}</svg>`;
+const LOCK='<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+const XI='<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+const lg=p=>{const u=p.logo?(window.clImg?clImg(p.logo,200):p.logo):'';return u?`<img src="${esc(u)}" alt="">`:(window.__catIc?__catIc(p.cat):'');};
+const achar=id=>(window.places||[]).find(x=>String(x.id)===String(id));
+
+/* Pendentes para quem usa este celular */
+function pendentes(){
+  const me=quem();if(!me)return[];
+  return(window.places||[]).filter(p=>p.status==='visitado'&&p.notas&&temN(p.notas[outro(me)])&&!temN(p.notas[me]))
+    .sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+}
+window.__pendentes=pendentes;
+
+/* Voltar do Android fecha o que estiver aberto aqui */
+let hist=false;
+function pushH(){if(!hist){try{history.pushState({ap:1},'');hist=true;}catch(e){}}}
+function popH(){if(hist){hist=false;try{history.back();}catch(e){}}}
+window.addEventListener('popstate',()=>{if(!hist)return;hist=false;
+  const ar=document.getElementById('ar-sh'),ov=document.getElementById('ap-ov'),aq=document.getElementById('aq-ov');
+  if(ar&&ar.classList.contains('open'))fecharAvaliar(true);else if(ov&&ov.classList.contains('open'))fecharPopup(null,true);else if(aq&&aq.classList.contains('open'))aq.classList.remove('open');});
+
+/* ---------- Popup ---------- */
+let fila=[],ix=0;
+function garantir(){
+  if(document.getElementById('ap-ov'))return;
+  document.body.insertAdjacentHTML('beforeend',`
+  <div class="ap-ov" id="ap-ov" role="dialog" aria-modal="true" aria-labelledby="ap-name"><div class="ap-pop">
+    <div class="ap-count" id="ap-count"></div>
+    <span class="ap-eye"><i></i><span id="ap-eye">Avaliação pendente</span></span>
+    <div class="ap-place"><div class="ap-lg" id="ap-lg"></div><div><h2 id="ap-name"></h2><p id="ap-sub"></p></div></div>
+    <p class="ap-msg" id="ap-msg"></p>
+    <div class="ap-hid"><div class="ap-av" id="ap-oav"></div><div class="tx"><b id="ap-ot"></b><span>Aparece depois que você avaliar</span></div><div class="ap-blur" aria-hidden="true">${STARF.repeat(4)}</div><span class="ap-lock ap-ico">${LOCK}</span></div>
+    <div class="ap-btns"><button type="button" class="ap-btn p" id="ap-go">Avaliar agora</button><button type="button" class="ap-btn" id="ap-later">Depois</button></div>
+  </div></div>
+  <div class="ar-sh" id="ar-sh" onclick="if(event.target===this)__arFechar()"><div class="ar-box" id="ar-box">
+    <div class="ar-hero"><span class="ar-handle"></span><button type="button" class="ar-x" onclick="__arFechar()" aria-label="Fechar">${XI}</button><div class="ap-lg" id="ar-lg"></div></div>
+    <div class="ar-body">
+      <h3 id="ar-name"></h3><div class="ar-sub" id="ar-sub"></div>
+      <div class="ar-rate" id="ar-rate"><div class="ar-lbl">Sua nota</div><div class="ar-stars" id="ar-stars"></div>
+        <div class="ar-val empty" id="ar-val">Toque nas estrelas</div>
+        <button type="button" class="ap-btn p ar-save" id="ar-save" disabled>Salvar minha nota</button></div>
+      <div class="ar-rev" id="ar-rev" hidden>
+        <div class="ar-duo"><div class="ar-nt"><div class="ap-av" id="ar-mav"></div><b id="ar-mn"></b><span>Sua nota</span></div><div class="ar-vs">e</div><div class="ar-nt o"><div class="ap-av" id="ar-oav"></div><b id="ar-on"></b><span id="ar-onm"></span></div></div>
+        <div class="ar-avg">${STAR}<div><small>Média do casal</small><b id="ar-avgv"></b></div></div>
+        <div class="ar-ver" id="ar-ver"></div>
+        <button type="button" class="ap-btn p ar-next" id="ar-next"></button>
+      </div>
+    </div>
+  </div></div>`);
+  document.getElementById('ap-later').onclick=()=>fecharPopup(()=>toast('','O aviso volta na próxima vez que abrir o app'));
+  document.getElementById('ap-go').onclick=()=>{const p=fila[ix];fecharPopup(()=>abrirAvaliar(p.id,true));};
+  document.getElementById('ar-save').onclick=salvar;
+  document.getElementById('ar-next').onclick=proxima;
+}
+function mostrarPopup(){
+  garantir();
+  const p=fila[ix],me=quem(),o=outro(me);if(!p)return;
+  document.getElementById('ap-count').textContent=fila.length>1?`${ix+1} de ${fila.length}`:'';
+  document.getElementById('ap-eye').textContent=fila.length>1&&ix===0?`${fila.length} avaliações pendentes`:'Avaliação pendente';
+  const w=p.visitadoPor||o;
+  document.getElementById('ap-lg').innerHTML=lg(p)+`<span class="ap-who ${w}">${w.toUpperCase()}</span>`;
+  document.getElementById('ap-name').textContent=p.name;
+  document.getElementById('ap-sub').textContent=sub(p);
+  const q=quando(p.date);
+  document.getElementById('ap-msg').innerHTML=`${w==='d'?'A':'O'} <b>${NOME[w]}</b> marcou que vocês foram aqui${q?' '+q:''}. Falta a sua nota.`;
+  const oav=document.getElementById('ap-oav');oav.className='ap-av '+o;oav.textContent=o.toUpperCase();
+  document.getElementById('ap-ot').textContent='Nota d'+(o==='d'?'a ':'o ')+NOME[o];
+  const ov=document.getElementById('ap-ov');ov.classList.remove('leave');void ov.offsetWidth;ov.classList.add('open');pushH();
+}
+function fecharPopup(cb,doVoltar){
+  const ov=document.getElementById('ap-ov');if(!ov)return;
+  if(!doVoltar)popH();
+  ov.classList.add('leave');
+  setTimeout(()=>{ov.classList.remove('open','leave');cb&&cb();},320);
+}
+
+/* ---------- Modal de avaliar ---------- */
+let atual=null,nota=0,daFila=false;
+function abrirAvaliar(id,fromFila){
+  garantir();
+  const p=achar(id);if(!p)return;
+  atual=p.id;nota=0;daFila=!!fromFila;
+  document.getElementById('ar-lg').innerHTML=lg(p);
+  document.getElementById('ar-name').textContent=p.name;
+  document.getElementById('ar-sub').textContent=[sub(p),p.date?'visitado em '+dCurta(p.date):''].filter(Boolean).join(' · ');
+  document.getElementById('ar-rate').hidden=false;
+  const rv=document.getElementById('ar-rev');rv.hidden=true;rv.classList.remove('on');
+  const st=document.getElementById('ar-stars');
+  st.innerHTML=[1,2,3,4,5].map(i=>`<div class="ar-st" data-i="${i}"><svg viewBox="0 0 24 24" class="e">${SV}</svg><svg viewBox="0 0 24 24" class="f">${SV}</svg><button type="button" class="l" aria-label="${fmt(i-.5)} estrelas" data-v="${i-.5}"></button><button type="button" class="r" aria-label="${i} estrelas" data-v="${i}"></button></div>`).join('');
+  st.querySelectorAll('button').forEach(b=>b.onclick=()=>{nota=+b.dataset.v;pintaEstrelas(b.closest('.ar-st'));});
+  pintaEstrelas();
+  document.getElementById('ar-sh').classList.add('open');document.getElementById('ar-box').scrollTop=0;pushH();
+}
+window.__avaliar=function(id){if(!quem()){escolherQuem(()=>abrirAvaliar(id));return;}if(window.closeDetail)closeDetail();setTimeout(()=>abrirAvaliar(id),250);};
+function pintaEstrelas(b){
+  document.querySelectorAll('#ar-stars .ar-st').forEach(s=>{const f=Math.max(0,Math.min(1,nota-(s.dataset.i-1)));s.querySelector('.f').style.clipPath=`inset(0 ${100-f*100}% 0 0)`;});
+  if(b){b.classList.remove('bump');void b.offsetWidth;b.classList.add('bump');}
+  const v=document.getElementById('ar-val');
+  if(nota){v.classList.remove('empty');v.textContent=fmt(nota);}else{v.classList.add('empty');v.textContent='Toque nas estrelas';}
+  document.getElementById('ar-save').disabled=!nota;
+}
+function salvar(){
+  const p=achar(atual),me=quem(),o=outro(me);if(!p||!me||!nota)return;
+  if(!window._fbLoaded){toast('','Sem conexão com a nuvem. Aguarde sincronizar para salvar.');return;}
+  p.notas={...(p.notas||{}),[me]:nota};
+  p.rating=media(p.notas);
+  if(window._fbSave)window._fbSave();
+  renderAll();if(typeof currentView!=='undefined'&&currentView!=='inicio')navigate(currentView);
+  const on=p.notas[o];
+  const mav=document.getElementById('ar-mav');mav.className='ap-av '+me;mav.textContent=me.toUpperCase();
+  const oav=document.getElementById('ar-oav');oav.className='ap-av '+o;oav.textContent=o.toUpperCase();
+  document.getElementById('ar-mn').textContent=fmt(nota);
+  document.getElementById('ar-on').textContent=temN(on)?fmt(on):'–';
+  document.getElementById('ar-onm').textContent=NOME[o];
+  document.getElementById('ar-avgv').textContent=fmt(p.rating);
+  const dif=temN(on)?Math.abs(nota-on):0;
+  document.getElementById('ar-ver').textContent=!temN(on)?`Falta a nota d${o==='d'?'a':'o'} ${NOME[o]}.`:dif===0?'Mesma nota. Vocês combinaram?':dif<=.5?'Quase a mesma nota.':dif>=2?'Opiniões bem diferentes nesse.':(nota>on?`Você gostou mais que ${o==='d'?'a':'o'} ${NOME[o]}.`:`${o==='d'?'A':'O'} ${NOME[o]} gostou mais que você.`);
+  const resta=daFila?fila.slice(ix+1).filter(x=>{const y=achar(x.id);return y&&!temN((y.notas||{})[me]);}).length:0;
+  document.getElementById('ar-next').textContent=resta?`Próxima avaliação (${ix+2} de ${fila.length})`:'Pronto';
+  document.getElementById('ar-rate').hidden=true;
+  const rv=document.getElementById('ar-rev');rv.hidden=false;void rv.offsetWidth;rv.classList.add('on');
+  setTimeout(confete,1500);
+}
+function proxima(){
+  const me=quem();
+  fecharAvaliar();
+  if(daFila){
+    while(++ix<fila.length){const y=achar(fila[ix].id);if(y&&!temN((y.notas||{})[me]))break;}
+    if(ix<fila.length){setTimeout(mostrarPopup,450);return;}
+  }
+  setTimeout(()=>toast('','Nota salva'),350);
+}
+function fecharAvaliar(doVoltar){const s=document.getElementById('ar-sh');if(s)s.classList.remove('open');if(!doVoltar)popH();}
+window.__arFechar=()=>fecharAvaliar();
+function confete(){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const box=document.getElementById('ar-box'),a=box.querySelector('.ar-avg');if(!a)return;
+  const r=a.getBoundingClientRect(),br=box.getBoundingClientRect(),cs=getComputedStyle(document.body);
+  const cores=[cs.getPropertyValue('--red').trim()||'#BA1011',cs.getPropertyValue('--star').trim()||'#F5A623','#2F8A4A'];
+  for(let k=0;k<22;k++){
+    const s=document.createElement('span');s.className='ar-burst';s.style.background=cores[k%3];
+    s.style.left=(r.left-br.left+r.width/2)+'px';s.style.top=(r.top-br.top+box.scrollTop+r.height/2)+'px';box.appendChild(s);
+    const g=Math.random()*Math.PI*2,d=60+Math.random()*90;
+    s.animate([{transform:'translate(0,0) rotate(0)',opacity:1},{transform:`translate(${Math.cos(g)*d}px,${Math.sin(g)*d-30}px) rotate(${Math.random()*540}deg)`,opacity:0}],{duration:900+Math.random()*400,easing:'cubic-bezier(.2,.7,.3,1)'}).onfinish=()=>s.remove();
+  }
+}
+
+/* ---------- Quem usa este celular (quando ainda não foi escolhido) ---------- */
+function escolherQuem(cb){
+  if(!document.getElementById('aq-ov'))
+    document.body.insertAdjacentHTML('beforeend',`<div class="ap-ov" id="aq-ov"><div class="ap-pop"><span class="ap-eye"><i></i>Nota de cada um</span><div class="ap-place" style="margin-bottom:4px"><div><h2>Quem usa este celular?</h2><p>Cada um dá a sua nota; o app mostra a média.</p></div></div><div class="aq-row">${['d','i'].map(k=>`<button type="button" data-k="${k}"><span class="ap-av ${k}">${k.toUpperCase()}</span>${NOME[k]}</button>`).join('')}</div></div></div>`);
+  const ov=document.getElementById('aq-ov');
+  ov.querySelectorAll('button[data-k]').forEach(b=>b.onclick=()=>{const k=b.dataset.k;if(window.__abQuem)__abQuem(k);else{try{localStorage.setItem(LS,k);}catch(e){}}popH();ov.classList.remove('open');setTimeout(cb,250);});
+  ov.classList.remove('leave');void ov.offsetWidth;ov.classList.add('open');pushH();
+}
+
+/* ---------- Cadastro / edição: a nota do formulário é a de quem usa o celular ---------- */
+const _sp=window.savePlace;
+window.savePlace=async function(){
+  const id=editId;
+  const ex=id?achar(id):null;
+  const legado=!!ex&&ex.status==='visitado'&&!ex.notas;
+  if(curStatus==='visitado'&&!legado&&!quem()&&document.getElementById('f-name').value.trim()){
+    escolherQuem(()=>window.savePlace());return;
+  }
+  const antes=ex?{status:ex.status,notas:ex.notas?{...ex.notas}:null,por:ex.visitadoPor||null}:null;
+  const ids=new Set((window.places||[]).map(p=>String(p.id)));
+  const r=rating;
+  await _sp.apply(this,arguments);
+  const p=id?achar(id):(window.places||[]).find(x=>!ids.has(String(x.id)));
+  if(!p||p===ex)return; // não salvou
+  const me=quem();
+  if(p.status!=='visitado'){delete p.notas;delete p.visitadoPor;}
+  else if(legado||!me){/* lugar antigo ou sem jogador: a nota segue como média */}
+  else{
+    const n=antes&&antes.status==='visitado'&&antes.notas?antes.notas:{};
+    if(temN(r))n[me]=r;else delete n[me];
+    p.notas=n;p.visitadoPor=(antes&&antes.status==='visitado'&&antes.por)||me;
+    p.rating=media(n);
+  }
+  if(window._fbSave)window._fbSave();
+  renderAll();if(typeof currentView!=='undefined'&&currentView!=='inicio')navigate(currentView);
+};
+const _om=window.openModal;
+window.openModal=function(id){
+  _om.apply(this,arguments);
+  const lb=document.querySelector('#fields-visitado .form-label');
+  let h=document.getElementById('nota-hint');
+  if(!h){const w=document.getElementById('star-input-wrap');if(w){w.insertAdjacentHTML('afterend','<div class="nota-hint" id="nota-hint"></div>');h=document.getElementById('nota-hint');}}
+  const p=id?achar(id):null,me=quem(),legado=!!p&&p.status==='visitado'&&!p.notas;
+  if(legado||!me){if(lb)lb.textContent='Avaliação';if(h)h.textContent=legado?'Nota do casal':'';return;}
+  const o=outro(me);
+  if(lb)lb.textContent='Sua nota';
+  if(p&&p.notas){
+    setRating(p.notas[me]||0);
+    const on=p.notas[o];
+    if(h)h.textContent=temN(on)?(temN(p.notas[me])?`Nota d${o==='d'?'a':'o'} ${NOME[o]}: ${fmt(on)}`:`A nota d${o==='d'?'a':'o'} ${NOME[o]} aparece depois que você avaliar`):`${o==='d'?'A':'O'} ${NOME[o]} ainda não avaliou`;
+  }else if(h)h.textContent=`${o==='d'?'A':'O'} ${NOME[o]} vai receber um aviso para dar a nota del${o==='d'?'a':'e'}`;
+};
+
+/* ---------- Detalhe: notas de cada um ---------- */
+const _od=window.openDetail;
+window.openDetail=function(id){
+  _od.apply(this,arguments);
+  const old=document.getElementById('dn-row');if(old)old.remove();
+  const p=achar(id);if(!p||p.status!=='visitado'||!p.notas)return;
+  const me=quem(),n=p.notas;
+  const chip=k=>{const v=n[k];
+    if(temN(v)&&me&&k!==me&&!temN(n[me]))return`<span class="dn-chip"><span class="ap-av ${k}">${k.toUpperCase()}</span>oculta</span>`;
+    return temN(v)?`<span class="dn-chip"><span class="ap-av ${k}">${k.toUpperCase()}</span>${fmt(v)}</span>`:`<span class="dn-chip wait"><span class="ap-av ${k}">${k.toUpperCase()}</span>falta avaliar</span>`;};
+  const btn=me&&!temN(n[me])?`<button type="button" class="dn-go" onclick="__avaliar('${p.id}')">Dar minha nota</button>`:'';
+  const r=document.getElementById('detail-rating');if(!r)return;
+  r.insertAdjacentHTML('afterend',`<div class="dn-row" id="dn-row">${chip('d')}${chip('i')}${btn}</div>`);
+};
+
+/* ---------- Quando mostrar: uma vez por abertura, depois da tela de abertura ---------- */
+let mostrado=false,saiu=0;
+function aberto(){return['overlay','detail-overlay','pk-sheet','fx-sheet','crop-overlay','ab-sheet','ar-sh','ap-ov','aq-ov'].some(i=>{const e=document.getElementById(i);return e&&e.classList.contains('open');});}
+function splashFora(){const s=document.getElementById('splash');return!s||s.classList.contains('hidden')||s.style.display==='none';}
+function tentar(n){
+  if(mostrado||window._viaShare)return;
+  if(!(window._fbLoaded&&window._appReady&&splashFora())||aberto()){if((n||0)<60)setTimeout(()=>tentar((n||0)+1),700);return;}
+  mostrado=true;
+  if(!quem())return;
+  fila=pendentes();ix=0;
+  if(fila.length)setTimeout(()=>{if(!aberto())mostrarPopup();},700);
+}
+setTimeout(tentar,900);
+// Voltar ao app depois de um tempo fora conta como nova abertura
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='hidden'){saiu=Date.now();return;}
+  if(saiu&&Date.now()-saiu>10*60*1000&&!window._viaShare){mostrado=false;setTimeout(tentar,1200);}
+});
 })();
 </script>
 </body>
