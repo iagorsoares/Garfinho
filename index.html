@@ -1152,6 +1152,14 @@ body.dark{--du-win:#4FB06A;--du-win-soft:#1C3324;--du-iag:#6FAFCF;--du-iag-soft:
 @keyframes duPop{from{transform:scale(0)}to{transform:scale(1)}}
 @keyframes duVs{from{transform:scale(0) rotate(-40deg)}to{transform:scale(1) rotate(0)}}
 @media (prefers-reduced-motion:reduce){.du-opt,.du-delta,.du-chk{transition:none}.du-opt,.du-vs span{animation:none!important}.du-opt.win .du-wb{animation:none;transform:scale(1)}}
+/* Nome do restaurante sobre a foto (etiqueta branca com contorno vermelho) */
+.du-nm{position:absolute;left:8px;top:8px;z-index:2;max-width:calc(100% - 92px);display:flex;align-items:center;gap:8px;background:var(--card);border:2px solid var(--red);border-radius:12px;padding:5px 11px 5px 6px;box-shadow:0 3px 10px rgba(0,0,0,.18);text-align:left}
+.du-nm .du-lg{width:28px;height:28px;font-size:.85rem}
+.du-nt{display:flex;flex-direction:column;min-width:0}
+.du-nt b{font:900 .98rem var(--font-d);color:var(--black);line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.du-nt small{font:700 .7rem var(--font-b);color:var(--gray2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.du-opt.has-ph .du-ob{display:none}
+.du-opt.has-ph .du-ph{height:170px}
 .du-f{display:flex;gap:8px;margin-top:12px}
 .du-ghost{flex:1;height:42px;border:1.5px solid var(--line);background:none;border-radius:12px;font:800 .84rem var(--font-b);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;color:var(--gray1)}
 .du-ghost:disabled{opacity:.4;cursor:default}
@@ -3762,12 +3770,11 @@ function pick(){
 const byId=id=>vis().find(p=>String(p.id)===id);
 
 function opt(id,i){
-  const p=byId(id),ph=fotos(p).slice(0,2);
+  const p=byId(id),ph=fotos(p).slice(0,2),d=dt(p.date);
   const media=ph.length
-    ?`<span class="du-ph${ph.length===1?' one':''}">${ph.map(f=>`<img src="${esc(cl(f.src,700))}" alt="${esc(f.cap||'Foto do prato')}" decoding="async">`).join('')}${ph[0].cap?`<span class="du-cap">${esc(ph[0].cap)}</span>`:''}${ph[1]&&ph[1].cap?`<span class="du-cap c2">${esc(ph[1].cap)}</span>`:''}</span>`
+    ?`<span class="du-ph${ph.length===1?' one':''}">${ph.map(f=>`<img src="${esc(cl(f.src,700))}" alt="${esc(f.cap||'Foto do prato')}" decoding="async">`).join('')}${ph[0].cap?`<span class="du-cap">${esc(ph[0].cap)}</span>`:''}${ph[1]&&ph[1].cap?`<span class="du-cap c2">${esc(ph[1].cap)}</span>`:''}<span class="du-nm">${logo(p)}<span class="du-nt"><b>${esc(p.name)}</b><small>${esc([sub(p),d].filter(Boolean).join(' · '))}</small></span></span></span>`
     :`<span class="du-ph none">${logo(p)}<small>Sem fotos dos pratos</small></span>`;
-  const d=dt(p.date);
-  return`<button type="button" class="du-opt ${i?'in-r':'in-l'}" id="du-o${i}" onclick="duEscolher(${i})">${media}<span class="du-wb">${ICK}</span><span class="du-delta" id="du-dl${i}"></span>
+  return`<button type="button" class="du-opt${ph.length?' has-ph':''} ${i?'in-r':'in-l'}" id="du-o${i}" onclick="duEscolher(${i})">${media}<span class="du-wb">${ICK}</span><span class="du-delta" id="du-dl${i}"></span>
     <span class="du-ob">${logo(p)}<span class="du-ot"><b>${esc(p.name)}</b><span>${esc([sub(p),d?'visitado em '+d:''].filter(Boolean).join(' · '))}</span></span><span class="du-chk">${ICK}</span></span></button>`;
 }
 function renderDuel(novo){
@@ -3903,8 +3910,8 @@ body.ab-novo .tb-dot{display:block}
    aberta e se existe uma mais nova no GitHub, e o estado da nuvem.
    A cada publicação, aumentar APP_VERSION e pôr a entrada no topo de APP_HIST.
    ============================================================ */
-const APP_VERSION='2026.10.17.4',APP_DATA='17/10/2026';
-const APP_HIST=[{"v": "2026.10.17.4", "d": "17/10/2026", "i": ["Nota de cada um: Débora e Iago avaliam separado e o lugar mostra a média", "Aviso de avaliação pendente ao abrir o app quando o outro marca um lugar como visitado"]}, {"v": "2026.10.17.3", "d": "17/10/2026", "i": ["Botão de troféu no topo do Diário abre o duelo \"Qual gostou mais?\""]}, {"v": "2026.10.17.2", "d": "17/10/2026", "i": ["Painel Sobre ao tocar no logo: quem usa o celular, versão e atualização", "Aviso quando houver versão nova"]}, {"v": "2026.10.17.1", "d": "17/10/2026", "i": ["Duelo \"Qual gostou mais?\" na aba Ranking", "Ranking da Débora, do Iago e do casal"]}, {"v": "2026.10.14", "d": "14/10/2026", "i": ["Mapa respeita os filtros da aba Lugares", "Botão de filtros flutuante no mapa", "Ponto azul destacando onde você está"]}, {"v": "2026.10.11.2", "d": "11/10/2026", "i": ["Início com topo vermelho e \"Que tal hoje?\"", "Botão + no centro do menu", "Últimas visitas em cartões deslizantes"]}, {"v": "2026.10.11.1", "d": "11/10/2026", "i": ["Posts do Instagram aparecem prontos, sem pulos", "Legenda dos posts escondida, com Ver legenda", "Abertura e listas mais rápidas"]}];
+const APP_VERSION='2026.10.17.5',APP_DATA='17/10/2026';
+const APP_HIST=[{"v": "2026.10.17.5", "d": "17/10/2026", "i": ["Duelo: nome do restaurante em destaque sobre cada foto"]}, {"v": "2026.10.17.4", "d": "17/10/2026", "i": ["Nota de cada um: Débora e Iago avaliam separado e o lugar mostra a média", "Aviso de avaliação pendente ao abrir o app quando o outro marca um lugar como visitado"]}, {"v": "2026.10.17.3", "d": "17/10/2026", "i": ["Botão de troféu no topo do Diário abre o duelo \"Qual gostou mais?\""]}, {"v": "2026.10.17.2", "d": "17/10/2026", "i": ["Painel Sobre ao tocar no logo: quem usa o celular, versão e atualização", "Aviso quando houver versão nova"]}, {"v": "2026.10.17.1", "d": "17/10/2026", "i": ["Duelo \"Qual gostou mais?\" na aba Ranking", "Ranking da Débora, do Iago e do casal"]}, {"v": "2026.10.14", "d": "14/10/2026", "i": ["Mapa respeita os filtros da aba Lugares", "Botão de filtros flutuante no mapa", "Ponto azul destacando onde você está"]}, {"v": "2026.10.11.2", "d": "11/10/2026", "i": ["Início com topo vermelho e \"Que tal hoje?\"", "Botão + no centro do menu", "Últimas visitas em cartões deslizantes"]}, {"v": "2026.10.11.1", "d": "11/10/2026", "i": ["Posts do Instagram aparecem prontos, sem pulos", "Legenda dos posts escondida, com Ver legenda", "Abertura e listas mais rápidas"]}];
 (function(){
 const LS='garfinho_jogador',NOME={d:'Débora',i:'Iago'};
 let remota=null,verif=false,ultima=0,histR=null,todas=false;
