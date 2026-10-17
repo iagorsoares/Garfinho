@@ -3855,5 +3855,135 @@ window._duOnData=function(){if(tab==='duelo'&&!busy&&document.getElementById('du
 if(document.getElementById('view-ranking'))setup();
 })();
 </script>
+
+<style id="garfinho-sobre">
+/* ── Painel "Sobre" (toque no logo do topo) ── */
+.tb-sym,.tb-ini{cursor:pointer;position:relative}
+.tb-ini span.on{background:var(--red)!important;border-color:var(--red)!important;color:#fff!important;z-index:1}
+body[data-view=inicio] .tb-ini span.on{background:#fff!important;border-color:#fff!important;color:var(--red)!important}
+.tb-dot{position:absolute;top:-2px;right:-4px;width:10px;height:10px;border-radius:50%;background:#2F8A4A;border:2px solid var(--card);display:none}
+body.ab-novo .tb-dot{display:block}
+.ab-box{padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
+.ab-hd{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.ab-hd .ab-sym{width:40px;height:52px;color:var(--red);flex-shrink:0}
+.ab-hd .ab-sym svg{width:100%;height:100%}
+.ab-hd b{display:block;font:400 1.5rem 'Bagel Fat One',var(--font-d);color:var(--red);line-height:1.05}
+.ab-hd span{display:block;font:700 .76rem var(--font-b);color:var(--gray2);margin-top:2px}
+.ab-sec{border:1.5px solid var(--border);border-radius:16px;padding:12px 14px;margin-bottom:10px}
+.ab-sec h4{margin:0 0 10px;font:800 .7rem var(--font-b);color:var(--gray2);text-transform:uppercase;letter-spacing:.07em}
+.ab-who{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ab-who button{display:flex;align-items:center;gap:10px;border:1.5px solid var(--line);background:var(--card);border-radius:12px;padding:8px 10px;cursor:pointer;font:800 .9rem var(--font-b);color:var(--black);text-align:left}
+.ab-who button.on{border-color:var(--red);background:var(--red-soft)}
+.ab-who i{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:900 .82rem var(--font-d);font-style:normal;color:#fff;flex-shrink:0}
+.ab-who i.d{background:var(--red)}.ab-who i.i{background:#2F6F8F}
+.ab-who small{display:block;font-size:.68rem;color:var(--gray2);font-weight:700}
+.ab-row{display:flex;justify-content:space-between;gap:10px;font-size:.84rem;color:var(--gray1);padding:5px 0}
+.ab-row b{color:var(--black);font-weight:800;text-align:right}
+.ab-ok{color:#2F8A4A!important}.ab-err{color:var(--red)!important}
+.ab-up{display:flex;align-items:center;gap:10px;margin-top:8px}
+.ab-up p{flex:1;margin:0;font-size:.8rem;color:var(--gray2);line-height:1.4}
+.ab-btn{height:40px;padding:0 14px;border-radius:12px;border:1.5px solid var(--line);background:none;font:800 .82rem var(--font-b);color:var(--black);cursor:pointer;flex-shrink:0}
+.ab-btn.p{background:#2F8A4A;border-color:#2F8A4A;color:#fff}
+.ab-tl{list-style:none;margin:0;padding:0}
+.ab-tl>li{position:relative;padding:0 0 12px 20px}
+.ab-tl>li::before{content:'';position:absolute;left:4px;top:6px;width:9px;height:9px;border-radius:50%;background:var(--line)}
+.ab-tl>li::after{content:'';position:absolute;left:8px;top:18px;bottom:0;width:1.5px;background:var(--border)}
+.ab-tl>li:last-child::after{display:none}
+.ab-tl>li.cur::before{background:var(--red);box-shadow:0 0 0 3px var(--red-soft)}
+.ab-d{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font:800 .82rem var(--font-d);color:var(--black)}
+.ab-tag{font:800 .62rem var(--font-b);border-radius:99px;padding:2px 7px}
+.ab-tag.c{background:var(--red-soft);color:var(--red)}.ab-tag.n{background:#E6F3EA;color:#2F8A4A}
+.ab-tl ul{margin:4px 0 0;padding-left:16px;font-size:.8rem;color:var(--gray1);line-height:1.5}
+.ab-more{width:100%;height:38px;border:none;background:none;color:var(--red);font:800 .82rem var(--font-b);cursor:pointer}
+</style>
+<script>
+/* ============================================================
+   SOBRE ESTE CELULAR: toque no logo ou nas iniciais do topo.
+   Mostra quem usa este celular (D/I, o mesmo do Duelo), a versão
+   aberta e se existe uma mais nova no GitHub, e o estado da nuvem.
+   A cada publicação, aumentar APP_VERSION e pôr a entrada no topo de APP_HIST.
+   ============================================================ */
+const APP_VERSION='2026.10.17.2',APP_DATA='17/10/2026';
+const APP_HIST=[{"v": "2026.10.17.2", "d": "17/10/2026", "i": ["Painel Sobre ao tocar no logo: quem usa o celular, versão e atualização", "Aviso quando houver versão nova"]}, {"v": "2026.10.17.1", "d": "17/10/2026", "i": ["Duelo \"Qual gostou mais?\" na aba Ranking", "Ranking da Débora, do Iago e do casal"]}, {"v": "2026.10.14", "d": "14/10/2026", "i": ["Mapa respeita os filtros da aba Lugares", "Botão de filtros flutuante no mapa", "Ponto azul destacando onde você está"]}, {"v": "2026.10.11.2", "d": "11/10/2026", "i": ["Início com topo vermelho e \"Que tal hoje?\"", "Botão + no centro do menu", "Últimas visitas em cartões deslizantes"]}, {"v": "2026.10.11.1", "d": "11/10/2026", "i": ["Posts do Instagram aparecem prontos, sem pulos", "Legenda dos posts escondida, com Ver legenda", "Abertura e listas mais rápidas"]}];
+(function(){
+const LS='garfinho_jogador',NOME={d:'Débora',i:'Iago'};
+let remota=null,verif=false,ultima=0,histR=null,todas=false;
+const cmpV=(a,b)=>{const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);for(let k=0;k<Math.max(x.length,y.length);k++){const d=(x[k]||0)-(y[k]||0);if(d)return d;}return 0;};
+const quem=()=>{try{const v=localStorage.getItem(LS);return v==='d'||v==='i'?v:null;}catch(e){return null;}};
+function marcaIni(){
+  const m=quem();document.querySelectorAll('.tb-ini span').forEach(sp=>sp.classList.toggle('on',!!m&&sp.textContent.trim().toLowerCase()===m));
+}
+function liga(){
+  document.querySelectorAll('.tb-sym,.tb-ini').forEach(el=>{
+    if(el.dataset.ab)return;el.dataset.ab='1';
+    el.setAttribute('role','button');el.setAttribute('aria-label','Sobre este celular');
+    el.addEventListener('click',abrirSobre);
+    if(el.classList.contains('tb-sym'))el.insertAdjacentHTML('beforeend','<span class="tb-dot"></span>');
+  });
+  marcaIni();
+}
+async function checar(){
+  verif=true;ultima=Date.now();pinta();
+  try{
+    const r=await fetch(location.pathname+'?ver='+Date.now(),{cache:'no-store'});
+    const t=await r.text();const m=t.match(/APP_VERSION='([^']+)'/);
+    remota=m?m[1]:APP_VERSION;
+    const h=t.match(/const APP_HIST=(\[.*?\]);\r?\n/);try{histR=h?JSON.parse(h[1]):null;}catch(e){histR=null;}
+  }catch(e){remota='erro';}
+  verif=false;
+  document.body.classList.toggle('ab-novo',!!remota&&remota!=='erro'&&remota!==APP_VERSION);
+  pinta();
+}
+function atualizar(){location.replace(location.pathname+'?v='+Date.now());}
+function pinta(){
+  const box=document.getElementById('ab-box');if(!box||!document.getElementById('ab-sheet').classList.contains('open'))return;
+  const m=quem(),L=window.places||[],D=window._duData||{d:[],i:[]};
+  const nq=L.filter(p=>p.status==='quero').length,nv=L.filter(p=>p.status==='visitado').length;
+  const novo=remota&&remota!=='erro'&&remota!==APP_VERSION;
+  const up=verif?'<p>Verificando...</p>'
+    :novo?`<p>Versão ${remota} disponível.</p><button type="button" class="ab-btn p" onclick="__abAtualizar()">Atualizar agora</button>`
+    :remota==='erro'?`<p>Não deu para verificar agora.</p><button type="button" class="ab-btn" onclick="__abChecar()">Tentar de novo</button>`
+    :remota?`<p class="ab-ok">Você está na versão mais recente.</p><button type="button" class="ab-btn" onclick="__abAtualizar()">Recarregar</button>`
+    :`<p>Ver se há versão nova no GitHub.</p><button type="button" class="ab-btn" onclick="__abChecar()">Verificar</button>`;
+  box.innerHTML=`<div class="cs-handle"></div>
+    <div class="ab-hd"><span class="ab-sym">${window.__sym?__sym():''}</span><div><b>Garfinho</b><span>Versão ${APP_VERSION} · publicada em ${APP_DATA}</span></div></div>
+    <div class="ab-sec"><h4>Quem usa este celular</h4><div class="ab-who">
+      ${['d','i'].map(k=>`<button type="button" class="${m===k?'on':''}" onclick="__abQuem('${k}')"><i class="${k}">${k.toUpperCase()}</i><span>${NOME[k]}<small>${(D[k]||[]).length} escolhas no duelo</small></span></button>`).join('')}
+    </div></div>
+    <div class="ab-sec"><h4>Atualização</h4><div class="ab-up">${up}</div></div>
+    <div class="ab-sec"><h4>Nuvem</h4>
+      <div class="ab-row"><span>Conexão</span><b class="${window._fbLoaded?'ab-ok':'ab-err'}">${window._fbLoaded?'Sincronizado':'Sem conexão'}</b></div>
+      <div class="ab-row"><span>Lugares</span><b>${L.length} · ${nq} quero ir · ${nv} visitados</b></div>
+    </div>
+    <div class="ab-sec"><h4>Últimas atualizações</h4>${tl()}</div>`;
+}
+function tl(){
+  const H=(histR&&histR.length?histR:APP_HIST),vis=todas?H:H.slice(0,3);
+  return`<ul class="ab-tl">${vis.map(x=>{const n=cmpV(x.v,APP_VERSION)>0,c=x.v===APP_VERSION;
+    return`<li class="${c?'cur':''}"><div class="ab-d">${esc(x.d)}${c?'<span class="ab-tag c">Você está aqui</span>':''}${n?'<span class="ab-tag n">Nova</span>':''}</div><ul>${(x.i||[]).map(t=>`<li>${esc(t)}</li>`).join('')}</ul></li>`;}).join('')}</ul>`+
+    (H.length>3?`<button type="button" class="ab-more" onclick="__abTodas()">${todas?'Mostrar menos':'Ver atualizações anteriores'}</button>`:'');
+}
+window.__abTodas=function(){todas=!todas;pinta();};
+function abrirSobre(){
+  if(!document.getElementById('ab-sheet'))
+    document.body.insertAdjacentHTML('beforeend','<div class="fx-sheet" id="ab-sheet" onclick="if(event.target===this)this.classList.remove(\'open\')"><div class="fx-box ab-box" id="ab-box"></div></div>');
+  document.getElementById('ab-sheet').classList.add('open');
+  pinta();checar();
+}
+window.__abChecar=checar;window.__abAtualizar=atualizar;
+window.__abQuem=function(k){
+  if(window.duJogador)duJogador(k);else{try{localStorage.setItem(LS,k);}catch(e){}}
+  marcaIni();pinta();
+};
+// O duelo também troca o jogador: mantém as iniciais do topo em dia
+const _dj=window.duJogador;if(_dj)window.duJogador=function(k){_dj(k);marcaIni();};
+liga();new MutationObserver(liga).observe(document.querySelector('.topbar')||document.body,{childList:true,subtree:true});
+// Ao abrir o app (e ao voltar para ele), confere se há versão nova
+setTimeout(async()=>{await checar();if(document.body.classList.contains('ab-novo')&&window.toast)toast('','Versão nova do Garfinho. Toque no logo para atualizar.');},4000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&Date.now()-ultima>600000)checar();});
+// Limpa o ?v= usado para forçar a atualização
+if(/[?&]v=\d+/.test(location.search)){try{history.replaceState(null,'',location.pathname+location.hash);}catch(e){}}
+})();
+</script>
 </body>
 </html>
