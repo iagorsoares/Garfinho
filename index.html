@@ -1203,6 +1203,30 @@ body.dark{--du-win:#4FB06A;--du-win-soft:#1C3324;--du-iag:#6FAFCF;--du-iag-soft:
 .du-dv .d{color:var(--du-deb)}.du-dv .i{color:var(--du-iag)}
 .du-empty{text-align:center;color:var(--gray2);font-size:.84rem;padding:24px 10px;line-height:1.5}
 </style>
+<style id="garfinho-duelo-lado">
+/* ── Duelo: os dois lugares lado a lado, foto em pé ── */
+.du-two{display:grid;grid-template-columns:1fr 1fr;gap:10px;position:relative}
+.du-two .du-opt{border-radius:16px}
+.du-two .du-ph,.du-opt.has-ph .du-two .du-ph,.du-two .du-opt.has-ph .du-ph{display:block;height:auto;aspect-ratio:3/4;max-width:100%;background:var(--bg3);position:relative;overflow:hidden}
+.du-two .du-ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .3s}
+.du-two .du-ph img.ok{opacity:1}
+.du-two .du-ph::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0) 55%,rgba(0,0,0,.35));pointer-events:none}
+.du-two .du-ph.none{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding-bottom:60px;background:var(--bg)}
+.du-two .du-ph.none::after{display:none}
+.du-two .du-nm{left:6px;right:6px;top:auto;bottom:6px;max-width:none;padding:5px 8px 5px 5px;gap:6px;border-radius:11px}
+.du-two .du-nm .du-lg{width:26px;height:26px;font-size:.8rem}
+.du-two .du-nt b{font-size:.88rem}
+.du-two .du-nt small{font-size:.64rem}
+.du-two .du-cap{left:6px;top:6px;bottom:auto;max-width:calc(100% - 12px);font-size:.66rem;padding:3px 8px;z-index:2}
+.du-n2{position:absolute;right:6px;top:30px;z-index:2;background:rgba(22,20,18,.62);color:#fff;font-size:.6rem;font-weight:800;padding:2px 7px;border-radius:99px}
+.du-two .du-wb{top:42%;width:58px;height:58px;margin:-29px 0 0 -29px;font-size:1.8rem}
+.du-two .du-delta{top:auto;bottom:70px;right:50%;transform:translate(50%,4px)}
+.du-two .du-opt.win .du-delta{transform:translate(50%,0)}
+.du-two .du-opt.win .du-nm{border-color:var(--du-win)}
+.du-two .du-vs{position:absolute;left:50%;top:42%;margin:0;transform:translate(-50%,-50%);display:block}
+.du-two .du-vs::before,.du-two .du-vs::after{display:none}
+.du-two .du-vs span{width:44px;height:44px}
+</style>
 </head>
 <body>
 <div id="ib"><div style="font-size:24px">🍽️</div><div><div class="ibt">Instalar na tela inicial</div><div class="ibs">Acesso rápido sem o navegador</div></div><button id="ibBtn">Instalar</button><button id="ibX" onclick="document.getElementById('ib').classList.remove('show')">×</button></div>
@@ -3770,13 +3794,15 @@ function pick(){
 const byId=id=>vis().find(p=>String(p.id)===id);
 
 function opt(id,i){
-  const p=byId(id),ph=fotos(p).slice(0,2),d=dt(p.date);
-  const media=ph.length
-    ?`<span class="du-ph${ph.length===1?' one':''}">${ph.map(f=>`<img src="${esc(cl(f.src,700))}" alt="${esc(f.cap||'Foto do prato')}" decoding="async">`).join('')}${ph[0].cap?`<span class="du-cap">${esc(ph[0].cap)}</span>`:''}${ph[1]&&ph[1].cap?`<span class="du-cap c2">${esc(ph[1].cap)}</span>`:''}<span class="du-nm">${logo(p)}<span class="du-nt"><b>${esc(p.name)}</b><small>${esc([sub(p),d].filter(Boolean).join(' · '))}</small></span></span></span>`
-    :`<span class="du-ph none">${logo(p)}<small>Sem fotos dos pratos</small></span>`;
-  return`<button type="button" class="du-opt${ph.length?' has-ph':''} ${i?'in-r':'in-l'}" id="du-o${i}" onclick="duEscolher(${i})">${media}<span class="du-wb">${ICK}</span><span class="du-delta" id="du-dl${i}"></span>
-    <span class="du-ob">${logo(p)}<span class="du-ot"><b>${esc(p.name)}</b><span>${esc([sub(p),d?'visitado em '+d:''].filter(Boolean).join(' · '))}</span></span><span class="du-chk">${ICK}</span></span></button>`;
+  const p=byId(id),ph=fotos(p),d=dt(p.date),f=ph[0];
+  const nm=`<span class="du-nm">${logo(p)}<span class="du-nt"><b>${esc(p.name)}</b><small>${esc([sub(p),d].filter(Boolean).join(' · '))}</small></span></span>`;
+  const media=f
+    ?`<span class="du-ph"><img src="${esc(duFoto(f.src))}" alt="${esc(f.cap||'Foto do prato')}" decoding="async" onload="this.classList.add('ok')" onerror="this.onerror=null;this.src='${esc(cl(f.src,700))}'">${f.cap?`<span class="du-cap">${esc(f.cap)}</span>`:''}${ph.length>1?`<span class="du-n2">+1 foto</span>`:''}${nm}</span>`
+    :`<span class="du-ph none">${logo(p)}<small>Sem fotos dos pratos</small>${nm}</span>`;
+  return`<button type="button" class="du-opt has-ph ${i?'in-r':'in-l'}" id="du-o${i}" onclick="duEscolher(${i})">${media}<span class="du-wb">${ICK}</span><span class="du-delta" id="du-dl${i}"></span></button>`;
 }
+// Foto em pé (3:4) cortada pelo Cloudinary em volta do prato (g_auto), em vez do meio da foto
+function duFoto(u){u=String(u||'');const m=u.match(/^(https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\/)(?:f_auto,q_auto,c_limit,w_\d+\/)?(.*)$/);return m?m[1]+'f_auto,q_auto,c_fill,g_auto,w_480,h_640/'+m[2]:u;}
 function renderDuel(novo){
   const el=document.getElementById('du-game');if(!el)return;
   if(!me||escolher){
@@ -3789,7 +3815,7 @@ function renderDuel(novo){
   if(novo||!cur||!byId(cur[0])||!byId(cur[1]))cur=pick();
   const tot=calc(me).tot,h=(window._duData||{})[me]||[];
   el.innerHTML=`<div class="du-h"><div><b>Qual gostou mais?</b><small>${tot} escolhas ${me==='d'?'da Débora':'do Iago'}</small></div><button type="button" class="du-who" onclick="duTrocar()" aria-label="Trocar jogador"><span class="du-ini ${me}">${me.toUpperCase()}</span>${NOME[me]}${IDOWN}</button></div>
-    ${opt(cur[0],0)}<div class="du-vs"><span>VS</span></div>${opt(cur[1],1)}
+    <div class="du-two">${opt(cur[0],0)}<div class="du-vs"><span>VS</span></div>${opt(cur[1],1)}</div>
     <div class="du-f"><button type="button" class="du-ghost" onclick="duDesfazer()"${h.length?'':' disabled'}>${IUNDO}Desfazer</button><button type="button" class="du-ghost" onclick="duPular()">${ISKIP}Não sei, pular</button></div>`;
 }
 function renderRank(){
@@ -3910,8 +3936,8 @@ body.ab-novo .tb-dot{display:block}
    aberta e se existe uma mais nova no GitHub, e o estado da nuvem.
    A cada publicação, aumentar APP_VERSION e pôr a entrada no topo de APP_HIST.
    ============================================================ */
-const APP_VERSION='2026.10.17.5',APP_DATA='17/10/2026';
-const APP_HIST=[{"v": "2026.10.17.5", "d": "17/10/2026", "i": ["Duelo: nome do restaurante em destaque sobre cada foto"]}, {"v": "2026.10.17.4", "d": "17/10/2026", "i": ["Nota de cada um: Débora e Iago avaliam separado e o lugar mostra a média", "Aviso de avaliação pendente ao abrir o app quando o outro marca um lugar como visitado"]}, {"v": "2026.10.17.3", "d": "17/10/2026", "i": ["Botão de troféu no topo do Diário abre o duelo \"Qual gostou mais?\""]}, {"v": "2026.10.17.2", "d": "17/10/2026", "i": ["Painel Sobre ao tocar no logo: quem usa o celular, versão e atualização", "Aviso quando houver versão nova"]}, {"v": "2026.10.17.1", "d": "17/10/2026", "i": ["Duelo \"Qual gostou mais?\" na aba Ranking", "Ranking da Débora, do Iago e do casal"]}, {"v": "2026.10.14", "d": "14/10/2026", "i": ["Mapa respeita os filtros da aba Lugares", "Botão de filtros flutuante no mapa", "Ponto azul destacando onde você está"]}, {"v": "2026.10.11.2", "d": "11/10/2026", "i": ["Início com topo vermelho e \"Que tal hoje?\"", "Botão + no centro do menu", "Últimas visitas em cartões deslizantes"]}, {"v": "2026.10.11.1", "d": "11/10/2026", "i": ["Posts do Instagram aparecem prontos, sem pulos", "Legenda dos posts escondida, com Ver legenda", "Abertura e listas mais rápidas"]}];
+const APP_VERSION='2026.10.17.6',APP_DATA='17/10/2026';
+const APP_HIST=[{"v": "2026.10.17.6", "d": "17/10/2026", "i": ["Duelo com os dois lugares lado a lado e a foto em pé, recortada em volta do prato"]}, {"v": "2026.10.17.5", "d": "17/10/2026", "i": ["Duelo: nome do restaurante em destaque sobre cada foto"]}, {"v": "2026.10.17.4", "d": "17/10/2026", "i": ["Nota de cada um: Débora e Iago avaliam separado e o lugar mostra a média", "Aviso de avaliação pendente ao abrir o app quando o outro marca um lugar como visitado"]}, {"v": "2026.10.17.3", "d": "17/10/2026", "i": ["Botão de troféu no topo do Diário abre o duelo \"Qual gostou mais?\""]}, {"v": "2026.10.17.2", "d": "17/10/2026", "i": ["Painel Sobre ao tocar no logo: quem usa o celular, versão e atualização", "Aviso quando houver versão nova"]}, {"v": "2026.10.17.1", "d": "17/10/2026", "i": ["Duelo \"Qual gostou mais?\" na aba Ranking", "Ranking da Débora, do Iago e do casal"]}, {"v": "2026.10.14", "d": "14/10/2026", "i": ["Mapa respeita os filtros da aba Lugares", "Botão de filtros flutuante no mapa", "Ponto azul destacando onde você está"]}, {"v": "2026.10.11.2", "d": "11/10/2026", "i": ["Início com topo vermelho e \"Que tal hoje?\"", "Botão + no centro do menu", "Últimas visitas em cartões deslizantes"]}, {"v": "2026.10.11.1", "d": "11/10/2026", "i": ["Posts do Instagram aparecem prontos, sem pulos", "Legenda dos posts escondida, com Ver legenda", "Abertura e listas mais rápidas"]}];
 (function(){
 const LS='garfinho_jogador',NOME={d:'Débora',i:'Iago'};
 let remota=null,verif=false,ultima=0,histR=null,todas=false;
