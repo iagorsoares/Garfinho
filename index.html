@@ -3936,8 +3936,8 @@ body.ab-novo .tb-dot{display:block}
    aberta e se existe uma mais nova no GitHub, e o estado da nuvem.
    A cada publicação, aumentar APP_VERSION e pôr a entrada no topo de APP_HIST.
    ============================================================ */
-const APP_VERSION='2026.10.17.6',APP_DATA='17/10/2026';
-const APP_HIST=[{"v": "2026.10.17.6", "d": "17/10/2026", "i": ["Duelo com os dois lugares lado a lado e a foto em pé, recortada em volta do prato"]}, {"v": "2026.10.17.5", "d": "17/10/2026", "i": ["Duelo: nome do restaurante em destaque sobre cada foto"]}, {"v": "2026.10.17.4", "d": "17/10/2026", "i": ["Nota de cada um: Débora e Iago avaliam separado e o lugar mostra a média", "Aviso de avaliação pendente ao abrir o app quando o outro marca um lugar como visitado"]}, {"v": "2026.10.17.3", "d": "17/10/2026", "i": ["Botão de troféu no topo do Diário abre o duelo \"Qual gostou mais?\""]}, {"v": "2026.10.17.2", "d": "17/10/2026", "i": ["Painel Sobre ao tocar no logo: quem usa o celular, versão e atualização", "Aviso quando houver versão nova"]}, {"v": "2026.10.17.1", "d": "17/10/2026", "i": ["Duelo \"Qual gostou mais?\" na aba Ranking", "Ranking da Débora, do Iago e do casal"]}, {"v": "2026.10.14", "d": "14/10/2026", "i": ["Mapa respeita os filtros da aba Lugares", "Botão de filtros flutuante no mapa", "Ponto azul destacando onde você está"]}, {"v": "2026.10.11.2", "d": "11/10/2026", "i": ["Início com topo vermelho e \"Que tal hoje?\"", "Botão + no centro do menu", "Últimas visitas em cartões deslizantes"]}, {"v": "2026.10.11.1", "d": "11/10/2026", "i": ["Posts do Instagram aparecem prontos, sem pulos", "Legenda dos posts escondida, com Ver legenda", "Abertura e listas mais rápidas"]}];
+const APP_VERSION='2026.10.23.1',APP_DATA='23/10/2026';
+const APP_HIST=[{"v": "2026.10.23.1", "d": "23/10/2026", "i": ["Botão de editar menor, no canto do detalhe", "\"Já fomos\" abre só data, nota, fotos e dica", "Adicionar foto e editar a visita direto no detalhe"]}, {"v": "2026.10.17.6", "d": "17/10/2026", "i": ["Duelo com os dois lugares lado a lado e a foto em pé, recortada em volta do prato"]}, {"v": "2026.10.17.5", "d": "17/10/2026", "i": ["Duelo: nome do restaurante em destaque sobre cada foto"]}, {"v": "2026.10.17.4", "d": "17/10/2026", "i": ["Nota de cada um: Débora e Iago avaliam separado e o lugar mostra a média", "Aviso de avaliação pendente ao abrir o app quando o outro marca um lugar como visitado"]}, {"v": "2026.10.17.3", "d": "17/10/2026", "i": ["Botão de troféu no topo do Diário abre o duelo \"Qual gostou mais?\""]}, {"v": "2026.10.17.2", "d": "17/10/2026", "i": ["Painel Sobre ao tocar no logo: quem usa o celular, versão e atualização", "Aviso quando houver versão nova"]}, {"v": "2026.10.17.1", "d": "17/10/2026", "i": ["Duelo \"Qual gostou mais?\" na aba Ranking", "Ranking da Débora, do Iago e do casal"]}, {"v": "2026.10.14", "d": "14/10/2026", "i": ["Mapa respeita os filtros da aba Lugares", "Botão de filtros flutuante no mapa", "Ponto azul destacando onde você está"]}, {"v": "2026.10.11.2", "d": "11/10/2026", "i": ["Início com topo vermelho e \"Que tal hoje?\"", "Botão + no centro do menu", "Últimas visitas em cartões deslizantes"]}, {"v": "2026.10.11.1", "d": "11/10/2026", "i": ["Posts do Instagram aparecem prontos, sem pulos", "Legenda dos posts escondida, com Ver legenda", "Abertura e listas mais rápidas"]}];
 (function(){
 const LS='garfinho_jogador',NOME={d:'Débora',i:'Iago'};
 let remota=null,verif=false,ultima=0,histR=null,todas=false;
@@ -4398,6 +4398,119 @@ document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='hidden'){saiu=Date.now();return;}
   if(saiu&&Date.now()-saiu>10*60*1000&&!window._viaShare){mostrado=false;setTimeout(tentar,1200);}
 });
+})();
+</script>
+<style id="garfinho-edicao">
+/* ── Edição compacta: lápis pequeno, folha curta de visita ── */
+.dt-tool{position:absolute;top:12px;z-index:5;width:34px;height:34px;border-radius:50%;border:1.5px solid var(--line-strong);background:var(--card);color:var(--gray1);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.dt-tool svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.dt-tool:active{transform:scale(.94)}
+.dt-edit{right:12px}.dt-close{left:12px}
+.detail-btn.dt-go{background:var(--red);border-color:var(--red);color:#fff}
+.detail-btn.dt-go svg{stroke:#fff}
+#detail-photos-section .detail-section-title{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.dt-vlink{font:800 .76rem var(--font-b);color:var(--red);text-transform:none;letter-spacing:0;cursor:pointer;background:none;border:none;padding:0}
+.dt-add{aspect-ratio:1/1;border-radius:12px;border:1.5px dashed var(--line-strong);background:none;color:var(--gray2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:700 .78rem var(--font-b);cursor:pointer}
+.dt-add svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+#overlay.m-visita #modal-step2>.form-field,#overlay.m-visita #fields-quero-note,#overlay.m-visita #btn-del{display:none!important}
+#overlay.m-visita #fields-visitado{display:block!important}
+#overlay.m-lugar #fields-visitado,#overlay.m-lugar #visited-toggle-wrap{display:none!important}
+.mv-sub{display:none;font:600 .82rem var(--font-b);color:var(--gray2);margin:-6px 0 14px}
+#overlay.m-visita .mv-sub{display:block}
+</style>
+<script>
+/* ============================================================
+   EDIÇÃO COMPACTA
+   - Detalhe: lápis pequeno no canto (dados do lugar), X para fechar,
+     "Já fomos" para lugares em Quero ir.
+   - Folha curta de visita (data, sua nota, fotos, dica): mesmo modal,
+     escondendo os campos do lugar. O modal do lápis esconde a visita.
+   ============================================================ */
+(function(){
+const SV={
+  pen:'<svg viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg>',
+  x:'<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  route:'<svg viewBox="0 0 24 24"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h8.5a3.5 3.5 0 0 0 0-7h-9a3.5 3.5 0 0 1 0-7H16"/></svg>',
+  check:'<svg viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></svg>',
+  cam:'<svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3"/></svg>'
+};
+const acha=id=>(window.places||[]).find(x=>x.id===id);
+let atual=null;
+const ov=()=>document.getElementById('overlay');
+
+/* subtítulo com o nome do lugar na folha de visita */
+const tt=document.getElementById('modal-title');
+if(tt&&!document.getElementById('mv-sub'))tt.insertAdjacentHTML('afterend','<div class="mv-sub" id="mv-sub"></div>');
+
+/* openModal: com id abre só os dados do lugar; novo cadastro fica como era */
+const _om=window.openModal;
+window.openModal=function(id){
+  const o=ov();o.classList.remove('m-visita','m-lugar');
+  _om.apply(this,arguments);
+  if(id)o.classList.add('m-lugar');
+  const b=document.getElementById('btn-save');if(b)b.textContent='Salvar Lugar';
+};
+
+/* folha curta: registrar ou editar a visita */
+window.__visita=function(id,foto){
+  const p=acha(id);if(!p)return;
+  if(window.closeDetail)closeDetail();
+  window.openModal(id);
+  const o=ov();o.classList.remove('m-lugar');o.classList.add('m-visita');
+  const era=p.status;
+  curStatus='visitado';
+  if(era!=='visitado'){
+    const nq=document.getElementById('f-note-quero'),nv=document.getElementById('f-note');
+    if(nq&&nv&&!nv.value)nv.value=nq.value;
+  }
+  showStep2('visitado');
+  document.getElementById('modal-title').textContent=era==='visitado'?'Editar visita':'Registrar visita';
+  document.getElementById('mv-sub').textContent=p.name||'';
+  document.getElementById('btn-save').textContent=era==='visitado'?'Salvar':'Salvar visita';
+  if(foto===0||foto===1)triggerPhoto(foto);
+};
+window.__editarLugar=function(id){if(window.closeDetail)closeDetail();window.openModal(id);};
+
+/* ao salvar, o texto do botão volta sozinho para "Salvar Lugar" no fim */
+const _sp=window.savePlace;
+window.savePlace=async function(){
+  const v=ov().classList.contains('m-visita');
+  await _sp.apply(this,arguments);
+  if(v&&ov().classList.contains('open')){const b=document.getElementById('btn-save');if(b)b.textContent='Salvar visita';}
+};
+
+/* detalhe */
+const _od=window.openDetail;
+window.openDetail=function(id){
+  _od.apply(this,arguments);
+  const p=acha(id);if(!p)return;atual=id;
+  const m=document.getElementById('detail-modal');
+  if(!document.getElementById('dt-edit')){
+    m.insertAdjacentHTML('afterbegin',`<button type="button" class="dt-tool dt-close" id="dt-close" aria-label="Fechar">${SV.x}</button><button type="button" class="dt-tool dt-edit" id="dt-edit" aria-label="Editar lugar">${SV.pen}</button>`);
+    document.getElementById('dt-close').onclick=()=>closeDetail();
+    document.getElementById('dt-edit').onclick=()=>{if(atual)__editarLugar(atual);};
+  }
+  m.scrollTop=0;
+  const maps=`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(p.address||p.name||'')}`;
+  const a=document.getElementById('detail-actions');
+  a.innerHTML=`<button type="button" class="detail-btn" id="dt-rota">${SV.route}Ver rota</button>`+
+    (p.status==='visitado'?'':`<button type="button" class="detail-btn dt-go" onclick="__visita('${p.id}')">${SV.check}Já fomos</button>`);
+  document.getElementById('dt-rota').onclick=()=>window.open(maps,'_blank');
+  /* fotos: link "Editar visita" e espaço para adicionar */
+  const sec=document.getElementById('detail-photos-section'),grid=document.getElementById('detail-photos');
+  const t=sec.querySelector('.detail-section-title');
+  const old=t.querySelector('.dt-vlink');if(old)old.remove();
+  sec.querySelectorAll('.dt-add').forEach(e=>e.remove());
+  if(p.status!=='visitado')return;
+  const n=(p.photos||[]).filter(Boolean).length;
+  if(!n)grid.innerHTML='';
+  sec.style.display='block';
+  t.insertAdjacentHTML('beforeend',`<button type="button" class="dt-vlink" onclick="__visita('${p.id}')">Editar visita</button>`);
+  if(n<2){
+    const livre=!(p.photos||[])[0]?0:1;
+    grid.insertAdjacentHTML('beforeend',`<button type="button" class="dt-add" onclick="__visita('${p.id}',${livre})">${SV.cam}Adicionar</button>`);
+  }
+};
 })();
 </script>
 </body>
