@@ -2528,7 +2528,6 @@ async function migrateCoords(){
 function addMarker(p){
   if(!p.lat||!p.lng)return;
   const statusLabel=p.status==='visitado'?'✅ Já fui':'🔖 Quero ir';
-  const dest=encodeURIComponent(p.address||p.name||'').replace(/'/g,'%27');
   const marker=L.marker([p.lat,p.lng],{icon:makeIcon(p.cat,p.status,p.pet),draggable:false})
     .addTo(leafletMap)
     .bindPopup(`<div class="map-popup">
@@ -2536,7 +2535,7 @@ function addMarker(p){
       <div class="map-popup-meta">${p.cat}${(p.address||p.city)?' · '+(p.address||p.city).split(',').slice(-2).join(',').trim():''}</div>
       <div style="font-size:.72rem;font-weight:700;margin-bottom:8px;color:${p.status==='visitado'?'#50a773':'#f5a623'}">${statusLabel}</div>
       ${p.rating?`<div style="color:#f5a623;margin-bottom:8px">${'★'.repeat(Math.floor(p.rating))}${p.rating%1?'½':''}</div>`:''}
-      <button class="map-popup-btn" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${dest}','_blank')">🗺️ Abrir rota</button>
+      <button class="map-popup-btn" onclick="__rota('${p.id}')">🗺️ Abrir rota</button>
       <button class="map-popup-btn" style="margin-top:6px;background:var(--bg3);color:var(--gray1)" onclick="startPinAdjust('${p.id}')">📌 Ajustar local no mapa</button>
     </div>`,{maxWidth:220,minWidth:180});
   marker._pid=p.id;
@@ -3608,6 +3607,7 @@ if(document.getElementById('view-inicio').classList.contains('active')&&window.p
 (function(){
   const L=[ // do que fica por cima para o que fica por baixo
     ['crop-overlay',()=>closeCrop()],
+    ['rt-sheet',()=>window.__rotaFechar&&__rotaFechar()],
     ['pk-sheet',()=>window.fecharEscolhaLugar&&fecharEscolhaLugar()],
     ['fx-sheet',()=>window.closeSheet&&closeSheet()],
     ['overlay',()=>closeModal()],
@@ -3936,8 +3936,8 @@ body.ab-novo .tb-dot{display:block}
    aberta e se existe uma mais nova no GitHub, e o estado da nuvem.
    A cada publicação, aumentar APP_VERSION e pôr a entrada no topo de APP_HIST.
    ============================================================ */
-const APP_VERSION='2026.10.24.1',APP_DATA='24/10/2026';
-const APP_HIST=[{"v": "2026.10.24.1", "d": "24/10/2026", "i": ["Ícone do app vermelho com o símbolo branco"]}, {"v": "2026.10.23.1", "d": "23/10/2026", "i": ["Botão de editar menor, no canto do detalhe", "\"Já fomos\" abre só data, nota, fotos e dica", "Adicionar foto e editar a visita direto no detalhe"]}, {"v": "2026.10.17.6", "d": "17/10/2026", "i": ["Duelo com os dois lugares lado a lado e a foto em pé, recortada em volta do prato"]}, {"v": "2026.10.17.5", "d": "17/10/2026", "i": ["Duelo: nome do restaurante em destaque sobre cada foto"]}, {"v": "2026.10.17.4", "d": "17/10/2026", "i": ["Nota de cada um: Débora e Iago avaliam separado e o lugar mostra a média", "Aviso de avaliação pendente ao abrir o app quando o outro marca um lugar como visitado"]}, {"v": "2026.10.17.3", "d": "17/10/2026", "i": ["Botão de troféu no topo do Diário abre o duelo \"Qual gostou mais?\""]}, {"v": "2026.10.17.2", "d": "17/10/2026", "i": ["Painel Sobre ao tocar no logo: quem usa o celular, versão e atualização", "Aviso quando houver versão nova"]}, {"v": "2026.10.17.1", "d": "17/10/2026", "i": ["Duelo \"Qual gostou mais?\" na aba Ranking", "Ranking da Débora, do Iago e do casal"]}, {"v": "2026.10.14", "d": "14/10/2026", "i": ["Mapa respeita os filtros da aba Lugares", "Botão de filtros flutuante no mapa", "Ponto azul destacando onde você está"]}, {"v": "2026.10.11.2", "d": "11/10/2026", "i": ["Início com topo vermelho e \"Que tal hoje?\"", "Botão + no centro do menu", "Últimas visitas em cartões deslizantes"]}, {"v": "2026.10.11.1", "d": "11/10/2026", "i": ["Posts do Instagram aparecem prontos, sem pulos", "Legenda dos posts escondida, com Ver legenda", "Abertura e listas mais rápidas"]}];
+const APP_VERSION='2026.11.08.1',APP_DATA='08/11/2026';
+const APP_HIST=[{"v": "2026.11.08.1", "d": "08/11/2026", "i": ["Ver rota: escolha entre Google Maps e Waze"]}, {"v": "2026.10.24.1", "d": "24/10/2026", "i": ["Ícone do app vermelho com o símbolo branco"]}, {"v": "2026.10.23.1", "d": "23/10/2026", "i": ["Botão de editar menor, no canto do detalhe", "\"Já fomos\" abre só data, nota, fotos e dica", "Adicionar foto e editar a visita direto no detalhe"]}, {"v": "2026.10.17.6", "d": "17/10/2026", "i": ["Duelo com os dois lugares lado a lado e a foto em pé, recortada em volta do prato"]}, {"v": "2026.10.17.5", "d": "17/10/2026", "i": ["Duelo: nome do restaurante em destaque sobre cada foto"]}, {"v": "2026.10.17.4", "d": "17/10/2026", "i": ["Nota de cada um: Débora e Iago avaliam separado e o lugar mostra a média", "Aviso de avaliação pendente ao abrir o app quando o outro marca um lugar como visitado"]}, {"v": "2026.10.17.3", "d": "17/10/2026", "i": ["Botão de troféu no topo do Diário abre o duelo \"Qual gostou mais?\""]}, {"v": "2026.10.17.2", "d": "17/10/2026", "i": ["Painel Sobre ao tocar no logo: quem usa o celular, versão e atualização", "Aviso quando houver versão nova"]}, {"v": "2026.10.17.1", "d": "17/10/2026", "i": ["Duelo \"Qual gostou mais?\" na aba Ranking", "Ranking da Débora, do Iago e do casal"]}, {"v": "2026.10.14", "d": "14/10/2026", "i": ["Mapa respeita os filtros da aba Lugares", "Botão de filtros flutuante no mapa", "Ponto azul destacando onde você está"]}, {"v": "2026.10.11.2", "d": "11/10/2026", "i": ["Início com topo vermelho e \"Que tal hoje?\"", "Botão + no centro do menu", "Últimas visitas em cartões deslizantes"]}, {"v": "2026.10.11.1", "d": "11/10/2026", "i": ["Posts do Instagram aparecem prontos, sem pulos", "Legenda dos posts escondida, com Ver legenda", "Abertura e listas mais rápidas"]}];
 (function(){
 const LS='garfinho_jogador',NOME={d:'Débora',i:'Iago'};
 let remota=null,verif=false,ultima=0,histR=null,todas=false;
@@ -4382,7 +4382,7 @@ window.openDetail=function(id){
 
 /* ---------- Quando mostrar: uma vez por abertura, depois da tela de abertura ---------- */
 let mostrado=false,saiu=0;
-function aberto(){return['overlay','detail-overlay','pk-sheet','fx-sheet','crop-overlay','ab-sheet','ar-sh','ap-ov','aq-ov'].some(i=>{const e=document.getElementById(i);return e&&e.classList.contains('open');});}
+function aberto(){return['overlay','detail-overlay','rt-sheet','pk-sheet','fx-sheet','crop-overlay','ab-sheet','ar-sh','ap-ov','aq-ov'].some(i=>{const e=document.getElementById(i);return e&&e.classList.contains('open');});}
 function splashFora(){const s=document.getElementById('splash');return!s||s.classList.contains('hidden')||s.style.display==='none';}
 function tentar(n){
   if(mostrado||window._viaShare)return;
@@ -4491,11 +4491,10 @@ window.openDetail=function(id){
     document.getElementById('dt-edit').onclick=()=>{if(atual)__editarLugar(atual);};
   }
   m.scrollTop=0;
-  const maps=`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(p.address||p.name||'')}`;
   const a=document.getElementById('detail-actions');
   a.innerHTML=`<button type="button" class="detail-btn" id="dt-rota">${SV.route}Ver rota</button>`+
     (p.status==='visitado'?'':`<button type="button" class="detail-btn dt-go" onclick="__visita('${p.id}')">${SV.check}Já fomos</button>`);
-  document.getElementById('dt-rota').onclick=()=>window.open(maps,'_blank');
+  document.getElementById('dt-rota').onclick=()=>__rota(p.id);
   /* fotos: link "Editar visita" e espaço para adicionar */
   const sec=document.getElementById('detail-photos-section'),grid=document.getElementById('detail-photos');
   const t=sec.querySelector('.detail-section-title');
@@ -4510,6 +4509,55 @@ window.openDetail=function(id){
     const livre=!(p.photos||[])[0]?0:1;
     grid.insertAdjacentHTML('beforeend',`<button type="button" class="dt-add" onclick="__visita('${p.id}',${livre})">${SV.cam}Adicionar</button>`);
   }
+};
+})();
+</script>
+<style id="garfinho-rota">
+/* ── Ver rota: escolher Google Maps ou Waze ── */
+#rt-sheet{z-index:1400!important}
+.rt-box{padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
+.rt-nome{font-size:.8rem;font-weight:600;color:var(--gray2);margin:-8px 0 14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rt-op{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;border:1.5px solid var(--line-strong);border-radius:var(--r);background:none;padding:0 14px;margin-top:8px;cursor:pointer;color:var(--black);font:800 .95rem var(--font-b);text-align:left}
+.rt-op:active{transform:scale(.98)}
+.rt-op i{width:36px;height:36px;border-radius:50%;background:var(--red-soft);color:var(--red);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rt-op i svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.rt-op span{flex:1}
+</style>
+<script>
+/* ============================================================
+   VER ROTA: pergunta sempre se abre no Google Maps ou no Waze
+   Vale para o detalhe do lugar e para o popup do mapa.
+   ============================================================ */
+(function(){
+const PIN='<svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>';
+const CARRO='<svg viewBox="0 0 24 24"><path d="M5 17H4a1 1 0 0 1-1-1v-3.5l2-5.5a2 2 0 0 1 1.9-1.3h10.2A2 2 0 0 1 19 6.999L21 12.5V16a1 1 0 0 1-1 1h-1M9 17h6M3.5 12h17"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>';
+let atual=null;
+const texto=p=>p.address||p.name||'';
+const urlMaps=p=>'https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(texto(p));
+const urlWaze=p=>{
+  const la=Number(p.lat),ln=Number(p.lng);
+  return Number.isFinite(la)&&Number.isFinite(ln)&&(la||ln)
+    ?`https://waze.com/ul?ll=${la},${ln}&navigate=yes`
+    :'https://waze.com/ul?q='+encodeURIComponent(texto(p))+'&navigate=yes';
+};
+window.__rotaFechar=function(){const s=document.getElementById('rt-sheet');if(s)s.classList.remove('open');atual=null;};
+window.__rotaAbrir=function(app){
+  if(!atual)return;
+  const u=app==='waze'?urlWaze(atual):urlMaps(atual);
+  __rotaFechar();
+  window.open(u,'_blank');
+};
+window.__rota=function(id){
+  const p=(window.places||[]).find(x=>String(x.id)===String(id));if(!p)return;
+  atual=p;
+  if(!document.getElementById('rt-sheet'))
+    document.body.insertAdjacentHTML('beforeend','<div class="fx-sheet" id="rt-sheet" onclick="if(event.target===this)__rotaFechar()"><div class="fx-box rt-box" id="rt-box"></div></div>');
+  document.getElementById('rt-box').innerHTML=`<div class="cs-handle"></div><div class="fx-head"><b>Abrir rota em</b></div><div class="rt-nome">${esc(p.name||'')}</div>
+    <button type="button" class="rt-op" onclick="__rotaAbrir('maps')"><i>${PIN}</i><span>Google Maps</span></button>
+    <button type="button" class="rt-op" onclick="__rotaAbrir('waze')"><i>${CARRO}</i><span>Waze</span></button>`;
+  const s=document.getElementById('rt-sheet');
+  s.offsetHeight;
+  s.classList.add('open');
 };
 })();
 </script>
